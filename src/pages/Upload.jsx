@@ -50,6 +50,7 @@ function Upload() {
   const [shopName, setShopName] = useState('')
   const [phoneSaved, setPhoneSaved] = useState(false)
   const [seller, setSeller] = useState(null)
+  const [loadingSeller, setLoadingSeller] = useState(true)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const fileInputCounter = useRef(0)
 
