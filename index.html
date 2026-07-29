@@ -8,25 +8,14 @@
   </head>
   <body>
     <div id="root"></div>
-    <div id="error-box" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#b91c1c;color:#fff;padding:16px;font-family:monospace;font-size:13px;white-space:pre-wrap;z-index:9999;max-height:50vh;overflow:auto;"></div>
+    <script type="module" src="/src/main.jsx"></script>
     <script>
-      var errorBox = document.getElementById('error-box');
-      function showError(msg) {
-        errorBox.style.display = 'block';
-        errorBox.textContent += msg + '\\n';
-      }
       window.onerror = function(msg, url, line, col, err) {
-        var text = 'Error: ' + msg + ' at ' + url + ':' + line + ':' + col;
-        if (err && err.stack) text += '\\n' + err.stack;
-        showError(text);
-        console.error(text);
+        console.error('Unhandled error:', msg, 'at', url + ':' + line + ':' + col, err);
       };
       window.onunhandledrejection = function(e) {
-        var text = 'Unhandled: ' + (e.reason && e.reason.stack ? e.reason.stack : String(e.reason));
-        showError(text);
-        console.error(text);
+        console.error('Unhandled promise rejection:', e.reason);
       };
     </script>
-    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
