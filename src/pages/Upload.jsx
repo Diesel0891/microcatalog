@@ -5,7 +5,8 @@ import { uploadToCloudinary } from '../lib/cloudinary'
 import { suggestProductDetails } from '../lib/ai'
 import { logger } from '../lib/logger.js'
 import ProductCard from '../components/ProductCard.jsx'
-import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, AlertCircle, Link2, Store } from 'lucide-react'
+import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, Sparkles, AlertCircle, Store } from 'lucide-react'
+import PublishSuccess from '../components/PublishSuccess.jsx'
 
 const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/infini-logo_frripe.png?v=2'
 const COUNTRIES = [
@@ -50,8 +51,6 @@ function Upload() {
   const [phoneSaved, setPhoneSaved] = useState(false)
   const [seller, setSeller] = useState(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [loadingSeller, setLoadingSeller] = useState(true)
-  const [linkCopied, setLinkCopied] = useState(false)
   const fileInputCounter = useRef(0)
 
   const [selectedIds, setSelectedIds] = useState(new Set())
@@ -414,24 +413,6 @@ function Upload() {
     }
   }
 
-  const copyLink = useCallback(async () => {
-    const catalogUrl = `${window.location.origin}/#/c/${sellerUuid}`
-    try {
-      await navigator.clipboard.writeText(catalogUrl)
-      setLinkCopied(true)
-      setTimeout(() => setLinkCopied(false), 3000)
-    } catch {
-      const textArea = document.createElement('textarea')
-      textArea.value = catalogUrl
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      setLinkCopied(true)
-      setTimeout(() => setLinkCopied(false), 3000)
-    }
-  }, [sellerUuid])
-
   if (loadingSeller) {
     return (
       <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
@@ -441,47 +422,13 @@ function Upload() {
   }
 
   if (published) {
-    const catalogUrl = `${window.location.origin}/#/c/${sellerUuid}`
-    const displayName = shopName.trim() || 'Catalog'
     return (
-      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg border border-stone-200 p-8 max-w-sm w-full text-center">
-          <div className="w-16 h-16 bg-sage-50 rounded-full flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 className="w-8 h-8 text-sage-600" strokeWidth={1.5} />
-          </div>
-          <h2 className="text-xl font-bold text-charcoal-950 mb-2">{displayName} Published</h2>
-          <p className="text-charcoal-500 text-sm mb-6">Your catalog is now live and ready to share.</p>
-          
-          <div className="bg-charcoal-50 rounded-xl p-4 mb-4 text-left">
-            <p className="text-xs text-charcoal-400 mb-2 font-medium uppercase tracking-wide flex items-center gap-1.5">
-              <Link2 className="w-3.5 h-3.5" strokeWidth={2} />
-              Catalog Link
-            </p>
-            <p className="text-charcoal-900 text-sm font-mono break-all leading-relaxed">{catalogUrl}</p>
-          </div>
-
-          {linkCopied && (
-            <div className="bg-sage-50 border border-sage-200 rounded-lg p-3 mb-4 flex items-center gap-2">
-              <Check className="w-4 h-4 text-sage-600" strokeWidth={3} />
-              <p className="text-sage-700 text-sm font-medium">Link copied to clipboard</p>
-            </div>
-          )}
-
-          <button
-            onClick={copyLink}
-            className="w-full bg-charcoal-950 text-white py-3.5 px-4 rounded-xl font-medium hover:bg-charcoal-800 transition flex items-center justify-center"
-          >
-            Copy Link to Share with Customers
-          </button>
-          
-          <p className="text-charcoal-400 text-xs mt-4">
-            Share this link on WhatsApp, Instagram, Facebook, or anywhere
-          </p>
-        </div>
-      </div>
+      <PublishSuccess
+        catalogUrl={`${window.location.origin}/#/c/${sellerUuid}`}
+        onEditCatalog={() => setPublished(false)}
+      />
     )
   }
-
   const maxItems = seller?.max_items || 999
   const remainingSlots = maxItems - totalItemCount
   const isAtLimit = remainingSlots <= 0
