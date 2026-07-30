@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { uploadToCloudinary } from '../lib/cloudinary'
 import { suggestProductDetails } from '../lib/ai'
+import { compressImage } from '../lib/compressImage.js'
 import { logger } from '../lib/logger.js'
 import ProductCard from '../components/ProductCard.jsx'
 import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
@@ -207,7 +208,8 @@ function Upload() {
           prev.map((i) => (i.id === item.id ? { ...i, uploading: true } : i))
         )
 
-        const imageUrl = await uploadToCloudinary(item.file)
+        const fileToUpload = await compressImage(item.file)
+        const imageUrl = await uploadToCloudinary(fileToUpload)
 
         const { data, error } = await supabase
           .from('catalog_items')
