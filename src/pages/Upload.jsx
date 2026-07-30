@@ -549,18 +549,10 @@ function Upload() {
           )}
         </div>
 
-        <label className={`block w-full border-2 border-dashed rounded-xl p-8 text-center transition ${
-          isAtLimit 
-            ? 'border-stone-300 bg-stone-50 opacity-50 cursor-not-allowed' 
-            : 'border-copper-300 hover:border-copper-500 hover:bg-copper-50/50 cursor-pointer'
-        }`}>
-          <UploadIcon className={`w-8 h-8 mx-auto mb-3 ${isAtLimit ? 'text-stone-400' : 'text-copper-500'}`} strokeWidth={1.5} />
-          <p className={`font-medium text-sm ${isAtLimit ? 'text-stone-500' : 'text-charcoal-900'}`}>
-            {isAtLimit ? 'Item limit reached' : 'Tap to upload photos'}
-          </p>
-          <p className="text-charcoal-400 text-xs mt-1">
-            {isAtLimit ? 'Upgrade for unlimited items' : `Up to ${remainingSlots} more images`}
-          </p>
+        <label className="block w-full border-2 border-dashed border-copper-300 hover:border-copper-500 hover:bg-copper-50/50 cursor-pointer rounded-xl p-8 text-center transition">
+          <UploadIcon className="w-8 h-8 mx-auto mb-3 text-copper-500" strokeWidth={1.5} />
+          <p className="font-medium text-sm text-charcoal-900">Tap to upload photos</p>
+          <p className="text-charcoal-400 text-xs mt-1">Select multiple images from your gallery</p>
           <input
             key={fileInputCounter.current}
             type="file"
