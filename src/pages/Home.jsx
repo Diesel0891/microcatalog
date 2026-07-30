@@ -23,7 +23,7 @@ function Home() {
       {/* Action Cards */}
       <div className="w-full max-w-sm space-y-3">
         <Link
-          to={`/u/${testSellerUuid}?admin=1`}
+          to={`/u/${testSellerUuid}`}
           className="group flex items-center gap-4 bg-white border border-stone-200 rounded-xl p-4 hover:border-copper-400 hover:shadow-md transition-all duration-200"
         >
           <div className="w-11 h-11 bg-copper-50 rounded-lg flex items-center justify-center shrink-0">
