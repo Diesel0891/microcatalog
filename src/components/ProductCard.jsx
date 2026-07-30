@@ -17,7 +17,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import StockStatusBadge from './StockStatusBadge.jsx'
-import StockStatusSelector from './StockStatusSelector.jsx'
+import StockStatusSheet from './StockStatusSheet.jsx'
 import { useStockStatus } from '../hooks/useStockStatus.js'
 import { logger } from '../lib/logger.js'
 import { DEFAULT_STOCK_STATUS } from '../lib/stockStatus.js'
@@ -52,6 +52,7 @@ export default function ProductCard({
   const [localStatus, setLocalStatus] = useState(
     item.stock_status || DEFAULT_STOCK_STATUS
   )
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showSavedFlash, setShowSavedFlash] = useState(false)
   const prevFieldsRef = useRef(null)
   const prevSavedRef = useRef(item.saved)
@@ -150,10 +151,15 @@ export default function ProductCard({
           <Trash2 className="w-4 h-4" strokeWidth={2} />
         </button>
 
-        {/* Stock Status Badge - top-left overlay */}
-        <div className="absolute top-2 left-2">
+        {/* Stock Status Badge - top-left overlay, tappable */}
+        <button
+          type="button"
+          onClick={() => setIsSheetOpen(true)}
+          disabled={statusUpdating || item.uploading}
+          className="absolute top-2 left-2 disabled:opacity-50"
+        >
           <StockStatusBadge status={localStatus} size="xs" />
-        </div>
+        </button>
       </div>
 
       <div className="p-4 space-y-3 relative">
@@ -181,11 +187,12 @@ export default function ProductCard({
           </p>
         )}
 
-        {/* Stock Status Selector */}
-        <StockStatusSelector
+        {/* Stock Status Sheet */}
+        <StockStatusSheet
+          isOpen={isSheetOpen}
           currentStatus={localStatus}
-          onChange={handleStatusChange}
-          disabled={statusUpdating || item.uploading}
+          onSelect={handleStatusChange}
+          onClose={() => setIsSheetOpen(false)}
         />
 
         <input
