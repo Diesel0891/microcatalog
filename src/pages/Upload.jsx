@@ -444,7 +444,7 @@ function Upload() {
   return (
     <div className="min-h-screen bg-[var(--color-bg)] pb-28">
       <div className="bg-white border-b border-stone-200 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-4 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-sm">
               <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
@@ -454,20 +454,15 @@ function Upload() {
               <p className="text-xs text-charcoal-400">Manage your products</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-charcoal-400">{totalItemCount} / {maxItems} items</p>
-            <div className="flex items-center justify-end gap-2 mt-0.5">
-              {!seller?.is_pro && (
-                <p className="text-xs text-copper-600 font-medium">{remainingSlots} remaining</p>
-              )}
-              <button
-                type="button"
-                onClick={scrollToShopDetails}
-                className="text-xs text-copper-600 font-medium hover:text-copper-700 transition flex items-center gap-0.5"
-              >
-                Edit details <span className="text-[10px]">→</span>
-              </button>
-            </div>
+          <div className="text-right flex flex-col justify-center">
+            <p className="text-xs text-charcoal-400 font-medium">{totalItemCount} of {maxItems}</p>
+            <button
+              type="button"
+              onClick={scrollToShopDetails}
+              className="text-xs text-copper-600 font-medium hover:text-copper-700 transition mt-1 inline-flex items-center justify-end gap-0.5"
+            >
+              Edit details <span className="text-[10px]">→</span>
+            </button>
           </div>
         </div>
       </div>
