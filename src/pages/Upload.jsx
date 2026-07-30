@@ -88,6 +88,29 @@ function Upload() {
             }
           }
         } else {
+          // Backward compatibility: old URLs used uuid instead of manage_token
+          const { data: legacySeller } = await supabase.from('sellers').select('*').eq('uuid', manageToken).single()
+          if (legacySeller) {
+            setSeller(legacySeller)
+            localStorage.setItem('microcatalog_manage_token', legacySeller.manage_token)
+            localStorage.setItem('microcatalog_seller_uuid', legacySeller.uuid)
+            setShopName(legacySeller.shop_name || '')
+            const fullPhone = legacySeller.phone || ''
+            setSellerPhone(fullPhone)
+            if (fullPhone) {
+              const country = COUNTRIES.find(c => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
+              if (country) {
+                setSelectedCountry(country.code)
+                setLocalPhone(fullPhone.slice(country.dial.length))
+              } else {
+                setSelectedCountry('OTHER')
+                setLocalPhone(fullPhone.replace(/^\+/, ''))
+              }
+            }
+            window.location.replace(`/#/u/${legacySeller.manage_token}`)
+            return
+          }
+
           const newUuid = crypto.randomUUID()
           const { data: newSeller, error: insertError } = await supabase.from('sellers').insert({
             uuid: newUuid,
