@@ -112,6 +112,7 @@ function Catalog() {
   }
 
   const displayName = shopName.trim() || 'Catalog'
+  const manageToken = localStorage.getItem('microcatalog_manage_token')
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] pb-8">
@@ -129,7 +130,7 @@ function Catalog() {
           </div>
           {isOwner && (
             <a
-              href={`/#/u/${storedToken}`}
+              href={`/#/u/${manageToken || sellerUuid}`}
               className="flex items-center gap-1.5 text-xs text-copper-600 font-medium hover:text-copper-700 transition"
             >
               <Edit3 className="w-3.5 h-3.5" strokeWidth={2} />
