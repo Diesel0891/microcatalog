@@ -5,7 +5,7 @@ import { uploadToCloudinary } from '../lib/cloudinary'
 import { suggestProductDetails } from '../lib/ai'
 import { logger } from '../lib/logger.js'
 import ProductCard from '../components/ProductCard.jsx'
-import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, Sparkles, AlertCircle, Store } from 'lucide-react'
+import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
 import PublishSuccess from '../components/PublishSuccess.jsx'
 
 const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/infini-logo_frripe.png?v=2'
@@ -183,19 +183,7 @@ function Upload() {
     const files = Array.from(e.target.files)
     if (files.length === 0) return
 
-    const maxItems = seller?.max_items || 999
-    const remaining = maxItems - totalItemCount
-
-    if (remaining <= 0) {
-      alert(`You've reached your limit of ${seller.max_items || 999} items. Upgrade to add more.`)
-      return
-    }
-
-    const filesToUpload = files.slice(0, remaining)
-    if (filesToUpload.length === 0) {
-      alert(`You can only upload ${remaining} more item(s).`)
-      return
-    }
+    const filesToUpload = files
 
     const newItems = filesToUpload.map((file) => ({
       id: crypto.randomUUID(),
@@ -261,7 +249,7 @@ function Upload() {
         )
       }
     }
-  }, [sellerUuid, sellerPhone, totalItemCount, seller])
+  }, [sellerUuid, sellerPhone])
 
   const toggleSelect = useCallback((id) => {
     setSelectedIds((prev) => {
@@ -467,9 +455,7 @@ function Upload() {
       />
     )
   }
-  const maxItems = seller?.max_items || 999
-  const remainingSlots = maxItems - totalItemCount
-  const isAtLimit = remainingSlots <= 0
+  // v1: No item limits. max_items reserved for v2 monetization.
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] pb-28">
@@ -485,7 +471,7 @@ function Upload() {
             </div>
           </div>
           <div className="text-right flex flex-col justify-center">
-            <p className="text-xs text-charcoal-400 font-medium">{totalItemCount} of {maxItems}</p>
+            <p className="text-xs text-charcoal-400 font-medium">{totalItemCount} items</p>
             <button
               type="button"
               onClick={scrollToShopDetails}
@@ -498,20 +484,6 @@ function Upload() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {!seller?.is_pro && remainingSlots <= 3 && (
-          <div className="bg-copper-50 border border-copper-200 rounded-xl p-4 flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-copper-600 shrink-0 mt-0.5" strokeWidth={2} />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-copper-800">
-                {isAtLimit ? 'Item limit reached' : `${remainingSlots} slots left`}
-              </p>
-              <p className="text-xs text-copper-600 mt-0.5">
-                Upgrade to unlimited items. Contact us on WhatsApp.
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Seller Info Card */}
         <div id="shop-details" className="bg-white rounded-xl border border-stone-200 p-4 space-y-4 transition-all duration-300 scroll-mt-20">
           <div className="flex items-center gap-2 mb-1">
