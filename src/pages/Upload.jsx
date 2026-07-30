@@ -48,10 +48,9 @@ function Upload() {
   const [published, setPublished] = useState(false)
   const [sellerPhone, setSellerPhone] = useState('')
   const [shopName, setShopName] = useState('')
-  const [phoneSaved, setPhoneSaved] = useState(false)
   const [seller, setSeller] = useState(null)
   const [loadingSeller, setLoadingSeller] = useState(true)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [savedFeedback, setSavedFeedback] = useState(null)
   const fileInputCounter = useRef(0)
 
   const [selectedIds, setSelectedIds] = useState(new Set())
@@ -356,7 +355,7 @@ function Upload() {
     return country.dial + cleaned
   }, [selectedCountry, localPhone])
 
-  const validateLocalPhone = () => {
+  const validateLocalPhone = useCallback(() => {
     const country = COUNTRIES.find(c => c.code === selectedCountry)
     if (!country) return false
     let cleaned = localPhone.replace(/\D/g, '')
@@ -364,27 +363,25 @@ function Upload() {
       cleaned = cleaned.slice(1)
     }
     return cleaned.length === country.digits
-  }
+  }, [selectedCountry, localPhone])
 
-  const canSave = validateLocalPhone()
 
-  const saveSellerInfo = useCallback(async () => {
-    if (!canSave) return
-    
-    await supabase.from('sellers').update({ 
-      phone: getFullPhone(),
-      shop_name: shopName.trim()
-    }).eq('uuid', sellerUuid)
-    
-    await supabase
-      .from('catalog_items')
-      .update({ seller_phone: getFullPhone() })
-      .eq('seller_uuid', sellerUuid)
+  const autoSaveShopName = useCallback(async () => {
+    const trimmed = shopName.trim()
+    await supabase.from('sellers').update({ shop_name: trimmed }).eq('uuid', sellerUuid)
+    setSavedFeedback('shopName')
+    setTimeout(() => setSavedFeedback(null), 2000)
+  }, [sellerUuid, shopName])
 
-    setSellerPhone(getFullPhone())
-    setPhoneSaved(true)
-    setHasUnsavedChanges(false)
-  }, [sellerUuid, getFullPhone, shopName, canSave])
+  const autoSavePhone = useCallback(async () => {
+    if (!validateLocalPhone()) return
+    const fullPhone = getFullPhone()
+    await supabase.from('sellers').update({ phone: fullPhone }).eq('uuid', sellerUuid)
+    await supabase.from('catalog_items').update({ seller_phone: fullPhone }).eq('seller_uuid', sellerUuid)
+    setSellerPhone(fullPhone)
+    setSavedFeedback('phone')
+    setTimeout(() => setSavedFeedback(null), 2000)
+  }, [sellerUuid, getFullPhone, validateLocalPhone])
 
   const handlePublish = async () => {
     const fullPhone = getFullPhone()
@@ -484,9 +481,16 @@ function Upload() {
               type="text"
               placeholder="e.g. Africa Trading"
               value={shopName}
-              onChange={(e) => { setShopName(e.target.value); setHasUnsavedChanges(true); setPhoneSaved(false); }}
+              onChange={(e) => setShopName(e.target.value)}
+              onBlur={autoSaveShopName}
               className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
             />
+            {savedFeedback === 'shopName' && (
+              <p className="text-sage-700 text-xs mt-1.5 flex items-center gap-1">
+                <Check className="w-3 h-3" strokeWidth={3} />
+                Saved
+              </p>
+            )}
           </div>
 
           <div>
@@ -494,7 +498,7 @@ function Upload() {
             <div className="flex gap-2 overflow-hidden">
               <select
                 value={selectedCountry}
-                onChange={(e) => { setSelectedCountry(e.target.value); setLocalPhone(''); setHasUnsavedChanges(true); setPhoneSaved(false); }}
+                onChange={(e) => { setSelectedCountry(e.target.value); setLocalPhone(''); }}
                 className="border border-stone-200 rounded-lg px-2 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent shrink-0 max-w-[40%]"
               >
                 {COUNTRIES.map(c => (
@@ -505,7 +509,8 @@ function Upload() {
                 type="tel"
                 placeholder={COUNTRIES.find(c => c.code === selectedCountry)?.placeholder || ''}
                 value={localPhone}
-                onChange={(e) => { setLocalPhone(e.target.value); setPhoneTouched(true); setHasUnsavedChanges(true); setPhoneSaved(false); }}
+                onChange={(e) => { setLocalPhone(e.target.value); setPhoneTouched(true); }}
+                onBlur={autoSavePhone}
                 className={`flex-1 border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent ${
                   phoneTouched && !validateLocalPhone() ? 'border-red-300 bg-red-50' : 'border-stone-200'
                 }`}
@@ -520,20 +525,12 @@ function Upload() {
             <p className="text-xs text-charcoal-400 mt-1.5">Customers will message this number on WhatsApp.</p>
           </div>
 
-          <button
-            onClick={saveSellerInfo}
-            disabled={!canSave}
-            className="w-full bg-charcoal-950 text-white py-3 rounded-xl font-medium hover:bg-charcoal-800 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
-          >
-            {phoneSaved && !hasUnsavedChanges ? (
-              <>
-                <Check className="w-4 h-4" strokeWidth={3} />
-                Shop Details Saved
-              </>
-            ) : (
-              'Save Shop Details'
-            )}
-          </button>
+          {savedFeedback === 'phone' && (
+            <p className="text-sage-700 text-xs mt-1.5 flex items-center gap-1">
+              <Check className="w-3 h-3" strokeWidth={3} />
+              Saved
+            </p>
+          )}
         </div>
 
         <label className={`block w-full border-2 border-dashed rounded-xl p-8 text-center transition ${
