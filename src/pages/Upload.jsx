@@ -70,6 +70,7 @@ function Upload() {
         
         if (data) {
           setSeller(data)
+          localStorage.setItem('microcatalog_seller_uuid', sellerUuid)
           setShopName(data.shop_name || '')
           const fullPhone = data.phone || ''
           setSellerPhone(fullPhone)
@@ -98,6 +99,7 @@ function Upload() {
             alert('Unable to connect to the database. Please check your internet connection and try again. If this persists, contact support.')
           } else {
             setSeller(newSeller)
+            localStorage.setItem('microcatalog_seller_uuid', sellerUuid)
           }
         }
       } catch (err) {
@@ -140,6 +142,7 @@ function Upload() {
           .from('catalog_items')
           .select('*', { count: 'exact', head: true })
           .eq('seller_uuid', sellerUuid)
+          .eq('published', false)
 
         setTotalItemCount(count || 0)
       } catch (err) {

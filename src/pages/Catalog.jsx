@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger.js'
 import { isInquirable, getStockLabel } from '../lib/stockStatus.js'
 import StockStatusBadge from '../components/StockStatusBadge.jsx'
-import { Loader2, MessageCircle, Tag, ChevronRight, Package, Store } from 'lucide-react'
+import { Loader2, MessageCircle, Tag, ChevronRight, Package, Store, Edit3 } from 'lucide-react'
 
 function Catalog() {
   const { sellerUuid } = useParams()
@@ -13,6 +13,7 @@ function Catalog() {
   const [shopName, setShopName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isOwner, setIsOwner] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -47,6 +48,10 @@ function Catalog() {
       }
     }
     fetchData()
+
+    // Check if viewer is the seller (owner)
+    const storedUuid = localStorage.getItem('microcatalog_seller_uuid')
+    setIsOwner(storedUuid === sellerUuid)
   }, [sellerUuid])
 
   const openWhatsApp = (item) => {
@@ -122,6 +127,15 @@ function Catalog() {
               <p className="text-xs text-charcoal-400">{items.length} item{items.length !== 1 ? 's' : ''} available</p>
             </div>
           </div>
+          {isOwner && (
+            <a
+              href={`/#/u/${sellerUuid}`}
+              className="flex items-center gap-1.5 text-xs text-copper-600 font-medium hover:text-copper-700 transition"
+            >
+              <Edit3 className="w-3.5 h-3.5" strokeWidth={2} />
+              Edit catalog
+            </a>
+          )}
         </div>
       </div>
 
