@@ -384,6 +384,15 @@ function Upload() {
     setTimeout(() => setSavedFeedback(null), 2000)
   }, [sellerUuid, getFullPhone, validateLocalPhone])
 
+  const scrollToShopDetails = () => {
+    const el = document.getElementById('shop-details')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      el.classList.add('ring-2', 'ring-copper-400', 'ring-offset-2')
+      setTimeout(() => el.classList.remove('ring-2', 'ring-copper-400', 'ring-offset-2'), 1500)
+    }
+  }
+
   const handlePublish = async () => {
     const fullPhone = getFullPhone()
     if (!validatePhone(fullPhone)) {
@@ -450,6 +459,13 @@ function Upload() {
             {!seller?.is_pro && (
               <p className="text-xs text-copper-600 font-medium">{remainingSlots} remaining</p>
             )}
+            <button
+              type="button"
+              onClick={scrollToShopDetails}
+              className="text-xs text-copper-600 font-medium hover:text-copper-700 transition mt-0.5 flex items-center justify-end gap-0.5"
+            >
+              Edit details <span className="text-[10px]">→</span>
+            </button>
           </div>
         </div>
       </div>
@@ -470,7 +486,7 @@ function Upload() {
         )}
 
         {/* Seller Info Card */}
-        <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-4">
+        <div id="shop-details" className="bg-white rounded-xl border border-stone-200 p-4 space-y-4 transition-all duration-300">
           <div className="flex items-center gap-2 mb-1">
             <Store className="w-4 h-4 text-copper-500" strokeWidth={2} />
             <h2 className="text-sm font-semibold text-charcoal-700">Your Shop Details</h2>
