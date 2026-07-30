@@ -40,7 +40,7 @@ function detectCountry() {
 
 
 function Upload() {
-  const { sellerUuid } = useParams()
+  const { manageToken } = useParams()
   
   const [items, setItems] = useState([])
   const [totalItemCount, setTotalItemCount] = useState(0)
@@ -49,6 +49,7 @@ function Upload() {
   const [sellerPhone, setSellerPhone] = useState('')
   const [shopName, setShopName] = useState('')
   const [seller, setSeller] = useState(null)
+  const sellerUuid = seller?.uuid
   const [loadingSeller, setLoadingSeller] = useState(true)
   const [savedFeedback, setSavedFeedback] = useState(null)
   const fileInputCounter = useRef(0)
@@ -66,11 +67,12 @@ function Upload() {
   useEffect(() => {
     async function loadSeller() {
       try {
-        const { data } = await supabase.from('sellers').select('*').eq('uuid', sellerUuid).single()
+        const { data } = await supabase.from('sellers').select('*').eq('manage_token', manageToken).single()
         
         if (data) {
           setSeller(data)
-          localStorage.setItem('microcatalog_seller_uuid', sellerUuid)
+          localStorage.setItem('microcatalog_manage_token', manageToken)
+          localStorage.setItem('microcatalog_seller_uuid', data.uuid)
           setShopName(data.shop_name || '')
           const fullPhone = data.phone || ''
           setSellerPhone(fullPhone)
@@ -86,8 +88,10 @@ function Upload() {
             }
           }
         } else {
+          const newUuid = crypto.randomUUID()
           const { data: newSeller, error: insertError } = await supabase.from('sellers').insert({
-            uuid: sellerUuid,
+            uuid: newUuid,
+            manage_token: manageToken,
             phone: '',
             shop_name: '',
             is_pro: false,
@@ -99,7 +103,8 @@ function Upload() {
             alert('Unable to connect to the database. Please check your internet connection and try again. If this persists, contact support.')
           } else {
             setSeller(newSeller)
-            localStorage.setItem('microcatalog_seller_uuid', sellerUuid)
+            localStorage.setItem('microcatalog_manage_token', manageToken)
+          localStorage.setItem('microcatalog_seller_uuid', newUuid)
           }
         }
       } catch (err) {
@@ -109,10 +114,11 @@ function Upload() {
       }
     }
     loadSeller()
-  }, [sellerUuid])
+  }, [manageToken])
 
   useEffect(() => {
     async function loadData() {
+      if (!sellerUuid) return
       try {
         const { data: itemsData } = await supabase
           .from('catalog_items')

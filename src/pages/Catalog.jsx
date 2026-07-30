@@ -129,7 +129,7 @@ function Catalog() {
           </div>
           {isOwner && (
             <a
-              href={`/#/u/${sellerUuid}`}
+              href={`/#/u/${storedToken}`}
               className="flex items-center gap-1.5 text-xs text-copper-600 font-medium hover:text-copper-700 transition"
             >
               <Edit3 className="w-3.5 h-3.5" strokeWidth={2} />

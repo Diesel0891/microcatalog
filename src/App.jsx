@@ -8,7 +8,7 @@ function App() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/u/:sellerUuid" element={<Upload />} />
+        <Route path="/u/:manageToken" element={<Upload />} />
         <Route path="/c/:sellerUuid" element={<Catalog />} />
       </Routes>
     </HashRouter>
