@@ -144,12 +144,19 @@ export default function ProductCard({
             />
           </div>
         )}
-        <button
-          onClick={onRemove}
-          className="absolute top-2 right-2 bg-white/90 text-charcoal-700 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition shadow-sm"
-        >
-          <Trash2 className="w-4 h-4" strokeWidth={2} />
-        </button>
+        <div className="absolute top-2 right-2 flex items-center gap-1.5">
+          {item.published && (
+            <span className="bg-sage-100 text-sage-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-sage-300 shadow-sm">
+              LIVE
+            </span>
+          )}
+          <button
+            onClick={onRemove}
+            className="bg-white/90 text-charcoal-700 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition shadow-sm"
+          >
+            <Trash2 className="w-4 h-4" strokeWidth={2} />
+          </button>
+        </div>
 
         {/* Stock Status Badge - top-left overlay, tappable */}
         <button

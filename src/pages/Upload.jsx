@@ -118,7 +118,6 @@ function Upload() {
           .from('catalog_items')
           .select('*')
           .eq('seller_uuid', sellerUuid)
-          .eq('published', false)
           .order('created_at', { ascending: false })
 
         if (itemsData) {
@@ -142,7 +141,6 @@ function Upload() {
           .from('catalog_items')
           .select('*', { count: 'exact', head: true })
           .eq('seller_uuid', sellerUuid)
-          .eq('published', false)
 
         setTotalItemCount(count || 0)
       } catch (err) {
