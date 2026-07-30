@@ -129,6 +129,7 @@ function Upload() {
             description: item.description || '',
             sizeSpecs: item.size_specs || '',
             extraNotes: item.extra_notes || '',
+            stock_status: item.stock_status || 'available',
             published: item.published,
             uploading: false,
             saved: true,
