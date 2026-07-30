@@ -456,16 +456,18 @@ function Upload() {
           </div>
           <div className="text-right">
             <p className="text-xs text-charcoal-400">{totalItemCount} / {maxItems} items</p>
-            {!seller?.is_pro && (
-              <p className="text-xs text-copper-600 font-medium">{remainingSlots} remaining</p>
-            )}
-            <button
-              type="button"
-              onClick={scrollToShopDetails}
-              className="text-xs text-copper-600 font-medium hover:text-copper-700 transition mt-0.5 flex items-center justify-end gap-0.5"
-            >
-              Edit details <span className="text-[10px]">→</span>
-            </button>
+            <div className="flex items-center justify-end gap-2 mt-0.5">
+              {!seller?.is_pro && (
+                <p className="text-xs text-copper-600 font-medium">{remainingSlots} remaining</p>
+              )}
+              <button
+                type="button"
+                onClick={scrollToShopDetails}
+                className="text-xs text-copper-600 font-medium hover:text-copper-700 transition flex items-center gap-0.5"
+              >
+                Edit details <span className="text-[10px]">→</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -486,7 +488,7 @@ function Upload() {
         )}
 
         {/* Seller Info Card */}
-        <div id="shop-details" className="bg-white rounded-xl border border-stone-200 p-4 space-y-4 transition-all duration-300">
+        <div id="shop-details" className="bg-white rounded-xl border border-stone-200 p-4 space-y-4 transition-all duration-300 scroll-mt-20">
           <div className="flex items-center gap-2 mb-1">
             <Store className="w-4 h-4 text-copper-500" strokeWidth={2} />
             <h2 className="text-sm font-semibold text-charcoal-700">Your Shop Details</h2>
