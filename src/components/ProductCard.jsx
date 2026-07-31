@@ -15,6 +15,7 @@ import {
   Sparkles,
   Plus,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react'
 import StockStatusBadge from './StockStatusBadge.jsx'
 import StockStatusSheet from './StockStatusSheet.jsx'
@@ -47,6 +48,7 @@ export default function ProductCard({
   onSuggest,
   isSuggesting,
   showAiError,
+  onRetry,
 }) {
   const { updateStatus, updating: statusUpdating } = useStockStatus()
   const [localStatus, setLocalStatus] = useState(
@@ -247,10 +249,20 @@ export default function ProductCard({
         </details>
 
         {item.error && (
-          <p className="text-red-600 text-sm flex items-center gap-1.5">
-            <AlertCircle className="w-3.5 h-3.5" strokeWidth={2} />
-            {item.error}
-          </p>
+          <div className="space-y-2">
+            <p className="text-red-600 text-sm flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5" strokeWidth={2} />
+              {item.error}
+            </p>
+            <button
+              onClick={onRetry}
+              disabled={item.uploading}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 disabled:opacity-50 transition"
+            >
+              <RefreshCw className="w-3.5 h-3.5" strokeWidth={2} />
+              Tap to retry
+            </button>
+          </div>
         )}
         {showSavedFlash && (
           <div className="absolute top-2 right-12 bg-sage-100 text-sage-800 text-xs font-semibold px-2.5 py-1 rounded-full border border-sage-300 shadow-sm animate-pulse">

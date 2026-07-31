@@ -356,6 +356,58 @@ function Upload() {
       })
     }
   }, [items])
+  const handleRetry = useCallback(async (id) => {
+    const item = items.find((i) => i.id === id)
+
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, uploading: true, error: null } : i))
+    )
+
+    try {
+      const fileToUpload = await compressImage(item.file)
+      const imageUrl = await uploadToCloudinary(fileToUpload)
+
+      const { data, error } = await supabase
+        .from('catalog_items')
+        .insert({
+          seller_uuid: sellerUuid,
+          image_url: imageUrl,
+          title: item.title || '',
+          price: item.price || '',
+          description: item.description || '',
+          size_specs: item.sizeSpecs || '',
+          extra_notes: item.extraNotes || '',
+          published: false,
+          seller_phone: sellerPhone || null,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === id
+            ? { ...i, dbId: data.id, imageUrl, uploading: false, saved: true, error: null }
+            : i
+        )
+      )
+      setTotalItemCount(prev => prev + 1)
+    } catch (err) {
+      logger.error('Upload', 'Retry failed', { message: err.message })
+      const friendlyError = err.message?.includes('401') || err.message?.includes('Unauthorized')
+        ? 'Retry failed: Please check your Cloudinary configuration.'
+        : err.message?.includes('network') || err.message?.includes('fetch')
+        ? 'Retry failed: Please check your internet connection.'
+        : 'Retry failed: ' + err.message
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === id ? { ...i, uploading: false, error: friendlyError } : i
+        )
+      )
+    }
+  }, [items, sellerUuid, sellerPhone])
+
 
   const validatePhone = (phone) => {
     const cleaned = phone.replace(/\s/g, '')
@@ -614,6 +666,7 @@ function Upload() {
               onToggleSelect={() => toggleSelect(item.id)}
               onRemove={() => removeItem(item.id)}
               onUpdateField={(field, value) => updateField(item.id, field, value)}
+              onRetry={() => handleRetry(item.id)}
               onSuggest={() => handleSuggest(item.id)}
               isSuggesting={suggestingIds.has(item.id)}
               showAiError={aiErrorId === item.id}
