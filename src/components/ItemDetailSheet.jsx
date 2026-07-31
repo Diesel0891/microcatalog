@@ -1,5 +1,4 @@
 import { X, MessageCircle, Tag } from 'lucide-react'
-import { isInquirable } from '../lib/stockStatus.js'
 import StockStatusBadge from './StockStatusBadge.jsx'
 
 /**
@@ -25,7 +24,6 @@ import StockStatusBadge from './StockStatusBadge.jsx'
 export default function ItemDetailSheet({ item, onWhatsApp, onClose }) {
   if (!item) return null
 
-  const inquirable = isInquirable(item.stock_status)
 
   return (
     <>
@@ -94,15 +92,9 @@ export default function ItemDetailSheet({ item, onWhatsApp, onClose }) {
           <div className="pt-4">
             <button
               onClick={() => onWhatsApp(item)}
-              disabled={!inquirable}
-              className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-sm transition ${
-                inquirable
-                  ? 'bg-charcoal-950 text-white hover:bg-charcoal-800 active:scale-[0.98]'
-                  : 'bg-charcoal-200 text-charcoal-400 cursor-not-allowed'
-              }`}
-            >
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-sm transition bg-charcoal-950 text-white hover:bg-charcoal-800 active:scale-[0.98]">
               <MessageCircle className="w-5 h-5" strokeWidth={2} />
-              {inquirable ? 'Message on WhatsApp' : 'Item Unavailable'}
+              Message on WhatsApp
             </button>
           </div>
         </div>

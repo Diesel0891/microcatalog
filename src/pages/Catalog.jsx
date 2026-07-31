@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger.js'
-import { isInquirable, getStockLabel } from '../lib/stockStatus.js'
 import StockStatusBadge from '../components/StockStatusBadge.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
@@ -62,23 +61,34 @@ function Catalog() {
     setIsOwner(storedUuid === sellerUuid)
   }, [sellerUuid])
 
-  const openWhatsApp = (item) => {
-    const message = [
-      `Hi, I'm interested in *${item.title}* — ${item.price}`,
-      `Status: ${getStockLabel(item.stock_status)}`,
-      ``,
-      `📷 Product photo:`,
-      `${item.image_url}`
-    ].join('\n')
+    const openWhatsApp = (item) => {
+      let message
+      switch (item.stock_status) {
+        case 'reserved':
+          message = `Hi, I'm interested in *${item.title}* — ${item.price}. Is there any chance it becomes available?`
+          break
+        case 'sold':
+          message = `Hi, do you have anything similar to *${item.title}*?`
+          break
+        default:
+          message = `Hi, I'm interested in *${item.title}* — ${item.price}.`
+      }
 
-    const encodedMessage = encodeURIComponent(message)
-    const cleanPhone = sellerPhone ? sellerPhone.replace(/\D/g, '') : ''
-    const whatsappUrl = cleanPhone
-      ? `https://wa.me/${cleanPhone}?text=${encodedMessage}`
-      : `https://wa.me/?text=${encodedMessage}`
+      const fullMessage = [
+        message,
+        ``,
+        `📷 Product photo:`,
+        `${item.image_url}`
+      ].join('\n')
 
-    window.open(whatsappUrl, '_blank')
-  }
+      const encodedMessage = encodeURIComponent(fullMessage)
+      const cleanPhone = sellerPhone ? sellerPhone.replace(/\D/g, '') : ''
+      const whatsappUrl = cleanPhone
+        ? `https://wa.me/${cleanPhone}?text=${encodedMessage}`
+        : `https://wa.me/?text=${encodedMessage}`
+
+      window.open(whatsappUrl, '_blank')
+    }
 
   if (loading) {
     return (
@@ -137,7 +147,7 @@ function Catalog() {
         <div className="bg-copper-50 border border-copper-200 rounded-lg px-4 py-3 flex items-center gap-2">
           <MessageCircle className="w-4 h-4 text-copper-600 shrink-0" strokeWidth={2} />
           <p className="text-copper-800 text-xs font-medium">
-            Tap any item to inquire on WhatsApp
+            Tap any item to view details and message on WhatsApp
           </p>
         </div>
       </div>
@@ -145,20 +155,13 @@ function Catalog() {
       {/* Items Grid */}
       <div className="max-w-lg mx-auto px-4 space-y-4 mt-2">
         {items.map((item) => {
-          const inquirable = isInquirable(item.stock_status)
           const isSold = item.stock_status === 'sold'
 
           return (
             <button
               key={item.id}
-              onClick={() => inquirable && setSelectedItem(item)}
-              disabled={!inquirable}
-              className={`w-full bg-white rounded-2xl border overflow-hidden text-left transition-all duration-200 ${
-                inquirable
-                  ? 'border-stone-200 hover:shadow-lg hover:border-copper-300 active:scale-[0.98]'
-                  : 'border-stone-200 opacity-60 cursor-not-allowed'
-              }`}
-            >
+              onClick={() => setSelectedItem(item)}
+                className="w-full bg-white rounded-2xl border border-stone-200 overflow-hidden text-left transition-all duration-200 hover:shadow-lg hover:border-copper-300 active:scale-[0.98]">
               <div className="relative">
                 <img
                   src={item.image_url}
@@ -166,8 +169,8 @@ function Catalog() {
                   className={`w-full h-56 object-cover ${isSold ? 'grayscale' : ''}`}
                 />
                 {isSold && (
-                  <div className="absolute inset-0 bg-charcoal-950/15 flex items-center justify-center">
-                    <span className="text-white font-bold text-2xl tracking-widest drop-shadow-lg">SOLD</span>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-white/80 font-bold text-2xl tracking-widest drop-shadow-lg">SOLD</span>
                   </div>
                 )}
                 <div className="absolute top-2 left-2">
@@ -201,12 +204,8 @@ function Catalog() {
 
                 {/* Inspect indicator */}
                 <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                  <span className={`text-xs font-medium ${inquirable ? 'text-charcoal-400' : 'text-charcoal-300'}`}>
-                    {inquirable ? 'View details' : 'Unavailable'}
-                  </span>
-                  {inquirable && (
-                    <ChevronRight className="w-4 h-4 text-copper-500" strokeWidth={2} />
-                  )}
+                  <span className="text-xs font-medium text-charcoal-400">View details</span>
+                  <ChevronRight className="w-4 h-4 text-copper-500" strokeWidth={2} />
                 </div>
               </div>
             </button>
