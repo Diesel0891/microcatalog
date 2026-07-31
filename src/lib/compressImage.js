@@ -58,7 +58,7 @@ export async function compressImage(file) {
             resolve(file)
             return
           }
-          const compressedFile = new File([blob], file.name, {
+        const compressedFile = new File([blob], file.name, {
             type: 'image/jpeg',
             lastModified: Date.now(),
           })
