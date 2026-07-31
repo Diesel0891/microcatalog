@@ -95,12 +95,12 @@ function Catalog() {
     return <EmptyState title="Something went wrong" description={error} />
   }
 
-  if (items.length === 0) {
-    return <EmptyState title="Catalog is empty" description="No items have been published yet." />
-  }
-
   if (sellerNotFound) {
     return <EmptyState title="Catalog not found" description="This catalog link doesn't exist or has been removed." />
+  }
+
+  if (items.length === 0) {
+    return <EmptyState title="Catalog is empty" description="No items have been published yet." />
   }
 
   const displayName = shopName.trim() || 'Catalog' 
