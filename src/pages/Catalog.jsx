@@ -221,14 +221,13 @@ function Catalog() {
       <div className="max-w-lg mx-auto px-4 mt-8 text-center">
         <p className="text-charcoal-300 text-xs">Powered by Infini</p>
       </div>
+      <ItemDetailSheet
+        item={selectedItem}
+        onWhatsApp={openWhatsApp}
+        onClose={() => setSelectedItem(null)}
+      />
     </div>
   )
 }
-      <ItemDetailSheet
-       item={selectedItem}
-       sellerPhone={sellerPhone}
-       onWhatsApp={openWhatsApp}
-       onClose={() => setSelectedItem(null)}
-     />
 
 export default Catalog
