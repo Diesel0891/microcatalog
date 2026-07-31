@@ -5,6 +5,7 @@ import { logger } from '../lib/logger.js'
 import { isInquirable, getStockLabel } from '../lib/stockStatus.js'
 import StockStatusBadge from '../components/StockStatusBadge.jsx'
 import EmptyState from '../components/EmptyState.jsx'
+import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
 import { Loader2, MessageCircle, Tag, ChevronRight, Store, Edit3 } from 'lucide-react'
 
 function Catalog() {
@@ -15,6 +16,7 @@ function Catalog() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isOwner, setIsOwner] = useState(false)
+  const [selectedItem, setSelectedItem] = useState(null)
   const [sellerNotFound, setSellerNotFound] = useState(false)
 
   useEffect(() => {
@@ -149,7 +151,7 @@ function Catalog() {
           return (
             <button
               key={item.id}
-              onClick={() => inquirable && openWhatsApp(item)}
+              onClick={() => inquirable && setSelectedItem(item)}
               disabled={!inquirable}
               className={`w-full bg-white rounded-2xl border overflow-hidden text-left transition-all duration-200 ${
                 inquirable
@@ -222,5 +224,11 @@ function Catalog() {
     </div>
   )
 }
+      <ItemDetailSheet
+       item={selectedItem}
+       sellerPhone={sellerPhone}
+       onWhatsApp={openWhatsApp}
+       onClose={() => setSelectedItem(null)}
+     />
 
 export default Catalog
