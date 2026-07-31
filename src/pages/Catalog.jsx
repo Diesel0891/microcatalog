@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger.js'
 import { isInquirable, getStockLabel } from '../lib/stockStatus.js'
 import StockStatusBadge from '../components/StockStatusBadge.jsx'
-import { Loader2, MessageCircle, Tag, ChevronRight, Package, Store, Edit3 } from 'lucide-react'
+import EmptyState from '../components/EmptyState.jsx'
+import { Loader2, MessageCircle, Tag, ChevronRight, Store, Edit3 } from 'lucide-react'
 
 function Catalog() {
   const { sellerUuid } = useParams()
@@ -14,6 +15,7 @@ function Catalog() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isOwner, setIsOwner] = useState(false)
+  const [sellerNotFound, setSellerNotFound] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -28,6 +30,10 @@ function Catalog() {
         if (sellerData) {
           setSellerPhone(sellerData.phone || '')
           setShopName(sellerData.shop_name || '')
+        } else {
+          setSellerNotFound(true)
+          setLoading(false)
+          return
         }
 
         // Fetch catalog items
@@ -84,34 +90,18 @@ function Catalog() {
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl border border-stone-200 p-8 max-w-sm w-full text-center shadow-sm">
-          <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Package className="w-6 h-6 text-red-500" strokeWidth={1.5} />
-          </div>
-          <h2 className="text-charcoal-900 font-semibold mb-2">Something went wrong</h2>
-          <p className="text-charcoal-500 text-sm">{error}</p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="Something went wrong" description={error} />
   }
 
   if (items.length === 0) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-6">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-charcoal-100 rounded-full flex items-center justify-center mx-auto mb-5">
-            <Package className="w-8 h-8 text-charcoal-400" strokeWidth={1.5} />
-          </div>
-          <h2 className="text-xl font-bold text-charcoal-950 mb-2">Catalog is empty</h2>
-          <p className="text-charcoal-400 text-sm">No items have been published yet.</p>
-        </div>
-      </div>
-    )
+    return <EmptyState title="Catalog is empty" description="No items have been published yet." />
   }
 
-  const displayName = shopName.trim() || 'Catalog'
+  if (sellerNotFound) {
+    return <EmptyState title="Catalog not found" description="This catalog link doesn't exist or has been removed." />
+  }
+
+  const displayName = shopName.trim() || 'Catalog' 
   const manageToken = localStorage.getItem('microcatalog_manage_token')
 
   return (
