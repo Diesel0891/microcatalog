@@ -199,17 +199,14 @@ function Catalog() {
                   <p className="text-charcoal-400 text-xs mt-3 italic leading-relaxed">{item.extra_notes}</p>
                 )}
 
-                {/* WhatsApp CTA */}
-                <div className="mt-4 pt-4 border-t border-stone-100">
-                  <div className={`flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-semibold text-sm transition ${
-                    inquirable
-                      ? 'bg-charcoal-950 text-white hover:bg-charcoal-800'
-                      : 'bg-charcoal-200 text-charcoal-400 cursor-not-allowed'
-                  }`}>
-                    <MessageCircle className="w-5 h-5" strokeWidth={2} />
-                    <span>{inquirable ? 'Inquire on WhatsApp' : 'Item Unavailable'}</span>
-                    {inquirable && <ChevronRight className="w-4 h-4 ml-1 opacity-60" strokeWidth={2} />}
-                  </div>
+                {/* Inspect indicator */}
+                <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
+                  <span className={`text-xs font-medium ${inquirable ? 'text-charcoal-400' : 'text-charcoal-300'}`}>
+                    {inquirable ? 'View details' : 'Unavailable'}
+                  </span>
+                  {inquirable && (
+                    <ChevronRight className="w-4 h-4 text-copper-500" strokeWidth={2} />
+                  )}
                 </div>
               </div>
             </button>
