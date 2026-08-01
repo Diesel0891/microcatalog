@@ -5,7 +5,7 @@ import { logger } from '../lib/logger.js'
 import StockStatusBadge from '../components/StockStatusBadge.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
-import { Loader2, MessageCircle, Tag, ChevronRight, Store, Edit3 } from 'lucide-react'
+import { Loader2, MessageCircle, Store, Edit3 } from 'lucide-react'
 
 function Catalog() {
   const { sellerUuid } = useParams()
@@ -176,38 +176,13 @@ function Catalog() {
                 <div className="absolute top-2 left-2">
                   <StockStatusBadge status={item.stock_status} size="xs" />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 pt-12">
-                  <div className="flex items-end justify-between gap-2">
-                    <h3 className="font-bold text-white text-lg leading-tight flex-1 drop-shadow-sm">{item.title}</h3>
-                    <span className="text-white font-bold text-lg whitespace-nowrap drop-shadow-sm">{item.price}</span>
+              </div>
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-bold text-charcoal-950 text-lg leading-tight flex-1">{item.title}</h3>
+                    <span className="text-lg font-bold text-copper-600 whitespace-nowrap">{item.price}</span>
                   </div>
                 </div>
-              </div>
-
-              <div className="p-4">
-                {item.description && (
-                  <p className="text-charcoal-500 text-sm leading-relaxed">{item.description}</p>
-                )}
-
-                {item.size_specs && (
-                  <div className="mt-3">
-                    <span className="inline-flex items-center gap-1.5 bg-sage-50 text-sage-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-sage-200">
-                      <Tag className="w-3 h-3" strokeWidth={2.5} />
-                      {item.size_specs}
-                    </span>
-                  </div>
-                )}
-
-                {item.extra_notes && (
-                  <p className="text-charcoal-400 text-xs mt-3 italic leading-relaxed">{item.extra_notes}</p>
-                )}
-
-                {/* Inspect indicator */}
-                <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                  <span className="text-xs font-medium text-charcoal-400">View details</span>
-                  <ChevronRight className="w-4 h-4 text-copper-500" strokeWidth={2} />
-                </div>
-              </div>
             </button>
           )
         })}
