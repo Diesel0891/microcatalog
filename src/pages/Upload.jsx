@@ -125,7 +125,7 @@ function Upload() {
           
           if (insertError) {
             logger.error('Upload', 'Failed to create seller', { message: insertError.message })
-            setInlineError('Unable to connect to the database. Please check your internet connection and try again.')
+            alert('Unable to connect to the database. Please check your internet connection and try again. If this persists, contact support.')
           } else {
             setSeller(newSeller)
             localStorage.setItem('microcatalog_manage_token', manageToken)
@@ -469,7 +469,7 @@ function Upload() {
   const handlePublish = async () => {
     const fullPhone = getFullPhone()
     if (!validatePhone(fullPhone)) {
-      setInlineError('Please save a valid WhatsApp number before publishing.')
+      alert('Please save a valid WhatsApp number before publishing.')
       setPhoneTouched(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
@@ -488,7 +488,7 @@ function Upload() {
       const friendlyPublishError = err.message?.includes('401') || err.message?.includes('Unauthorized')
         ? 'Publish failed: Database connection issue. Please check your Supabase configuration.'
         : 'Publish failed: ' + err.message
-      setInlineError(friendlyPublishError)
+      alert(friendlyPublishError)
     } finally {
       setPublishing(false)
     }
@@ -520,6 +520,31 @@ function Upload() {
             <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-sm">
               <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
             </div>
+            <div>
+              <h1 className="text-lg font-bold text-charcoal-950 leading-tight">Upload</h1>
+              <p className="text-xs text-charcoal-400">Manage your products</p>
+            </div>
+          </div>
+          <div className="text-right flex flex-col justify-center">
+            <p className="text-xs text-charcoal-400 font-medium">{totalItemCount} items</p>
+            <button
+              type="button"
+              onClick={scrollToShopDetails}
+              className="text-xs text-copper-600 font-medium hover:text-copper-700 transition mt-1 inline-flex items-center justify-end gap-0.5"
+            >
+              Edit details <span className="text-[10px]">→</span>
+            </button>
+            <a
+              href={`/#/c/${sellerUuid}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-copper-600 font-medium hover:text-copper-700 transition mt-1 inline-flex items-center justify-end gap-0.5"
+            >
+              Preview catalog <span className="text-[10px]">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
       {inlineError && (
         <div className="max-w-2xl mx-auto px-4 mt-4">
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
@@ -537,23 +562,6 @@ function Upload() {
         </div>
       )}
 
-            <div>
-              <h1 className="text-lg font-bold text-charcoal-950 leading-tight">Upload</h1>
-              <p className="text-xs text-charcoal-400">Manage your products</p>
-            </div>
-          </div>
-          <div className="text-right flex flex-col justify-center">
-            <p className="text-xs text-charcoal-400 font-medium">{totalItemCount} items</p>
-            <button
-              type="button"
-              onClick={scrollToShopDetails}
-              className="text-xs text-copper-600 font-medium hover:text-copper-700 transition mt-1 inline-flex items-center justify-end gap-0.5"
-            >
-              Edit details <span className="text-[10px]">→</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Seller Info Card */}
