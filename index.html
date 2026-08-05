@@ -9,19 +9,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <div id="error-box" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#b91c1c;color:#fff;padding:16px;font-family:monospace;font-size:13px;z-index:9999;white-space:pre-wrap;max-height:200px;overflow-y:auto;"></div>
-    <script>
-      const errorBox = document.getElementById('error-box');
-      window.onerror = function(msg, url, line, col, err) {
-        const text = 'ERROR: ' + msg + '\n at ' + url + ':' + line + '\n' + (err && err.stack ? err.stack : '');
-        errorBox.style.display = 'block';
-        errorBox.textContent = text;
-      };
-      window.onunhandledrejection = function(e) {
-        const text = 'UNHANDLED PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : e.reason) + '\n' + (e.reason && e.reason.stack ? e.reason.stack : '');
-        errorBox.style.display = 'block';
-        errorBox.textContent = text;
-      };
-    </script>
   </body>
 </html>
