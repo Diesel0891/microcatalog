@@ -151,6 +151,18 @@ function Catalog() {
           </p>
         </div>
       </div>
+        {/* Viral Banner */}
+        <div className="max-w-lg mx-auto px-4 py-2">
+          <a
+            href="/#/"
+            className="block bg-charcoal-950 text-white rounded-xl p-4 text-center hover:bg-charcoal-800 active:scale-[0.98] transition"
+          >
+            <p className="text-sm font-medium">
+              Love this catalog? <span className="text-copper-400">Create your own — it's free →</span>
+            </p>
+          </a>
+        </div>
+
 
       {/* Items Grid */}
       <div className="max-w-lg mx-auto px-4 space-y-4 mt-2">
