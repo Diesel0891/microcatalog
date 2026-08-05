@@ -65,6 +65,7 @@ function Upload() {
   const [localPhone, setLocalPhone] = useState('')
   const [phoneTouched, setPhoneTouched] = useState(false)
 
+  const [inlineError, setInlineError] = useState(null)
   useEffect(() => {
     async function loadSeller() {
       try {
@@ -124,7 +125,7 @@ function Upload() {
           
           if (insertError) {
             logger.error('Upload', 'Failed to create seller', { message: insertError.message })
-            alert('Unable to connect to the database. Please check your internet connection and try again. If this persists, contact support.')
+            setInlineError('Unable to connect to the database. Please check your internet connection and try again.')
           } else {
             setSeller(newSeller)
             localStorage.setItem('microcatalog_manage_token', manageToken)
@@ -468,7 +469,7 @@ function Upload() {
   const handlePublish = async () => {
     const fullPhone = getFullPhone()
     if (!validatePhone(fullPhone)) {
-      alert('Please save a valid WhatsApp number before publishing.')
+      setInlineError('Please save a valid WhatsApp number before publishing.')
       setPhoneTouched(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
@@ -487,7 +488,7 @@ function Upload() {
       const friendlyPublishError = err.message?.includes('401') || err.message?.includes('Unauthorized')
         ? 'Publish failed: Database connection issue. Please check your Supabase configuration.'
         : 'Publish failed: ' + err.message
-      alert(friendlyPublishError)
+      setInlineError(friendlyPublishError)
     } finally {
       setPublishing(false)
     }
@@ -519,6 +520,23 @@ function Upload() {
             <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-sm">
               <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
             </div>
+      {inlineError && (
+        <div className="max-w-2xl mx-auto px-4 mt-4">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" strokeWidth={2} />
+            <div className="flex-1">
+              <p className="text-red-700 text-sm font-medium">{inlineError}</p>
+              <button
+                onClick={() => setInlineError(null)}
+                className="text-red-600 text-xs font-medium mt-2 hover:text-red-800 transition"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
             <div>
               <h1 className="text-lg font-bold text-charcoal-950 leading-tight">Upload</h1>
               <p className="text-xs text-charcoal-400">Manage your products</p>
