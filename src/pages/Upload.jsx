@@ -125,7 +125,7 @@ function Upload() {
           
           if (insertError) {
             logger.error('Upload', 'Failed to create seller', { message: insertError.message })
-            alert('Unable to connect to the database. Please check your internet connection and try again. If this persists, contact support.')
+            setInlineError('Unable to connect to the database. Please check your internet connection and try again. If this persists, contact support.')
           } else {
             setSeller(newSeller)
             localStorage.setItem('microcatalog_manage_token', manageToken)
@@ -469,7 +469,7 @@ function Upload() {
   const handlePublish = async () => {
     const fullPhone = getFullPhone()
     if (!validatePhone(fullPhone)) {
-      alert('Please save a valid WhatsApp number before publishing.')
+      setInlineError('Please save a valid WhatsApp number before publishing.')
       setPhoneTouched(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
@@ -488,7 +488,7 @@ function Upload() {
       const friendlyPublishError = err.message?.includes('401') || err.message?.includes('Unauthorized')
         ? 'Publish failed: Database connection issue. Please check your Supabase configuration.'
         : 'Publish failed: ' + err.message
-      alert(friendlyPublishError)
+      setInlineError(friendlyPublishError)
     } finally {
       setPublishing(false)
     }
