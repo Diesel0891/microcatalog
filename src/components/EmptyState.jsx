@@ -1,4 +1,4 @@
-import { Package } from 'lucide-react'
+import { Package, HelpCircle } from 'lucide-react'
 
 /**
  * Reusable empty state component.
@@ -18,9 +18,10 @@ import { Package } from 'lucide-react'
  * @param {string} props.title - Headline text.
  * @param {string} props.description - Subtext explaining the state.
  * @param {{label: string, onClick: () => void}} [props.action] - Optional CTA button.
+ * @param {string} [props.support] - Error message for support WhatsApp link.
  * @returns {JSX.Element}
  */
-export default function EmptyState({ icon: Icon = Package, title, description, action }) {
+export default function EmptyState({ icon: Icon = Package, title, description, action, support }) {
   return (
     <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-6">
       <div className="text-center max-w-xs">
@@ -38,6 +39,17 @@ export default function EmptyState({ icon: Icon = Package, title, description, a
           </button>
         )}
       </div>
+          {support && (
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent('Hello Infini, I got this error: ' + support)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm text-copper-600 font-medium hover:text-copper-700 transition"
+            >
+              <HelpCircle className="w-4 h-4" strokeWidth={2} />
+              Contact Support
+            </a>
+          )}
     </div>
   )
 }
