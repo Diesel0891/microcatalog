@@ -102,7 +102,7 @@ function Catalog() {
   }
 
   if (error) {
-    return <EmptyState title="Something went wrong" description={error} />
+    return <EmptyState title="Something went wrong" description={error} support={error} />
   }
 
   if (sellerNotFound) {
