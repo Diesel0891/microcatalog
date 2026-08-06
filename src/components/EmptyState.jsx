@@ -38,18 +38,18 @@ export default function EmptyState({ icon: Icon = Package, title, description, a
             {action.label}
           </button>
         )}
+        {support && (
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent('Hello Infini, I got this error: ' + support)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm text-copper-600 font-medium hover:text-copper-700 transition"
+          >
+            <HelpCircle className="w-4 h-4" strokeWidth={2} />
+            Contact Support
+          </a>
+        )}
       </div>
-          {support && (
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent('Hello Infini, I got this error: ' + support)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 text-sm text-copper-600 font-medium hover:text-copper-700 transition"
-            >
-              <HelpCircle className="w-4 h-4" strokeWidth={2} />
-              Contact Support
-            </a>
-          )}
     </div>
   )
 }
