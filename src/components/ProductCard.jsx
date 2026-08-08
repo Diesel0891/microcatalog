@@ -286,11 +286,7 @@ export default function ProductCard({
             </button>
           </div>
         )}
-        {showSavedFlash && (
-          <div className="absolute top-2 right-12 bg-sage-100 text-sage-800 text-xs font-semibold px-2.5 py-1 rounded-full border border-sage-300 shadow-sm animate-pulse">
-            Saved
-          </div>
-        )}
+        
       </div>
     </div>
   )
