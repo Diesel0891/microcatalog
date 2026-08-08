@@ -296,16 +296,44 @@ function Upload() {
     setBulkSize('')
   }, [selectedIds, bulkPrice, bulkSize, items])
 
-  const updateField = useCallback(async (id, field, value) => {
+  const updateField = useCallback((id, field, value) => {
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     )
 
     const item = items.find((i) => i.id === id)
-    if (item?.dbId) {
-      const dbField = field === 'sizeSpecs' ? 'size_specs' : field === 'extraNotes' ? 'extra_notes' : field
-      await supabase.from('catalog_items').update({ [dbField]: value }).eq('id', item.dbId)
+    if (!item?.dbId) return
+
+    const dbField = field === 'sizeSpecs' ? 'size_specs' : field === 'extraNotes' ? 'extra_notes' : field
+
+    const key = `${id}:${field}`
+    if (saveTimersRef.current[key]) {
+      clearTimeout(saveTimersRef.current[key])
     }
+
+    setSaveStates((prev) => ({ ...prev, [id]: { ...prev[id], [field]: 'saving' } }))
+
+    saveTimersRef.current[key] = setTimeout(async () => {
+      try {
+        const { error } = await supabase.from('catalog_items').update({ [dbField]: value }).eq('id', item.dbId)
+        if (error) throw error
+        setSaveStates((prev) => ({ ...prev, [id]: { ...prev[id], [field]: 'saved' } }))
+        setTimeout(() => {
+          setSaveStates((prev) => {
+            const next = { ...prev }
+            if (next[id]) {
+              const { [field]: _, ...rest } = next[id]
+              next[id] = rest
+              if (Object.keys(next[id]).length === 0) delete next[id]
+            }
+            return next
+          })
+        }, 2000)
+      } catch (err) {
+        logger.error('Upload', 'Autosave failed', { itemId: id, field: dbField, error: err.message })
+        setSaveStates((prev) => ({ ...prev, [id]: { ...prev[id], [field]: 'error' } }))
+      }
+    }, 500)
   }, [items])
 
   const removeItem = useCallback(async (id) => {
