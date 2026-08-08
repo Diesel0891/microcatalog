@@ -9,7 +9,8 @@ import ProductCard from '../components/ProductCard.jsx'
 import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
 import PublishSuccess from '../components/PublishSuccess.jsx'
 
-const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/infini-logo_frripe.png?v=2'
+const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png'
+
 const COUNTRIES = [
   { code: 'MW', flag: '🇲🇼', name: 'Malawi', dial: '+265', placeholder: '0991 234 567', digits: 9, stripLeadingZero: true },
   { code: 'ZM', flag: '🇿🇲', name: 'Zambia', dial: '+260', placeholder: '0977 123 456', digits: 9, stripLeadingZero: true },
