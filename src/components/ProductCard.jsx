@@ -56,6 +56,44 @@ export default function ProductCard({
     item.stock_status || DEFAULT_STOCK_STATUS
   )
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [showSavedFlash, setShowSavedFlash] = useState(false)
+  const prevFieldsRef = useRef(null)
+  const prevSavedRef = useRef(item.saved)
+
+  useEffect(() => {
+    const currentFields = {
+      title: item.title,
+      price: item.price,
+      description: item.description,
+      sizeSpecs: item.sizeSpecs,
+      extraNotes: item.extraNotes,
+    }
+
+    // Skip initial mount
+    if (prevFieldsRef.current === null) {
+      prevFieldsRef.current = currentFields
+      prevSavedRef.current = item.saved
+      return
+    }
+
+    // Trigger 1: item just became saved (upload completed)
+    const justBecameSaved = item.saved && !prevSavedRef.current
+    // Trigger 2: any editable field changed while already saved
+    const hasFieldChanged = Object.keys(currentFields).some(
+      key => prevFieldsRef.current[key] !== currentFields[key]
+    )
+
+    if ((justBecameSaved || hasFieldChanged) && item.saved) {
+      setShowSavedFlash(true)
+      const timer = setTimeout(() => setShowSavedFlash(false), 2000)
+      prevFieldsRef.current = currentFields
+      prevSavedRef.current = item.saved
+      return () => clearTimeout(timer)
+    }
+
+    prevFieldsRef.current = currentFields
+    prevSavedRef.current = item.saved
+  }, [item.title, item.price, item.description, item.sizeSpecs, item.extraNotes, item.saved])
 
     const getSaveIndicator = (field) => {
     const status = saveStates[field]
@@ -248,4 +286,12 @@ export default function ProductCard({
             </button>
           </div>
         )}
-      
+        {showSavedFlash && (
+          <div className="absolute top-2 right-12 bg-sage-100 text-sage-800 text-xs font-semibold px-2.5 py-1 rounded-full border border-sage-300 shadow-sm animate-pulse">
+            Saved
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
