@@ -53,8 +53,9 @@ function Upload() {
   const sellerUuid = seller?.uuid
   const [loadingSeller, setLoadingSeller] = useState(true)
   const [savedFeedback, setSavedFeedback] = useState(null)
+  const [saveStates, setSaveStates] = useState({})
+  const saveTimersRef = useRef({})
   const fileInputCounter = useRef(0)
-
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkPrice, setBulkPrice] = useState('')
   const [bulkSize, setBulkSize] = useState('')
