@@ -47,7 +47,8 @@ export default function StockStatusSheet({ isOpen, currentStatus, onSelect, onCl
       />
 
       {/* Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 p-6 animate-slide-up shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/75 backdrop-blur-md border-t border-white/40 rounded-t-2xl z-50 p-6 animate-slide-up shadow-2xl">
+
         {/* Drag handle */}
         <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-6" />
 
