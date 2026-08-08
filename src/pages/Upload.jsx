@@ -550,11 +550,9 @@ function Upload() {
           <div className="flex items-center gap-3">
                      <div className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shadow-sm bg-charcoal-950 ring-1 ring-white/10">
               <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
-            </div>
-
-              <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
-            </div>
+                        </div>
             <div>
+
               <h1 className="text-lg font-bold text-charcoal-950 leading-tight">Upload</h1>
               <p className="text-xs text-charcoal-400">Manage your products</p>
             </div>
