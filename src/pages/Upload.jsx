@@ -721,6 +721,7 @@ function Upload() {
               onToggleSelect={() => toggleSelect(item.id)}
               onRemove={() => removeItem(item.id)}
               onUpdateField={(field, value) => updateField(item.id, field, value)}
+              saveStates={saveStates[item.id] || {}}
               onRetry={() => handleRetry(item.id)}
               onSuggest={() => handleSuggest(item.id)}
               isSuggesting={suggestingIds.has(item.id)}
