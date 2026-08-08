@@ -95,6 +95,22 @@ export default function ProductCard({
     prevSavedRef.current = item.saved
   }, [item.title, item.price, item.description, item.sizeSpecs, item.extraNotes, item.saved])
 
+    const getSaveIndicator = (field) => {
+    const status = saveStates[field]
+    if (!status) return null
+    const styles = {
+      saving: 'text-amber-600',
+      saved: 'text-sage-700',
+      error: 'text-red-600',
+    }
+    const labels = { saving: 'Saving...', saved: 'Saved', error: 'Failed' }
+    return (
+      <span className={`text-[10px] font-medium ml-1.5 ${styles[status]}`}>
+        {labels[status]}
+      </span>
+    )
+  }
+
   const handleStatusChange = async (newStatus) => {
     setLocalStatus(newStatus)
     if (item.dbId) {
