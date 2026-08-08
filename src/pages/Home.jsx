@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger.js'
 import { Store, ArrowRight, Search, HelpCircle, Loader2 } from 'lucide-react'
 
-const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/infini-logo_frripe.png?v=2'
+const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png'
 
 function Home() {
   const navigate = useNavigate()
