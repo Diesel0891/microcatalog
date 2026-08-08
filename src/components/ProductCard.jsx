@@ -228,6 +228,7 @@ export default function ProductCard({
           onChange={(e) => onUpdateField('title', e.target.value)}
           className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
         />
+        {getSaveIndicator('title')} 
         <input
           type="text"
           placeholder="Price *"
@@ -235,6 +236,7 @@ export default function ProductCard({
           onChange={(e) => onUpdateField('price', e.target.value)}
           className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
         />
+        {getSaveIndicator('price')} 
 
         <details className="group">
           <summary className="flex items-center gap-2 text-sm text-copper-600 cursor-pointer font-medium select-none">
@@ -248,6 +250,7 @@ export default function ProductCard({
               onChange={(e) => onUpdateField('description', e.target.value)}
               className="w-full border border-stone-200 rounded-lg px-3 py-2.5 h-20 resize-none text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
             />
+            {getSaveIndicator('description')} 
             <input
               type="text"
               placeholder="Size / Specs"
@@ -255,6 +258,7 @@ export default function ProductCard({
               onChange={(e) => onUpdateField('sizeSpecs', e.target.value)}
               className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
             />
+            {getSaveIndicator('sizeSpecs')} 
             <input
               type="text"
               placeholder="Extra Notes"
@@ -262,6 +266,7 @@ export default function ProductCard({
               onChange={(e) => onUpdateField('extraNotes', e.target.value)}
               className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
             />
+            {getSaveIndicator('extraNotes')} 
           </div>
         </details>
 
