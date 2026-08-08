@@ -35,9 +35,11 @@ export default function ItemDetailSheet({ item, onWhatsApp, onClose }) {
       />
 
       {/* Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/75 backdrop-blur-md border-t border-white/40 rounded-t-2xl z-50 max-h-[90vh] overflow-y-auto animate-slide-up shadow-2xl">
+
         {/* Header with close */}
-        <div className="sticky top-0 bg-white rounded-t-2xl px-4 pt-4 pb-2 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white/60 backdrop-blur-sm rounded-t-2xl px-4 pt-4 pb-2 flex items-center justify-between z-10">
+
           <StockStatusBadge status={item.stock_status} size="sm" />
           <button
             onClick={onClose}
