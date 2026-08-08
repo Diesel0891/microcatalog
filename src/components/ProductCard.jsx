@@ -48,6 +48,7 @@ export default function ProductCard({
   onSuggest,
   isSuggesting,
   showAiError,
+  saveStates = {},
   onRetry,
 }) {
   const { updateStatus, updating: statusUpdating } = useStockStatus()
