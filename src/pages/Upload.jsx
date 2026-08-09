@@ -9,6 +9,8 @@ import ProductCard from '../components/ProductCard.jsx'
 import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
 import PublishSuccess from '../components/PublishSuccess.jsx'
 import FloatingLabel from '../components/FloatingLabel.jsx'
+import SkeletonLoader from '../components/SkeletonLoader.jsx'
+
 
 
 const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png'
@@ -526,13 +528,7 @@ function Upload() {
     }
   }
 
-  if (loadingSeller) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-copper-500 animate-spin" strokeWidth={2} />
-      </div>
-    )
-  }
+  https://github.com/Diesel0891/microcatalog/edit/main/src/pages/Upload.jsx
 
   if (published) {
     return (
