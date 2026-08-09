@@ -58,8 +58,7 @@ export default function ProductCard({
     item.stock_status || DEFAULT_STOCK_STATUS
   )
   const [isSheetOpen, setIsSheetOpen] = useState(false)
-const getSaveIndicator = (field) => {
-
+    const [detailsExpanded, setDetailsExpanded] = useState(false)
     const getSaveIndicator = (field) => {
     const status = saveStates[field]
     if (!status) return null
