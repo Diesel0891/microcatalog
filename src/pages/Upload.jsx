@@ -8,6 +8,8 @@ import { logger } from '../lib/logger.js'
 import ProductCard from '../components/ProductCard.jsx'
 import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
 import PublishSuccess from '../components/PublishSuccess.jsx'
+import FloatingLabel from '../components/FloatingLabel.jsx'
+
 
 const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png'
 
@@ -603,23 +605,22 @@ function Upload() {
             <h2 className="text-sm font-semibold text-charcoal-700">Your Shop Details</h2>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-charcoal-500 mb-1.5">Shop Name <span className="text-charcoal-300 font-normal">(optional)</span></label>
-            <input
-              type="text"
-              placeholder="e.g. Africa Trading"
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
-              onBlur={autoSaveShopName}
-              className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
-            />
-            {savedFeedback === 'shopName' && (
-              <p className="text-sage-700 text-xs mt-1.5 flex items-center gap-1">
-                <Check className="w-3 h-3" strokeWidth={3} />
-                Saved
-              </p>
-            )}
-          </div>
+                  <div>
+          <FloatingLabel
+            label="Shop Name"
+            value={shopName}
+            onChange={(e) => setShopName(e.target.value)}
+            onBlur={autoSaveShopName}
+            helper="This name appears at the top of your catalog"
+          />
+          {savedFeedback === 'shopName' && (
+            <p className="text-sage-700 text-xs mt-1.5 flex items-center gap-1">
+              <Check className="w-3 h-3" strokeWidth={3} />
+              Saved
+            </p>
+          )}
+        </div>
+
 
           <div>
             <label className="block text-xs font-medium text-charcoal-500 mb-1.5">WhatsApp Number <span className="text-red-500">*</span></label>
