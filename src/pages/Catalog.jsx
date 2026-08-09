@@ -6,7 +6,7 @@ import StockStatusBadge from '../components/StockStatusBadge.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
 import { motion } from 'framer-motion'
-import { Loader2, MessageCircle, Store, Edit3 } from 'lucide-react'
+import { MessageCircle, Store, Edit3 } from 'lucide-react'
 
 function Catalog() {
   const { sellerUuid } = useParams()
@@ -91,15 +91,8 @@ function Catalog() {
       window.open(whatsappUrl, '_blank')
     }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 text-copper-500 animate-spin mx-auto mb-3" strokeWidth={2} />
-          <p className="text-charcoal-400 text-sm font-medium">Loading catalog...</p>
-        </div>
-      </div>
-    )
+    if (loading) {
+    return <SkeletonLoader variant="catalog" count={4} />
   }
 
   if (error) {
