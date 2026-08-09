@@ -23,6 +23,8 @@ import { useStockStatus } from '../hooks/useStockStatus.js'
 import { logger } from '../lib/logger.js'
 import { DEFAULT_STOCK_STATUS } from '../lib/stockStatus.js'
 import FloatingLabel from './FloatingLabel.jsx'
+import FadeImage from './FadeImage.jsx'
+
 
 
 /**
@@ -114,11 +116,11 @@ export default function ProductCard({
       )}
 
       <div className="relative">
-        <img
-          src={item.imageUrl}
-          alt="Product"
-          className="w-full h-48 object-cover"
-        />
+                  <FadeImage
+            src={item.imageUrl}
+            alt="Product"
+            className="w-full h-48"
+          />
         {item.uploading && (
           <div className="absolute inset-0 bg-charcoal-950/60 flex items-center justify-center backdrop-blur-sm">
             <Loader2
