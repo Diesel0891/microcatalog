@@ -56,12 +56,26 @@ export default {
         'elevation-3': '0 10px 15px -3px rgb(0 0 0 / 0.04), 0 4px 6px -4px rgb(0 0 0 / 0.02)',
         'elevation-4': '0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.03)',
       },
-      transitionTimingFunction: {
+            transitionTimingFunction: {
         'spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
         'spring-subtle': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
+      letterSpacing: {
+        'tight': '-0.025em',
+        'normal': '0',
+        'wide': '0.025em',
+        'wider': '0.05em',
+        'display': '-0.02em',
+      },
+      lineHeight: {
+        'tight': '1.2',
+        'snug': '1.35',
+        'normal': '1.5',
+        'relaxed': '1.65',
+      },
     },
   },
+
 
   plugins: [],
 }
