@@ -6,6 +6,7 @@ import StockStatusBadge from '../components/StockStatusBadge.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
 import SkeletonLoader from '../components/SkeletonLoader.jsx'
+import FadeImage from '../components/FadeImage.jsx'
 import { motion } from 'framer-motion'
 import { MessageCircle, Store, Edit3 } from 'lucide-react'
 
@@ -177,11 +178,11 @@ function Catalog() {
                 }}
                 onClick={() => setSelectedItem(item)}
                 className="w-full bg-white rounded-2xl border border-stone-200 overflow-hidden text-left transition-all duration-200 hover:shadow-lg hover:border-copper-300 active:scale-[0.98]">
-                <div className="relative">
-                  <img
+                                <div className="relative">
+                  <FadeImage
                     src={item.image_url}
                     alt={item.title}
-                    className={`w-full h-56 object-cover ${isSold ? 'grayscale' : ''}`}
+                    className={`w-full h-56 ${isSold ? 'grayscale' : ''}`}
                   />
                   {isSold && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
