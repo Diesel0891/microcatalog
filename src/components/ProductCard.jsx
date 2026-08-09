@@ -22,6 +22,8 @@ import StockStatusSheet from './StockStatusSheet.jsx'
 import { useStockStatus } from '../hooks/useStockStatus.js'
 import { logger } from '../lib/logger.js'
 import { DEFAULT_STOCK_STATUS } from '../lib/stockStatus.js'
+import FloatingLabel from './FloatingLabel.jsx'
+
 
 /**
  * Render a single product card.
@@ -57,6 +59,8 @@ export default function ProductCard({
   )
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [showSavedFlash, setShowSavedFlash] = useState(false)
+  const [detailsExpanded, setDetailsExpanded] = useState(false)
+
   const prevFieldsRef = useRef(null)
   const prevSavedRef = useRef(item.saved)
 
@@ -221,54 +225,62 @@ export default function ProductCard({
           onClose={() => setIsSheetOpen(false)}
         />
 
-        <input
-          type="text"
-          placeholder="Title *"
-          value={item.title}
-          onChange={(e) => onUpdateField('title', e.target.value)}
-          className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
-        />
-        {getSaveIndicator('title')} 
-        <input
-          type="text"
-          placeholder="Price *"
-          value={item.price}
-          onChange={(e) => onUpdateField('price', e.target.value)}
-          className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
-        />
-        {getSaveIndicator('price')} 
+              <FloatingLabel
+        label="Title"
+        value={item.title}
+        onChange={(e) => onUpdateField('title', e.target.value)}
+        required
+        maxLength={100}
+      />
+      {getSaveIndicator('title')}
+      <FloatingLabel
+        label="Price"
+        value={item.price}
+        onChange={(e) => onUpdateField('price', e.target.value)}
+        required
+        maxLength={30}
+      />
+      {getSaveIndicator('price')}
 
-        <details className="group">
-          <summary className="flex items-center gap-2 text-sm text-copper-600 cursor-pointer font-medium select-none">
-            <Plus className="w-4 h-4" strokeWidth={2} />
-            Add Details
-          </summary>
-          <div className="mt-3 space-y-3">
-            <textarea
-              placeholder="Description"
-              value={item.description}
-              onChange={(e) => onUpdateField('description', e.target.value)}
-              className="w-full border border-stone-200 rounded-lg px-3 py-2.5 h-20 resize-none text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
-            />
-            {getSaveIndicator('description')} 
-            <input
-              type="text"
-              placeholder="Size / Specs"
-              value={item.sizeSpecs}
-              onChange={(e) => onUpdateField('sizeSpecs', e.target.value)}
-              className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
-            />
-            {getSaveIndicator('sizeSpecs')} 
-            <input
-              type="text"
-              placeholder="Extra Notes"
-              value={item.extraNotes}
-              onChange={(e) => onUpdateField('extraNotes', e.target.value)}
-              className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent"
-            />
-            {getSaveIndicator('extraNotes')} 
-          </div>
-        </details>
+      <button
+        type="button"
+        onClick={() => setDetailsExpanded(!detailsExpanded)}
+        className="flex items-center gap-2 text-sm text-copper-600 font-medium select-none transition-colors hover:text-copper-700"
+      >
+        <Plus className={`w-4 h-4 transition-transform duration-300 ease-spring ${detailsExpanded ? 'rotate-45' : ''}`} strokeWidth={2} />
+        {detailsExpanded ? 'Hide Details' : 'Add Details'}
+      </button>
+      <div className={`overflow-hidden transition-all duration-500 ease-spring-subtle ${detailsExpanded ? 'max-h-[600px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
+        <div className="space-y-3">
+          <FloatingLabel
+            label="Description"
+            value={item.description}
+            onChange={(e) => onUpdateField('description', e.target.value)}
+            type="textarea"
+            autoExpand
+            maxLength={500}
+          />
+          {getSaveIndicator('description')}
+          <FloatingLabel
+            label="Size / Specs"
+            value={item.sizeSpecs}
+            onChange={(e) => onUpdateField('sizeSpecs', e.target.value)}
+            type="textarea"
+            autoExpand
+            maxLength={100}
+          />
+          {getSaveIndicator('sizeSpecs')}
+          <FloatingLabel
+            label="Extra Notes"
+            value={item.extraNotes}
+            onChange={(e) => onUpdateField('extraNotes', e.target.value)}
+            type="textarea"
+            autoExpand
+            maxLength={200}
+          />
+          {getSaveIndicator('extraNotes')}
+        </div>
+      </div>
 
         {item.error && (
           <div className="space-y-2">
