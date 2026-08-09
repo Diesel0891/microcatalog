@@ -527,8 +527,9 @@ function Upload() {
       setPublishing(false)
     }
   }
-
-  https://github.com/Diesel0891/microcatalog/edit/main/src/pages/Upload.jsx
+    if (loadingSeller) {
+    return <SkeletonLoader variant="upload" />
+  }
 
   if (published) {
     return (
