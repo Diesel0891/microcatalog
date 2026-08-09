@@ -595,7 +595,7 @@ function Upload() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Seller Info Card */}
-        <div id="shop-details" className="bg-white rounded-xl border border-stone-200 p-4 space-y-4 transition-all duration-300 scroll-mt-20">
+                <div id="shop-details" className="bg-white rounded-2xl border border-stone-200 p-4 space-y-4 transition-all duration-300 scroll-mt-20">
           <div className="flex items-center gap-2 mb-1">
             <Store className="w-4 h-4 text-copper-500" strokeWidth={2} />
             <h2 className="text-sm font-semibold text-charcoal-700">Your Shop Details</h2>
