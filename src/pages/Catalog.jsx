@@ -5,6 +5,7 @@ import { logger } from '../lib/logger.js'
 import StockStatusBadge from '../components/StockStatusBadge.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
+import SkeletonLoader from '../components/SkeletonLoader.jsx'
 import { motion } from 'framer-motion'
 import { MessageCircle, Store, Edit3 } from 'lucide-react'
 
