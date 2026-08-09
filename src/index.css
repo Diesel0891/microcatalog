@@ -62,8 +62,25 @@
     outline-offset: 2px;
     border-radius: 8px;
   }
-  :focus:not(:focus-visible) {
+    :focus:not(:focus-visible) {
     outline: none;
+  }
+  
+  /* Safe-area insets for notched phones */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Reduced motion accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
