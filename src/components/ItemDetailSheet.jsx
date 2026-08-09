@@ -1,4 +1,4 @@
-import { X, MessageCircle, Tag } from 'lucide-react'
+import { X, MessageCircle, Ruler } from 'lucide-react'
 import StockStatusBadge from './StockStatusBadge.jsx'
 
 /**
@@ -76,12 +76,13 @@ export default function ItemDetailSheet({ item, onWhatsApp, onClose }) {
           )}
 
           {item.size_specs && (
-            <div className="flex items-center gap-2">
-              <Tag className="w-4 h-4 text-sage-600" strokeWidth={2} />
+                        <div className="flex items-center gap-2">
+              <Ruler className="w-4 h-4 text-sage-600" strokeWidth={2} />
               <span className="text-sm text-charcoal-700 font-medium">
                 {item.size_specs}
               </span>
             </div>
+
           )}
 
           {item.extra_notes && (
