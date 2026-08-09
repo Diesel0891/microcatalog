@@ -5,6 +5,7 @@ import { logger } from '../lib/logger.js'
 import StockStatusBadge from '../components/StockStatusBadge.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
+import { motion } from 'framer-motion'
 import { Loader2, MessageCircle, Store, Edit3 } from 'lucide-react'
 
 function Catalog() {
@@ -165,41 +166,48 @@ function Catalog() {
         </div>
 
 
-      {/* Items Grid */}
-      <div className="max-w-lg mx-auto px-4 space-y-4 mt-2">
-        {items.map((item) => {
-          const isSold = item.stock_status === 'sold'
+              {/* Items Grid */}
+        <div className="max-w-lg mx-auto px-4 space-y-4 mt-2">
+          {items.map((item, index) => {
+            const isSold = item.stock_status === 'sold'
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => setSelectedItem(item)}
+            return (
+              <motion.button
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.4,
+                  delay: index * 0.08,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                onClick={() => setSelectedItem(item)}
                 className="w-full bg-white rounded-2xl border border-stone-200 overflow-hidden text-left transition-all duration-200 hover:shadow-lg hover:border-copper-300 active:scale-[0.98]">
-              <div className="relative">
-                <img
-                  src={item.image_url}
-                  alt={item.title}
-                  className={`w-full h-56 object-cover ${isSold ? 'grayscale' : ''}`}
-                />
-                {isSold && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-white/80 font-bold text-2xl tracking-widest drop-shadow-lg">SOLD</span>
+                <div className="relative">
+                  <img
+                    src={item.image_url}
+                    alt={item.title}
+                    className={`w-full h-56 object-cover ${isSold ? 'grayscale' : ''}`}
+                  />
+                  {isSold && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-white/80 font-bold text-2xl tracking-widest drop-shadow-lg">SOLD</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <StockStatusBadge status={item.stock_status} size="xs" />
                   </div>
-                )}
-                <div className="absolute top-2 left-2">
-                  <StockStatusBadge status={item.stock_status} size="xs" />
                 </div>
-              </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-bold text-charcoal-950 text-lg leading-tight flex-1">{item.title}</h3>
                     <span className="text-lg font-bold text-copper-600 whitespace-nowrap">{item.price}</span>
                   </div>
                 </div>
-            </button>
-          )
-        })}
-      </div>
+              </motion.button>
+            )
+          })}
+        </div>
 
       {/* Footer */}
       <div className="max-w-lg mx-auto px-4 mt-8 text-center">
