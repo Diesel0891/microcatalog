@@ -19,10 +19,56 @@
     --color-success-bg: #e3ebe3;
     --color-error: #b91c1c;
     --color-error-bg: #fef2f2;
+    }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom scrollbar — thin, subtle, premium */
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #d6d3d1;
+    border-radius: 20px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #a8a29e;
+  }
+  
+  /* Native app feel: no text selection on tappable elements */
+  button, a, [role="button"], summary {
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  
+  /* Remove iOS default input styling */
+  input, textarea, select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  /* Accessibility: visible focus ring for keyboard only */
+  :focus-visible {
+    outline: 2px solid #c65f3e;
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
   }
 }
 
 @layer utilities {
+
   .text-balance {
     text-wrap: balance;
   }
