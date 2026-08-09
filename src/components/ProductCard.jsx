@@ -8,7 +8,7 @@
  * @module ProductCard
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import {
   Loader2,
   Trash2,
