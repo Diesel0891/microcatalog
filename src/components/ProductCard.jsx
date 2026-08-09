@@ -92,8 +92,7 @@ export default function ProductCard({
   }
 
   return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border overflow-hidden transition ${
+    <div      className={`bg-white rounded-2xl shadow-sm border overflow-hidden transition ${
         isSelected
           ? 'border-copper-400 ring-2 ring-copper-100'
           : 'border-stone-200'
