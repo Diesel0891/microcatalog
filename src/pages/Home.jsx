@@ -80,16 +80,15 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center justify-center p-6">
-              {/* Brand Mark */}
-        <div className="mb-10 text-center w-full max-w-sm">
-          <div className="bg-charcoal-950 rounded-2xl p-8 shadow-xl">
-            <div className="w-24 h-24 rounded-2xl mx-auto mb-4 overflow-hidden shadow-lg ring-2 ring-white/10">
-              <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-1">Infini</h1>
-            <p className="text-white/60 text-sm font-medium">Your WhatsApp catalog, in 2 minutes</p>
+                      {/* Brand Mark */}
+        <div className="mb-10 text-center">
+          <div className="w-24 h-24 rounded-2xl mx-auto mb-5 overflow-hidden shadow-lg bg-charcoal-950 ring-2 ring-white/10">
+            <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
           </div>
+          <h1 className="text-2xl font-bold text-charcoal-950 mb-2">Infini</h1>
+          <p className="text-charcoal-500 text-sm font-medium">Your WhatsApp catalog, in 2 minutes</p>
         </div>
+
 
 
       {/* Primary CTA */}
