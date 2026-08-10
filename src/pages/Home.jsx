@@ -82,7 +82,7 @@ function Home() {
     <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center pt-10 pb-6 px-6">
                       {/* Brand Mark */}
         <div className="mb-6 text-center">
-          <div className="w-24 h-24 rounded-2xl mx-auto mb-3 overflow-hidden shadow-lg bg-charcoal-950 ring-2 ring-white/10">
+          <div className="w-24 h-24 rounded-2xl mx-auto mb-3 overflow-hidden shadow-lg bg-charcoal-950 ring-2 ring-[var(--color-brand-blue)]/20">
             <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-2xl font-bold text-charcoal-950 mb-2">Infini</h1>

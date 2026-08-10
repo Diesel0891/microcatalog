@@ -19,6 +19,8 @@
     --color-success-bg: #e3ebe3;
     --color-error: #b91c1c;
     --color-error-bg: #fef2f2;
+    /* Brand accent — use sparingly for logo containers, not UI actions */
+    --color-brand-blue: #2563eb;
     }
 }
 
