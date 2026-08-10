@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger.js'
-import { Store, ArrowRight, Search, HelpCircle, Loader2 } from 'lucide-react'
+import { Store, ArrowRight, HelpCircle, Loader2 } from 'lucide-react'
 
 const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png'
 
@@ -120,8 +120,8 @@ function Home() {
           }}
           className="w-full flex items-center justify-center gap-2 text-sm text-copper-600 font-medium hover:text-copper-700 transition"
         >
-          <Search className="w-4 h-4" strokeWidth={2} />
-          {showRecovery ? 'Hide recovery' : 'Already have a catalog?'}
+          
+          {showRecovery ? 'Hide' : 'Manage an existing catalog →'}
         </button>
 
         {/* Recovery Panel */}
