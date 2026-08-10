@@ -556,22 +556,25 @@ function Upload() {
             </div>
           </div>
           <div className="text-right flex flex-col justify-center">
-            <p className="text-xs text-charcoal-400 font-medium">{totalItemCount} items</p>
-            <button
-              type="button"
-              onClick={scrollToShopDetails}
-              className="text-xs text-copper-600 font-medium hover:text-copper-700 transition mt-1 inline-flex items-center justify-end gap-0.5"
-            >
-              Edit details <span className="text-[10px]">→</span>
-            </button>
-            <a
-              href={`/#/c/${sellerUuid}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-copper-600 font-medium hover:text-copper-700 transition mt-1 inline-flex items-center justify-end gap-0.5"
-            >
-              Preview catalog <span className="text-[10px]">→</span>
-            </a>
+            <p className="text-xs text-charcoal-500 font-semibold">{totalItemCount} product{totalItemCount !== 1 ? 's' : ''}</p>
+            <div className="flex items-center justify-end gap-1.5 text-xs mt-1.5 text-charcoal-400">
+              <button
+                type="button"
+                onClick={scrollToShopDetails}
+                className="hover:text-copper-600 transition"
+              >
+                Edit shop details
+              </button>
+              <span>·</span>
+              <a
+                href={`/#/c/${sellerUuid}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-copper-600 font-medium hover:text-copper-700 transition inline-flex items-center gap-0.5"
+              >
+                Preview <span className="text-[10px]">→</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
