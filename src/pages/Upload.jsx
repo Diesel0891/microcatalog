@@ -551,8 +551,8 @@ function Upload() {
                         </div>
             <div>
 
-              <h1 className="text-lg font-bold text-charcoal-950 leading-tight">Upload</h1>
-              <p className="text-xs text-charcoal-400">Manage your products</p>
+              <h1 className="text-lg font-bold text-charcoal-950 leading-tight">Your catalog</h1>
+              <p className="text-xs text-charcoal-400">Add products and manage your shop</p>
             </div>
           </div>
           <div className="text-right flex flex-col justify-center">
