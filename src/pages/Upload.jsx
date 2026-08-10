@@ -627,7 +627,7 @@ function Upload() {
               <select
                 value={selectedCountry}
                 onChange={(e) => { setSelectedCountry(e.target.value); setLocalPhone(''); }}
-                className="border border-stone-200 rounded-lg px-2 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent shrink-0 max-w-[40%]"
+                className="border border-stone-200 rounded-xl px-2 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent shrink-0 max-w-[40%]"
               >
                 {COUNTRIES.map(c => (
                   <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
@@ -639,7 +639,7 @@ function Upload() {
                 value={localPhone}
                 onChange={(e) => { setLocalPhone(e.target.value); setPhoneTouched(true); }}
                 onBlur={autoSavePhone}
-                className={`flex-1 border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent ${
+                className={`flex-1 border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-copper-400 focus:border-transparent ${
                   phoneTouched && !validateLocalPhone() ? 'border-red-300 bg-red-50' : 'border-stone-200'
                 }`}
               />
