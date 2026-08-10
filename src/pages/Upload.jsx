@@ -6,7 +6,7 @@ import { suggestProductDetails } from '../lib/ai'
 import { compressImage } from '../lib/compressImage.js'
 import { logger } from '../lib/logger.js'
 import ProductCard from '../components/ProductCard.jsx'
-import { Upload as UploadIcon, Camera, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
+import { Camera, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
 import PublishSuccess from '../components/PublishSuccess.jsx'
 import FloatingLabel from '../components/FloatingLabel.jsx'
 import SkeletonLoader from '../components/SkeletonLoader.jsx'
@@ -62,7 +62,6 @@ function Upload() {
   const [saveStates, setSaveStates] = useState({})
   const saveTimersRef = useRef({})
   const fileInputCounter = useRef(0)
-  const logoFileInputRef = useRef(null)
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkPrice, setBulkPrice] = useState('')
   const [bulkSize, setBulkSize] = useState('')
@@ -673,7 +672,6 @@ function Upload() {
             <label className="block text-xs font-medium text-charcoal-500 mb-1.5">WhatsApp Number <span className="text-red-500">*</span></label>
             <div className="flex gap-2 overflow-hidden">
 
-            <div className="flex gap-2 overflow-hidden">
               <select
                 value={selectedCountry}
                 onChange={(e) => { setSelectedCountry(e.target.value); setLocalPhone(''); }}
