@@ -79,10 +79,10 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center pt-10 pb-6 px-6">
                       {/* Brand Mark */}
-        <div className="mb-10 text-center">
-          <div className="w-24 h-24 rounded-2xl mx-auto mb-5 overflow-hidden shadow-lg bg-charcoal-950 ring-2 ring-white/10">
+        <div className="mb-6 text-center">
+          <div className="w-24 h-24 rounded-2xl mx-auto mb-3 overflow-hidden shadow-lg bg-charcoal-950 ring-2 ring-white/10">
             <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-2xl font-bold text-charcoal-950 mb-2">Infini</h1>
@@ -92,7 +92,7 @@ function Home() {
 
 
       {/* Primary CTA */}
-      <div className="w-full max-w-sm space-y-4">
+      <div className="w-full max-w-sm space-y-3">
         <button
           onClick={handleStartSelling}
           disabled={creating}
@@ -171,7 +171,7 @@ function Home() {
       </div>
 
       {/* Footer */}
-      <div className="mt-12 text-center">
+      <div className="mt-8 text-center">
         <p className="text-charcoal-300 text-xs">Powered by Infini</p>
       </div>
     </div>
