@@ -108,7 +108,7 @@ function Home() {
           {creating ? (
             <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
           ) : (
-            <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-copper-400 transition-colors" strokeWidth={2} />
+            <ArrowRight className="w-4 h-4 text-white/70 group-hover:text-copper-400 transition-colors" strokeWidth={2} />
           )}
         </button>
 
@@ -163,7 +163,7 @@ function Home() {
           href="https://wa.me/?text=Hello%20Infini%2C%20I%20need%20help%20with%20my%20catalog."
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 text-sm text-charcoal-400 hover:text-charcoal-600 transition"
+          className="w-full flex items-center justify-center gap-2 text-sm text-charcoal-600 hover:text-charcoal-900 transition"
         >
           <HelpCircle className="w-4 h-4" strokeWidth={2} />
           Need help? Contact support
