@@ -54,6 +54,7 @@ function Upload() {
   const [published, setPublished] = useState(false)
   const [sellerPhone, setSellerPhone] = useState('')
   const [shopName, setShopName] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
   const [seller, setSeller] = useState(null)
   const sellerUuid = seller?.uuid
   const [loadingSeller, setLoadingSeller] = useState(true)
@@ -61,6 +62,7 @@ function Upload() {
   const [saveStates, setSaveStates] = useState({})
   const saveTimersRef = useRef({})
   const fileInputCounter = useRef(0)
+  const logoFileInputRef = useRef(null)
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [bulkPrice, setBulkPrice] = useState('')
   const [bulkSize, setBulkSize] = useState('')
@@ -82,6 +84,7 @@ function Upload() {
           localStorage.setItem('microcatalog_manage_token', manageToken)
           localStorage.setItem('microcatalog_seller_uuid', data.uuid)
           setShopName(data.shop_name || '')
+          setLogoUrl(data.logo_url || '')
           const fullPhone = data.phone || ''
           setSellerPhone(fullPhone)
           // Parse existing phone into country + local
@@ -103,6 +106,7 @@ function Upload() {
             localStorage.setItem('microcatalog_manage_token', legacySeller.manage_token)
             localStorage.setItem('microcatalog_seller_uuid', legacySeller.uuid)
             setShopName(legacySeller.shop_name || '')
+            setLogoUrl(legacySeller.logo_url || '')
             const fullPhone = legacySeller.phone || ''
             setSellerPhone(fullPhone)
             if (fullPhone) {
@@ -491,6 +495,22 @@ function Upload() {
     setTimeout(() => setSavedFeedback(null), 2000)
   }, [sellerUuid, getFullPhone, validateLocalPhone])
 
+  const handleLogoUpload = useCallback(async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const compressed = await compressImage(file)
+      const url = await uploadToCloudinary(compressed)
+      setLogoUrl(url)
+      await supabase.from('sellers').update({ logo_url: url }).eq('uuid', sellerUuid)
+      setSavedFeedback('logo')
+      setTimeout(() => setSavedFeedback(null), 2000)
+    } catch (err) {
+      logger.error('Upload', 'Logo upload failed', { message: err.message })
+      setInlineError('Logo upload failed. Please try again.')
+    }
+  }, [sellerUuid])
+
   const scrollToShopDetails = () => {
     const el = document.getElementById('shop-details')
     if (el) {
@@ -612,7 +632,7 @@ function Upload() {
             onBlur={autoSaveShopName}
             helper="This name appears at the top of your catalog"
           />
-          {savedFeedback === 'shopName' && (
+                    {savedFeedback === 'shopName' && (
             <p className="text-sage-700 text-xs mt-1.5 flex items-center gap-1">
               <Check className="w-3 h-3" strokeWidth={3} />
               Saved
@@ -620,9 +640,39 @@ function Upload() {
           )}
         </div>
 
+        {/* Logo Upload */}
+        <div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="hidden"
+            />
+            {logoUrl ? (
+              <img src={logoUrl} alt="Shop logo" className="w-16 h-16 rounded-xl object-cover border border-stone-200" />
+            ) : (
+              <div className="w-16 h-16 rounded-xl bg-charcoal-950 flex items-center justify-center border border-stone-200">
+                <Store className="w-6 h-6 text-copper-400" strokeWidth={1.5} />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-charcoal-900">{logoUrl ? 'Change logo' : 'Add shop logo'}</p>
+              <p className="text-xs text-charcoal-400">Optional — appears on your catalog</p>
+            </div>
+          </label>
+          {savedFeedback === 'logo' && (
+            <p className="text-sage-700 text-xs mt-1.5 flex items-center gap-1">
+              <Check className="w-3 h-3" strokeWidth={3} />
+              Saved
+            </p>
+          )}
+        </div>
 
           <div>
             <label className="block text-xs font-medium text-charcoal-500 mb-1.5">WhatsApp Number <span className="text-red-500">*</span></label>
+            <div className="flex gap-2 overflow-hidden">
+
             <div className="flex gap-2 overflow-hidden">
               <select
                 value={selectedCountry}
