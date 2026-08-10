@@ -28,7 +28,7 @@ function Catalog() {
         // Fetch seller info
         const { data: sellerData } = await supabase
           .from('sellers')
-          .select('phone, shop_name')
+          .select('phone, shop_name, logo_url')
           .eq('uuid', sellerUuid)
           .single()
 
