@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger.js'
-import { Store, ArrowRight, HelpCircle } from 'lucide-react'
+import { Store, ArrowRight, HelpCircle, Loader2 } from 'lucide-react'
 
 const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png'
 
@@ -36,6 +36,7 @@ function Home() {
         return
       }
 
+      // Store for ownership detection on catalog page
       localStorage.setItem('microcatalog_manage_token', manageToken)
       localStorage.setItem('microcatalog_seller_uuid', sellerUuid)
 
@@ -78,105 +79,32 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 flex flex-col items-center pt-14 pb-8 px-6">
-      {/* Brand Mark */}
-      <div className="text-center mb-10">
-        <div className="avatar mb-5">
-          <div className="w-24 rounded-2xl ring-2 ring-primary/20 ring-offset-2 ring-offset-base-100 shadow-xl">
-            <img src={LOGO_URL} alt="Infini" />
+    <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center pt-10 pb-6 px-6">
+                      {/* Brand Mark */}
+        <div className="mb-6 text-center">
+          <div className="w-24 h-24 rounded-2xl mx-auto mb-3 overflow-hidden shadow-lg bg-charcoal-950 ring-2 ring-[var(--color-brand-blue)]/20">
+            <img src={LOGO_URL} alt="Infini" className="w-full h-full object-cover" />
           </div>
+          <h1 className="text-2xl font-bold text-charcoal-950 mb-2">Infini</h1>
+          <p className="text-charcoal-500 text-sm font-medium">Your WhatsApp catalog, in 2 minutes</p>
         </div>
-        <h1 className="text-3xl font-bold text-base-content mb-2 tracking-tight">Infini</h1>
-        <p className="text-base-content/50 text-sm font-medium">Your WhatsApp catalog, in 2 minutes</p>
-      </div>
+
+
 
       {/* Primary CTA */}
-      <div className="w-full max-w-sm space-y-4">
+      <div className="w-full max-w-sm space-y-3">
         <button
           onClick={handleStartSelling}
           disabled={creating}
-          className="btn btn-primary btn-lg w-full gap-3 shadow-lg shadow-primary/20 normal-case text-left h-auto py-4"
+          className="w-full group flex items-center gap-4 bg-charcoal-950 text-white rounded-xl p-4 hover:bg-charcoal-800 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
         >
-          <div className="bg-white/20 rounded-lg p-2">
-            <Store className="w-5 h-5" strokeWidth={1.5} />
+          <div className="w-11 h-11 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
+            <Store className="w-5 h-5 text-copper-400" strokeWidth={1.5} />
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-base">Start Selling</div>
-            <div className="text-xs opacity-70 font-normal">Create your free catalog</div>
+          <div className="flex-1 min-w-0 text-left">
+            <h2 className="font-semibold text-sm">Start Selling</h2>
+            <p className="text-white/60 text-xs mt-0.5">Create your free catalog</p>
           </div>
-          {creating ? (
-            <span className="loading loading-spinner loading-sm"></span>
-          ) : (
-            <ArrowRight className="w-5 h-5 opacity-60" strokeWidth={2} />
-          )}
-        </button>
-
-        {/* Recovery Toggle */}
-        <button
-          onClick={() => {
-            setShowRecovery(!showRecovery)
-            setRecoveryError(null)
-          }}
-          className="btn btn-ghost btn-sm w-full text-primary normal-case font-medium"
-        >
-          {showRecovery ? 'Hide' : 'Manage an existing catalog →'}
-        </button>
-
-        {/* Recovery Panel */}
-        {showRecovery && (
-          <div className="card card-compact bg-base-200 border border-base-300 shadow-sm">
-            <div className="card-body space-y-3">
-              <p className="text-xs text-base-content/60">
-                Enter the WhatsApp number you saved in your catalog (with country code).
-              </p>
-              <input
-                type="tel"
-                placeholder="+265991234567"
-                value={recoveryPhone}
-                onChange={(e) => setRecoveryPhone(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleRecover()}
-                className="input input-bordered input-sm w-full bg-base-100"
-              />
-              <button
-                onClick={handleRecover}
-                disabled={recovering || !recoveryPhone.trim()}
-                className="btn btn-primary btn-sm w-full normal-case"
-              >
-                {recovering ? (
-                  <span className="loading loading-spinner loading-xs mr-2"></span>
-                ) : null}
-                Find my catalog
-              </button>
-              {recoveryError && (
-                <div className="alert alert-error alert-sm py-2 text-xs">
-                  <span>{recoveryError}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Support */}
-        <a
-          href="https://wa.me/?text=Hello%20Infini%2C%20I%20need%20help%20with%20my%20catalog."
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-ghost btn-xs w-full text-base-content/50 normal-case gap-2"
-        >
-          <HelpCircle className="w-3.5 h-3.5" strokeWidth={2} />
-          Need help? Contact support
-        </a>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-auto pt-8 text-center">
-        <p className="text-base-content/30 text-xs">Powered by Infini</p>
-      </div>
-    </div>
-  )
-}
-
-export default Home
           {creating ? (
             <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
           ) : (
