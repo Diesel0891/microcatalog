@@ -15,6 +15,7 @@ function Catalog() {
   const [items, setItems] = useState([])
   const [sellerPhone, setSellerPhone] = useState('')
   const [shopName, setShopName] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isOwner, setIsOwner] = useState(false)
@@ -34,6 +35,7 @@ function Catalog() {
         if (sellerData) {
           setSellerPhone(sellerData.phone || '')
           setShopName(sellerData.shop_name || '')
+          setLogoUrl(sellerData.logo_url || '')
         } else {
           setSellerNotFound(true)
           setLoading(false)
@@ -119,9 +121,14 @@ function Catalog() {
 
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-charcoal-950 rounded-xl flex items-center justify-center">
-              <Store className="w-5 h-5 text-copper-400" strokeWidth={1.5} />
-            </div>
+           {logoUrl ? (
+              <img src={logoUrl} alt={displayName} className="w-10 h-10 rounded-xl object-cover" />
+            ) : (
+              <div className="w-10 h-10 bg-charcoal-950 rounded-xl flex items-center justify-center">
+                <Store className="w-5 h-5 text-copper-400" strokeWidth={1.5} />
+              </div>
+            )}
+
             <div>
               <h1 className="text-lg font-bold text-charcoal-950 leading-tight">{displayName}</h1>
               <p className="text-xs text-charcoal-400">{items.length} item{items.length !== 1 ? 's' : ''} available</p>
