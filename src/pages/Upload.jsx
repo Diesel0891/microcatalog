@@ -6,7 +6,7 @@ import { suggestProductDetails } from '../lib/ai'
 import { compressImage } from '../lib/compressImage.js'
 import { logger } from '../lib/logger.js'
 import ProductCard from '../components/ProductCard.jsx'
-import { Upload as UploadIcon, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
+import { Upload as UploadIcon, Camera, Check, ChevronDown, ChevronUp, Loader2, AlertCircle, Store } from 'lucide-react'
 import PublishSuccess from '../components/PublishSuccess.jsx'
 import FloatingLabel from '../components/FloatingLabel.jsx'
 import SkeletonLoader from '../components/SkeletonLoader.jsx'
@@ -659,9 +659,9 @@ function Upload() {
         </div>
 
         <label className="block w-full border-2 border-dashed border-copper-300 hover:border-copper-500 hover:bg-copper-50/50 cursor-pointer rounded-xl p-8 text-center transition">
-          <UploadIcon className="w-8 h-8 mx-auto mb-3 text-copper-500" strokeWidth={1.5} />
-          <p className="font-medium text-sm text-charcoal-900">Tap to upload photos</p>
-          <p className="text-charcoal-400 text-xs mt-1">Select multiple images from your gallery</p>
+          <Camera className="w-8 h-8 mx-auto mb-3 text-copper-500" strokeWidth={1.5} />
+          <p className="font-medium text-sm text-charcoal-900">Add your products</p>
+          <p className="text-charcoal-400 text-xs mt-1">Tap to select product photos — you can choose multiple at once</p>
           <input
             key={fileInputCounter.current}
             type="file"
