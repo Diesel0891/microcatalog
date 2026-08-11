@@ -1098,7 +1098,6 @@ export default function Upload() {
                   onOpenStatus={setStatusFor}
                   onSuggest={handleSuggest}
                   suggestingId={suggestingIds.has(item.id) ? item.id : null}
-                  currency=""
                 />
               ))}
             </div>
