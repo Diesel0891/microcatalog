@@ -8,11 +8,9 @@ import { logger } from '../lib/logger.js'
 import {
   Store, Camera, Sparkles, Check, ChevronDown, X, Phone,
   Pencil, Trash2, Clock, Circle, CheckCircle2, ShoppingBag,
-  ImagePlus, MoreHorizontal, Eye, ArrowRight, Loader2, AlertCircle
+  ImagePlus, MoreHorizontal, Eye, Loader2, AlertCircle
 } from 'lucide-react'
 import { cn } from '../lib/cn.js'
-
-const LOGO_URL = 'https://res.cloudinary.com/a3udr8l4/image/upload/w_200,h_200,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png'
 
 const COUNTRIES = [
   { code: 'MW', flag: '🇲🇼', name: 'Malawi', dial: '+265', placeholder: '0991 234 567', digits: 9, stripLeadingZero: true },
@@ -177,7 +175,7 @@ function ShopCard({
   shopName, setShopName,
   phone, setPhone,
   countryCode, setCountryCode,
-  logoUrl, setLogoUrl,
+  logoUrl,
   saveState,
   highlight,
   onLogoUpload,
@@ -357,7 +355,6 @@ function ProductCard({
   onOpenStatus,
   onSuggest,
   suggestingId,
-  currency,
 }) {
   const [expanded, setExpanded] = useState(false)
 
@@ -691,18 +688,9 @@ export default function Upload() {
   const sellerUuid = seller?.uuid
   const [loadingSeller, setLoadingSeller] = useState(true)
   const [savedFeedback, setSavedFeedback] = useState(null)
-  const [saveStates, setSaveStates] = useState({})
-  const saveTimersRef = useRef({})
-  const fileInputCounter = useRef(0)
-  const [selectedIds, setSelectedIds] = useState(new Set())
-  const [bulkPrice, setBulkPrice] = useState('')
-  const [bulkSize, setBulkSize] = useState('')
-  const [showBulkBar, setShowBulkBar] = useState(false)
   const [suggestingIds, setSuggestingIds] = useState(new Set())
-  const [aiErrorId, setAiErrorId] = useState(null)
   const [selectedCountry, setSelectedCountry] = useState(detectCountry())
   const [localPhone, setLocalPhone] = useState('')
-  const [phoneTouched, setPhoneTouched] = useState(false)
   const [inlineError, setInlineError] = useState(null)
   const [logoUrl, setLogoUrl] = useState('')
   const [statusFor, setStatusFor] = useState(null)
@@ -788,20 +776,6 @@ export default function Upload() {
     loadData()
   }, [sellerUuid])
 
-  // Autosave helpers
-  const getFullPhone = useCallback(() => {
-    const country = COUNTRIES.find(c => c.code === selectedCountry)
-    if (!country) return ''
-    if (country.code === 'OTHER') {
-      const cleaned = localPhone.replace(/\s/g, '')
-      return cleaned.startsWith('+') ? cleaned : '+' + cleaned
-    }
-    let cleaned = localPhone.replace(/\D/g, '')
-    if (country.stripLeadingZero && cleaned.startsWith('0')) {
-      cleaned = cleaned.slice(1)
-    }
-    return country.dial + cleaned
-  }, [selectedCountry, localPhone])
 
   const validateLocalPhone = useCallback(() => {
     const country = COUNTRIES.find(c => c.code === selectedCountry)
@@ -812,23 +786,6 @@ export default function Upload() {
     }
     return cleaned.length >= country.digits
   }, [selectedCountry, localPhone])
-
-  const autoSaveShopName = useCallback(async () => {
-    const trimmed = shopName.trim()
-    await supabase.from('sellers').update({ shop_name: trimmed }).eq('uuid', sellerUuid)
-    setSavedFeedback('shopName')
-    setTimeout(() => setSavedFeedback(null), 2000)
-  }, [sellerUuid, shopName])
-
-  const autoSavePhone = useCallback(async () => {
-    if (!validateLocalPhone()) return
-    const fullPhone = getFullPhone()
-    await supabase.from('sellers').update({ phone: fullPhone }).eq('uuid', sellerUuid)
-    await supabase.from('catalog_items').update({ seller_phone: fullPhone }).eq('seller_uuid', sellerUuid)
-    setSellerPhone(fullPhone)
-    setSavedFeedback('phone')
-    setTimeout(() => setSavedFeedback(null), 2000)
-  }, [sellerUuid, getFullPhone, validateLocalPhone])
 
   const handleLogoUpload = useCallback(async (e) => {
     const file = e.target.files?.[0]
@@ -978,7 +935,6 @@ export default function Upload() {
 
   // Publish
   const handlePublish = useCallback(async () => {
-    const fullPhone = getFullPhone()
     if (!validateLocalPhone()) {
       setNeedsPhone(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -994,7 +950,7 @@ export default function Upload() {
     } finally {
       setPublishing(false)
     }
-  }, [sellerUuid, getFullPhone, validateLocalPhone])
+  }, [sellerUuid, validateLocalPhone])
 
   const catalogLink = `https://microcatalog.vercel.app/#/c/${sellerUuid}`
 
