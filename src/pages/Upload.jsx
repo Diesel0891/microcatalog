@@ -176,6 +176,8 @@ function ShopCard({
   phone, setPhone,
   countryCode, setCountryCode,
   logoUrl,
+  onShopNameBlur,
+  onPhoneBlur,
   saveState,
   highlight,
   onLogoUpload,
@@ -259,6 +261,7 @@ function ShopCard({
               <input
                 value={shopName}
                 onChange={(e) => setShopName(e.target.value)}
+                onBlur={onShopNameBlur}
                 placeholder="e.g. Amara Threads"
                 className={inputBase}
               />
@@ -272,6 +275,7 @@ function ShopCard({
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/[^\d\s]/g, ""))}
+                      onBlur={onPhoneBlur}
                     inputMode="tel"
                     placeholder="801 234 5678"
                     className={cn(inputBase, "h-[52px] py-0 pl-11")}
@@ -787,6 +791,29 @@ export default function Upload() {
     return cleaned.length >= country.digits
   }, [selectedCountry, localPhone])
 
+  const autoSaveShopName = useCallback(async () => {
+    const trimmed = shopName.trim()
+    if (!trimmed) return
+    await supabase.from('sellers').update({ shop_name: trimmed }).eq('uuid', sellerUuid)
+    setSavedFeedback('shopName')
+    setTimeout(() => setSavedFeedback(null), 2000)
+  }, [sellerUuid, shopName])
+
+  const autoSavePhone = useCallback(async () => {
+    if (!validateLocalPhone()) return
+    const country = COUNTRIES.find(c => c.code === selectedCountry)
+    let cleaned = localPhone.replace(/\D/g, '')
+    if (country.stripLeadingZero && cleaned.startsWith('0')) {
+      cleaned = cleaned.slice(1)
+    }
+    const fullPhone = country.dial + cleaned
+    await supabase.from('sellers').update({ phone: fullPhone }).eq('uuid', sellerUuid)
+    await supabase.from('catalog_items').update({ seller_phone: fullPhone }).eq('seller_uuid', sellerUuid)
+    setSellerPhone(fullPhone)
+    setSavedFeedback('phone')
+    setTimeout(() => setSavedFeedback(null), 2000)
+  }, [sellerUuid, selectedCountry, localPhone, validateLocalPhone])
+
   const handleLogoUpload = useCallback(async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -1038,6 +1065,8 @@ export default function Upload() {
             saveState={savedFeedback === 'shopName' || savedFeedback === 'phone' || savedFeedback === 'logo' ? 'saved' : 'idle'}
             highlight={needsPhone}
             onLogoUpload={handleLogoUpload}
+            onShopNameBlur={autoSaveShopName}
+            onPhoneBlur={autoSavePhone}
           />
 
           {needsPhone && !sellerPhone && (
