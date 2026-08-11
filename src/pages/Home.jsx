@@ -12,7 +12,8 @@ export default function Home() {
   const [recoveryOpen, setRecoveryOpen] = useState(false)
   const [phone, setPhone] = useState('')
   const [recovering, setRecovering] = useState(false)
-  const [error, setError] = useState(null)
+  const [createError, setCreateError] = useState(null)
+  const [recoveryError, setRecoveryError] = useState(null)
 
   async function handleCreate() {
     if (creating) return
@@ -33,7 +34,7 @@ export default function Home() {
 
       if (insertError) {
         logger.error('Home', 'Failed to create seller', { message: insertError.message })
-        setError('Unable to create catalog. Please check your connection and try again.')
+        setCreateError('Unable to create catalog. Please check your connection and try again.')
         setCreating(false)
         return
       }
@@ -44,7 +45,7 @@ export default function Home() {
       navigate(`/u/${manageToken}`)
     } catch (err) {
       logger.error('Home', 'Onboarding error', { message: err.message })
-      setError('Something went wrong. Please try again.')
+      setCreateError('Something went wrong. Please try again.')
       setCreating(false)
     }
   }
@@ -52,11 +53,11 @@ export default function Home() {
   async function handleRecover(e) {
     e.preventDefault()
     if (recovering) return
-    setError(null)
+    setRecoveryError(null)
 
     const digits = phone.replace(/[^\d+]/g, '')
     if (digits.length < 7) {
-      setError('Enter the phone number linked to your catalog.')
+      setRecoveryError('Enter the phone number linked to your catalog.')
       return
     }
 
@@ -70,7 +71,7 @@ export default function Home() {
         .single()
 
       if (dbError || !data) {
-        setError('No catalog found for that number. Make sure you entered the full number with country code (e.g. +265991234567).')
+        setRecoveryError('No catalog found for that number. Make sure you entered the full number with country code (e.g. +265991234567).')
         setRecovering(false)
         return
       }
@@ -81,7 +82,7 @@ export default function Home() {
       navigate(`/u/${data.manage_token}`)
     } catch (err) {
       logger.error('Home', 'Recovery error', { message: err.message })
-      setError('Unable to look up catalog. Please try again or contact support.')
+      setRecoveryError('Unable to look up catalog. Please try again or contact support.')
       setRecovering(false)
     }
   }
@@ -167,6 +168,15 @@ export default function Home() {
           </button>
         </div>
 
+        {createError && (
+          <div
+            className="animate-rise mt-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 flex items-start gap-2 text-[13px] leading-snug text-destructive"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{createError}</span>
+          </div>
+        )}
+
         {/* Secondary action */}
         <div
           className="animate-rise mt-6"
@@ -221,20 +231,20 @@ export default function Home() {
                     value={phone}
                     onChange={(e) => {
                       setPhone(e.target.value)
-                      if (error) setError(null)
+                      if (recoveryError) setRecoveryError(null)
                     }}
-                    aria-invalid={!!error}
+                    aria-invalid={!!recoveryError}
                     className="h-[52px] w-full rounded-2xl border border-input bg-background px-4 text-left text-[16px] text-foreground outline-none transition-all duration-200 placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/20"
                   />
                 </div>
 
-                {error && (
+                {recoveryError && (
                   <p
                     role="alert"
                     className="animate-rise mt-3 flex items-start gap-2 text-[13px] leading-snug text-destructive"
                   >
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{error}</span>
+                    <span>{recoveryError}</span>
                   </p>
                 )}
 
