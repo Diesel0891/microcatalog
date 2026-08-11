@@ -1,4 +1,4 @@
-import { useState } from 'react'
+content = r'''import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger.js'
@@ -280,3 +280,9 @@ export default function Home() {
     </main>
   )
 }
+'''
+
+with open('src/pages/Home.jsx', 'w') as f:
+    f.write(content)
+
+print('SUCCESS')
