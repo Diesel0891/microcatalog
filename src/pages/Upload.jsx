@@ -135,9 +135,10 @@ function CountrySelect({ value, onChange }) {
 
       {open ? (
         <>
-          <div className="fixed inset-0 z-20" onPointerDown={() => setOpen(false)} aria-hidden />
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} aria-hidden />
           <ul
             role="listbox"
+            onClick={e => e.stopPropagation()}
             className="animate-expand absolute left-0 top-[60px] z-30 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
           >
             {COUNTRIES.map(c => {
@@ -208,6 +209,7 @@ function ShopCard({
           ) : (
             <span className="flex size-full flex-col items-center justify-center gap-0.5 text-muted-foreground">
               <Camera className="size-5" strokeWidth={2} />
+              <span className="text-[9px] font-semibold">Logo</span>
             </span>
           )}
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-foreground/55 py-1 text-[10px] font-semibold text-background opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
