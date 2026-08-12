@@ -296,63 +296,132 @@ function ShopCard({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Upload area                                                        */
+/*  Upload section                                                   */
 /* ------------------------------------------------------------------ */
 
-function UploadArea({ onFiles, uploading }) {
-  const input = useRef(null)
+function UploadSection({ onFiles, uploading, hasProducts }) {
+  const galleryInput = useRef(null)
+  const cameraInput = useRef(null)
+
+  const handleFiles = (e) => {
+    if (e.target.files?.length) onFiles(e.target.files)
+    e.target.value = ''
+  }
+
+  if (hasProducts) {
+    return (
+      <div className="animate-enter" style={{ animationDelay: '160ms' }}>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => galleryInput.current?.click()}
+            className="press group flex-1 flex items-center gap-3 rounded-[20px] border border-dashed border-primary/35 bg-primary/[0.04] p-4 text-left transition-colors hover:bg-primary/[0.07]"
+          >
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary transition-transform group-active:scale-95">
+              <ImagePlus className="size-5" strokeWidth={2} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-bold text-foreground">Gallery</span>
+              <span className="mt-0.5 block text-[13px] text-muted-foreground">Pick from photos</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => cameraInput.current?.click()}
+            className="press group flex-1 flex items-center gap-3 rounded-[20px] border border-dashed border-primary/35 bg-primary/[0.04] p-4 text-left transition-colors hover:bg-primary/[0.07]"
+          >
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary transition-transform group-active:scale-95">
+              <Camera className="size-5" strokeWidth={2} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-bold text-foreground">Camera</span>
+              <span className="mt-0.5 block text-[13px] text-muted-foreground">Snap a new photo</span>
+            </span>
+          </button>
+        </div>
+        <input
+          ref={galleryInput}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handleFiles}
+        />
+        <input
+          ref={cameraInput}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleFiles}
+        />
+        {uploading ? (
+          <div className="animate-fade mt-3 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between text-[13px]">
+              <span className="font-semibold text-foreground">
+                {uploading.count} {uploading.count === 1 ? 'photo' : 'photos'} uploading
+              </span>
+              <span className="tabular-nums text-muted-foreground">{Math.round(uploading.progress)}%</span>
+            </div>
+            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
+                style={{ width: '' }}
+              />
+            </div>
+          </div>
+        ) : null}
+      </div>
+    )
+  }
 
   return (
-    <div className="animate-enter" style={{ animationDelay: "160ms" }}>
-      <button
-        type="button"
-        onClick={() => input.current?.click()}
-        className="press group flex w-full items-center gap-4 rounded-[20px] border border-dashed border-primary/35 bg-primary/[0.04] p-5 text-left transition-colors hover:bg-primary/[0.07]"
-      >
-        <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary transition-transform group-active:scale-95">
-          <ImagePlus className="size-6" strokeWidth={2} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[15px] font-bold text-foreground">Tap to add products</span>
-          <span className="mt-0.5 block text-[13px] text-muted-foreground">
-            Pick photos from your gallery — one card per photo.
-          </span>
-        </span>
-      </button>
+    <div className="animate-enter flex flex-col items-center rounded-[20px] border border-dashed border-border bg-card/60 px-6 py-12 text-center" style={{ animationDelay: '240ms' }}>
+      <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <Camera className="size-7" strokeWidth={2} />
+      </div>
+      <h3 className="mt-4 text-[17px] font-bold text-foreground">Add your first product</h3>
+      <p className="mx-auto mt-1.5 max-w-[16rem] text-[13px] leading-relaxed text-muted-foreground">
+        Snap a photo or pick from your gallery. One card per product.
+      </p>
+      <div className="mt-5 flex w-full max-w-[16rem] gap-3">
+        <button
+          type="button"
+          onClick={() => galleryInput.current?.click()}
+          className="press group flex flex-1 items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[13px] font-bold text-primary-foreground shadow-[0_8px_24px_oklch(0.64_0.16_41/0.3)]"
+        >
+          <ImagePlus className="size-4" />
+          Gallery
+        </button>
+        <button
+          type="button"
+          onClick={() => cameraInput.current?.click()}
+          className="press group flex flex-1 items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[13px] font-bold text-primary-foreground shadow-[0_8px_24px_oklch(0.64_0.16_41/0.3)]"
+        >
+          <Camera className="size-4" />
+          Camera
+        </button>
+      </div>
       <input
-        ref={input}
+        ref={galleryInput}
         type="file"
         accept="image/*"
         multiple
         className="hidden"
-        onChange={(e) => {
-          if (e.target.files?.length) onFiles(e.target.files)
-          e.target.value = ""
-        }}
+        onChange={handleFiles}
       />
-
-      {uploading ? (
-        <div className="animate-fade mt-3 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
-          <div className="flex items-center justify-between text-[13px]">
-            <span className="font-semibold text-foreground">
-              {uploading.count} {uploading.count === 1 ? "photo" : "photos"} uploading
-            </span>
-            <span className="tabular-nums text-muted-foreground">{Math.round(uploading.progress)}%</span>
-          </div>
-          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-secondary">
-            <div
-              className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
-              style={{ width: `${uploading.progress}%` }}
-            />
-          </div>
-        </div>
-      ) : null}
+      <input
+        ref={cameraInput}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFiles}
+      />
     </div>
   )
 }
 
-
-/* ------------------------------------------------------------------ */
 /*  Product card                                                       */
 /* ------------------------------------------------------------------ */
 
@@ -654,33 +723,6 @@ function SuccessModal({ link, onClose }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Empty state                                                        */
-/* ------------------------------------------------------------------ */
-
-function EmptyState({ onAdd }) {
-  return (
-    <div className="animate-enter flex flex-col items-center rounded-[20px] border border-dashed border-border bg-card/60 px-6 py-14 text-center" style={{ animationDelay: "240ms" }}>
-      <div className="flex size-20 items-center justify-center rounded-3xl bg-primary/10 text-primary">
-        <Camera className="size-9" strokeWidth={1.8} />
-      </div>
-      <h3 className="mt-5 text-xl font-bold text-foreground">Add your first product</h3>
-      <p className="mx-auto mt-2 max-w-[16rem] text-[15px] leading-relaxed text-muted-foreground">
-        Snap a photo, set a price, and it's ready to share. Your catalog starts here.
-      </p>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="press mt-6 flex h-[52px] items-center gap-2 rounded-2xl bg-primary px-6 text-[15px] font-bold text-primary-foreground shadow-[0_8px_24px_oklch(0.64_0.16_41/0.3)]"
-      >
-        <Camera className="size-5" />
-        Add a product
-      </button>
-    </div>
-  )
-}
-
-
-/* ------------------------------------------------------------------ */
 /*  Main Upload component                                              */
 /* ------------------------------------------------------------------ */
 
@@ -708,7 +750,6 @@ export default function Upload() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [needsPhone, setNeedsPhone] = useState(false)
 
-  const uploadInput = useRef(null)
 
   // Load seller
   useEffect(() => {
@@ -1087,11 +1128,9 @@ export default function Upload() {
             </div>
           )}
 
-          <UploadArea onFiles={handleFileSelect} uploading={uploading} />
+          <UploadSection onFiles={handleFileSelect} uploading={uploading} hasProducts={items.length > 0} />
 
-          {items.length === 0 ? (
-            <EmptyState onAdd={() => uploadInput.current?.click()} />
-          ) : (
+          {items.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-[15px] font-bold text-foreground">Products</h2>
@@ -1113,14 +1152,7 @@ export default function Upload() {
           )}
         </main>
 
-        <input
-          ref={uploadInput}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={handleFileSelect}
-        />
+
 
         {/* Publish bar */}
         <div className="fixed inset-x-0 bottom-0 z-40">
