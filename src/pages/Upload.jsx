@@ -178,6 +178,7 @@ function ShopCard({
   logoUrl,
   onShopNameBlur,
   onPhoneBlur,
+  phoneError,
   saveState,
   highlight,
   onLogoUpload,
@@ -187,6 +188,7 @@ function ShopCard({
 
   return (
     <section
+      id="shop-details"
       className={cn(
         "animate-enter rounded-[20px] border bg-card p-5 shadow-[var(--shadow-card)] transition-shadow",
         highlight ? "border-primary/50 ring-4 ring-primary/10" : "border-border",
@@ -280,6 +282,9 @@ function ShopCard({
                     placeholder="801 234 5678"
                     className={cn(inputBase, "h-[52px] py-0 pl-11")}
                   />
+                  {phoneError ? (
+                    <span className="mt-1.5 block text-xs text-destructive">{phoneError}</span>
+                  ) : null}
                 </div>
               </div>
             </Field>
@@ -696,6 +701,7 @@ export default function Upload() {
   const [selectedCountry, setSelectedCountry] = useState(detectCountry())
   const [localPhone, setLocalPhone] = useState('')
   const [inlineError, setInlineError] = useState(null)
+  const [phoneError, setPhoneError] = useState(null)
   const [logoUrl, setLogoUrl] = useState('')
   const [statusFor, setStatusFor] = useState(null)
   const [uploading, setUploading] = useState(null)
@@ -800,7 +806,11 @@ export default function Upload() {
   }, [sellerUuid, shopName])
 
   const autoSavePhone = useCallback(async () => {
-    if (!validateLocalPhone()) return
+    if (!validateLocalPhone()) {
+      setPhoneError('Please enter a valid phone number')
+      return
+    }
+    setPhoneError(null)
     const country = COUNTRIES.find(c => c.code === selectedCountry)
     let cleaned = localPhone.replace(/\D/g, '')
     if (country.stripLeadingZero && cleaned.startsWith('0')) {
@@ -920,7 +930,6 @@ export default function Upload() {
     const item = items.find(i => i.id === id)
     if (!item) return
     setSuggestingIds(prev => new Set(prev).add(id))
-    setAiErrorId(null)
     try {
       const suggestion = await suggestProductDetails(item.image_url)
       if (suggestion) {
@@ -940,7 +949,6 @@ export default function Upload() {
       }
     } catch (err) {
       logger.error('Upload', 'AI Suggest failed', { message: err.message })
-      setAiErrorId(id)
     } finally {
       setSuggestingIds(prev => {
         const next = new Set(prev)
@@ -1067,6 +1075,7 @@ export default function Upload() {
             onLogoUpload={handleLogoUpload}
             onShopNameBlur={autoSaveShopName}
             onPhoneBlur={autoSavePhone}
+            phoneError={phoneError}
           />
 
           {needsPhone && !sellerPhone && (
