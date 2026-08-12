@@ -135,7 +135,7 @@ function CountrySelect({ value, onChange }) {
 
       {open ? (
         <>
-          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} aria-hidden />
+          <div className="fixed inset-0 z-20" onPointerDown={() => setOpen(false)} aria-hidden />
           <ul
             role="listbox"
             className="animate-expand absolute left-0 top-[60px] z-30 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
@@ -277,15 +277,15 @@ function ShopCard({
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/[^\d\s]/g, ""))}
-                      onBlur={onPhoneBlur}
+                    onBlur={onPhoneBlur}
                     inputMode="tel"
                     placeholder="801 234 5678"
                     className={cn(inputBase, "h-[52px] py-0 pl-11")}
                   />
-                  {phoneError ? (
-                    <span className="mt-1.5 block text-xs text-destructive">{phoneError}</span>
-                  ) : null}
                 </div>
+                {phoneError ? (
+                  <span className="mt-1.5 block text-xs text-destructive">{phoneError}</span>
+                ) : null}
               </div>
             </Field>
           </div>
@@ -304,7 +304,7 @@ function UploadSection({ onFiles, uploading, hasProducts }) {
   const cameraInput = useRef(null)
 
   const handleFiles = (e) => {
-    if (e.target.files?.length) onFiles(e.target.files)
+    if (e.target.files?.length) onFiles(e)
     e.target.value = ''
   }
 
@@ -366,7 +366,7 @@ function UploadSection({ onFiles, uploading, hasProducts }) {
             <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-secondary">
               <div
                 className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
-                style={{ width: '' }}
+                style={{ width: `${uploading.progress}%` }}
               />
             </div>
           </div>
@@ -835,7 +835,7 @@ export default function Upload() {
     if (country.stripLeadingZero && cleaned.startsWith('0')) {
       cleaned = cleaned.slice(1)
     }
-    return cleaned.length >= country.digits
+    return cleaned.length === country.digits
   }, [selectedCountry, localPhone])
 
   const autoSaveShopName = useCallback(async () => {
