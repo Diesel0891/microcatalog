@@ -515,7 +515,7 @@ function ProductCard({
                   placeholder="Name your product"
                   className={inputBase}
                 />
-                {suggestingId === item.id ? <span className="shimmer pointer-events-none absolute inset-0 rounded-2xl" /> : null}
+                {suggestingId === item.id ? <span className="shimmer-v0 pointer-events-none absolute inset-0 rounded-2xl" /> : null}
               </div>
             </div>
 
@@ -537,7 +537,7 @@ function ProductCard({
                     placeholder="S, M, L"
                     className={inputBase}
                   />
-                  {suggestingId === item.id ? <span className="shimmer pointer-events-none absolute inset-0 rounded-2xl" /> : null}
+                  {suggestingId === item.id ? <span className="shimmer-v0 pointer-events-none absolute inset-0 rounded-2xl" /> : null}
                 </div>
               </Field>
             </div>
@@ -552,7 +552,7 @@ function ProductCard({
                   rows={3}
                   className={cn(inputBase, "resize-none leading-relaxed")}
                 />
-                {suggestingId === item.id ? <span className="shimmer pointer-events-none absolute inset-0 rounded-2xl" /> : null}
+                {suggestingId === item.id ? <span className="shimmer-v0 pointer-events-none absolute inset-0 rounded-2xl" /> : null}
               </div>
             </Field>
 

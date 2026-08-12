@@ -365,7 +365,7 @@
   animation: expand-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.shimmer {
+.shimmer-v0 {
   background: linear-gradient(
     100deg,
     transparent 20%,
@@ -401,6 +401,6 @@
     opacity: 1;
     transform: none;
   }
-  .shimmer { animation: none; }
+  .shimmer-v0 { animation: none; }
   .press:active { transform: none; }
 }
