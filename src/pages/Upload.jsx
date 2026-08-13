@@ -116,9 +116,26 @@ function Field({ label, children, hint }) {
 
 function CountrySelect({ value, onChange }) {
   const [open, setOpen] = useState(false)
+  const wrapperRef = useRef(null)
   const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('touchstart', handleClick)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('touchstart', handleClick)
+    }
+  }, [open])
+
   return (
-    <div className="relative">
+    <div ref={wrapperRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
@@ -133,37 +150,33 @@ function CountrySelect({ value, onChange }) {
         <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
-      {open ? (
-        <>
-          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} aria-hidden />
-          <ul
-            role="listbox"
-            onClick={e => e.stopPropagation()}
-            className="animate-expand absolute left-0 top-[60px] z-30 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
-          >
-            {COUNTRIES.map(c => {
-              const active = c.code === value
-              return (
-                <li key={c.code}>
-                  <button
-                    type="button"
-                    onClick={() => { onChange(c.code); setOpen(false) }}
-                    className={cn(
-                      "press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
-                      active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
-                    )}
-                  >
-                    <span className="text-lg">{c.flag}</span>
-                    <span className="flex-1 font-medium">{c.name}</span>
-                    <span className="text-sm text-muted-foreground">{c.dial}</span>
-                    {active ? <Check className="size-4 text-primary" /> : null}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </>
-      ) : null}
+      {open && (
+        <ul
+          role="listbox"
+          className="animate-expand absolute left-0 top-[60px] z-30 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
+        >
+          {COUNTRIES.map(c => {
+            const active = c.code === value
+            return (
+              <li key={c.code}>
+                <button
+                  type="button"
+                  onClick={() => { onChange(c.code); setOpen(false) }}
+                  className={cn(
+                    "press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
+                    active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
+                  )}
+                >
+                  <span className="text-lg">{c.flag}</span>
+                  <span className="flex-1 font-medium">{c.name}</span>
+                  <span className="text-sm text-muted-foreground">{c.dial}</span>
+                  {active ? <Check className="size-4 text-primary" /> : null}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
