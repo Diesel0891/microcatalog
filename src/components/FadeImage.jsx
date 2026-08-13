@@ -19,7 +19,8 @@ export default function FadeImage({ className = '', ...props }) {
   const [loaded, setLoaded] = useState(false)
 
   return (
-    <div className={`bg-stone-100 ${className}`}>
+    <div className={`relative bg-stone-100 ${className}`}>
+      {!loaded && <div className="absolute inset-0 shimmer-v0" />}
       <img
         {...props}
         onLoad={() => setLoaded(true)}
@@ -28,4 +29,3 @@ export default function FadeImage({ className = '', ...props }) {
     </div>
   )
 }
-
