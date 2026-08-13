@@ -81,23 +81,27 @@ function StatusBadge({ status }) {
 }
 
 function Photo({ src, alt }) {
-  const [loaded, setLoaded] = useState(false)
-  const ref = useRef(null)
+    const [loaded, setLoaded] = useState(false)
+    const ref = useRef(null)
 
-  useEffect(() => {
-    if (ref.current?.complete && ref.current.naturalWidth > 0) setLoaded(true)
-  }, [])
+    useEffect(() => {
+      if (ref.current?.complete && ref.current.naturalWidth > 0) setLoaded(true)
+    }, [])
 
-  return (
-    <img
-      ref={ref}
-      src={src || '/placeholder.svg'}
-      alt={alt}
-      onLoad={() => setLoaded(true)}
-      className={cn("size-full object-cover", loaded ? "animate-photo" : "opacity-0")}
-    />
-  )
-}
+    return (
+      <div className="relative size-full">
+        {!loaded && <div className="absolute inset-0 shimmer-v0" />}
+        <img
+          ref={ref}
+          src={src || '/placeholder.svg'}
+          alt={alt}
+          onLoad={() => setLoaded(true)}
+          className={cn("size-full object-cover", loaded ? "animate-photo" : "opacity-0")}
+        />
+      </div>
+    )
+  }
+
 
 function Field({ label, children, hint }) {
   return (
@@ -119,20 +123,18 @@ function CountrySelect({ value, onChange }) {
   const wrapperRef = useRef(null)
   const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
 
-  useEffect(() => {
-    if (!open) return
-    function handleClick(e) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false)
+      useEffect(() => {
+      if (!open) return
+      function handlePointerDown(e) {
+        if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+          setOpen(false)
+        }
       }
-    }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('touchstart', handleClick)
-    return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('touchstart', handleClick)
-    }
-  }, [open])
+      document.addEventListener('pointerdown', handlePointerDown, true)
+      return () => {
+        document.removeEventListener('pointerdown', handlePointerDown, true)
+      }
+    }, [open])
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -272,7 +274,8 @@ function ShopCard({
           collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]",
         )}
       >
-        <div className="overflow-hidden">
+          <div className={cn("overflow-hidden", !collapsed && "overflow-visible")}>
+
           <div className="mt-5 space-y-5">
             <Field label="Shop name">
               <input
@@ -284,25 +287,26 @@ function ShopCard({
               />
             </Field>
 
-            <Field label="WhatsApp number" hint="Customers message this number to order.">
-              <div className="flex gap-2.5">
-                <CountrySelect value={countryCode} onChange={setCountryCode} />
-                <div className="relative flex-1">
-                  <Phone className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
-                  <input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/[^\d\s]/g, ""))}
-                    onBlur={onPhoneBlur}
-                    inputMode="tel"
-                    placeholder="801 234 5678"
-                    className={cn(inputBase, "h-[52px] py-0 pl-11")}
-                  />
+                          <Field label="WhatsApp number" hint="Customers message this number to order.">
+                <div className="flex gap-2.5">
+                  <CountrySelect value={countryCode} onChange={setCountryCode} />
+                  <div className="relative flex-1">
+                    <Phone className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^\d\s]/g, ""))}
+                      onBlur={onPhoneBlur}
+                      inputMode="tel"
+                      placeholder="801 234 5678"
+                      className={cn(inputBase, "h-[52px] py-0 pl-11")}
+                    />
+                  </div>
                 </div>
                 {phoneError ? (
                   <span className="mt-1.5 block text-xs text-destructive">{phoneError}</span>
                 ) : null}
-              </div>
-            </Field>
+              </Field>
+
           </div>
         </div>
       </div>
@@ -921,42 +925,49 @@ export default function Upload() {
     setItems(prev => [...newItems, ...prev])
     setTotalItemCount(prev => prev + files.length)
 
-    let completed = 0
-    for (const item of newItems) {
-      try {
-        const fileToUpload = await compressImage(item.file)
-        const imageUrl = await uploadToCloudinary(fileToUpload)
+          let completed = 0
+      for (let i = 0; i < newItems.length; i++) {
+        const item = newItems[i]
+        try {
+          setUploading(u => u ? { ...u, progress: (i / files.length) * 100 + (0.15 / files.length) * 100 } : null)
+          const fileToUpload = await compressImage(item.file)
 
-        const { error } = await supabase
-          .from('catalog_items')
-          .insert({
-            seller_uuid: sellerUuid,
-            image_url: imageUrl,
-            title: item.title,
-            price: item.price,
-            description: item.description,
-            size_specs: item.size_specs,
-            extra_notes: item.extra_notes,
-            published: false,
-            seller_phone: sellerPhone || null,
-            stock_status: 'available',
-          })
-          .select()
-          .single()
+          setUploading(u => u ? { ...u, progress: (i / files.length) * 100 + (0.55 / files.length) * 100 } : null)
+          const imageUrl = await uploadToCloudinary(fileToUpload)
 
-        if (error) throw error
+          setUploading(u => u ? { ...u, progress: (i / files.length) * 100 + (0.85 / files.length) * 100 } : null)
+          const { error } = await supabase
+            .from('catalog_items')
+            .insert({
+              seller_uuid: sellerUuid,
+              image_url: imageUrl,
+              title: item.title,
+              price: item.price,
+              description: item.description,
+              size_specs: item.size_specs,
+              extra_notes: item.extra_notes,
+              published: false,
+              seller_phone: sellerPhone || null,
+              stock_status: 'available',
+            })
+            .select()
+            .single()
 
-        setItems(prev => prev.map(i => i.id === item.id ? { ...i, image_url: imageUrl, file: null } : i))
-        completed++
-        setUploading(u => u ? { ...u, progress: (completed / files.length) * 100 } : null)
-      } catch (err) {
-        logger.error('Upload', 'Image upload failed', { message: err.message })
-        setInlineError('Upload failed: Please check your internet connection.')
-        setUploading(null)
-        return
+          if (error) throw error
+
+          setItems(prev => prev.map(it => it.id === item.id ? { ...it, image_url: imageUrl, file: null } : it))
+          completed++
+          setUploading(u => u ? { ...u, progress: (completed / files.length) * 100 } : null)
+        } catch (err) {
+          logger.error('Upload', 'Image upload failed', { message: err.message })
+          setInlineError('Upload failed: Please check your internet connection.')
+          setUploading(null)
+          return
+        }
       }
-    }
-    setUploading(null)
+      await new Promise(r => setTimeout(r, 600))
+      setUploading(null)
+)
   }, [sellerUuid, sellerPhone])
 
   // Update item
