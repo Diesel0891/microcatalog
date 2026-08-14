@@ -362,7 +362,7 @@ function UploadSection({ onFiles, uploading, hasProducts }) {
       </div>
       <h3 className="mt-4 text-[17px] font-bold text-foreground">Add your first product</h3>
       <p className="mx-auto mt-1.5 max-w-[16rem] text-[13px] leading-relaxed text-muted-foreground">
-        Snap a photo or pick from your gallery. One card per product.
+        Pick from your gallery or snap a photo.
       </p>
       <div className="mt-5 flex w-full max-w-[16rem] gap-3">
         <button
