@@ -7,7 +7,7 @@ import { suggestProductDetails } from '../lib/ai'
 import { compressImage } from '../lib/compressImage.js'
 import { logger } from '../lib/logger.js'
 import {
-  Store, Camera, Sparkles, Check, ChevronDown, X, Phone,
+  Store, Camera, Sparkles, Check, ChevronDown, ChevronUp, X, Phone,
   Pencil, Trash2, Clock, Circle, CheckCircle2, ShoppingBag,
   ImagePlus, MoreHorizontal, Eye, Loader2, AlertCircle
 } from 'lucide-react'
@@ -132,6 +132,18 @@ function CountrySelect({ value, onChange }) {
     }
     setOpen(o => !o)
   }
+    useEffect(() => {
+    if (!open) return
+    function handlePointerDown(e) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true)
+    }
+  }, [open])
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -147,18 +159,13 @@ function CountrySelect({ value, onChange }) {
         <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
-      {open && createPortal(
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
-          <ul
-            role="listbox"
-            className="fixed z-50 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
-            style={{ top: pos.top, left: pos.left }}
-          >
+            {open && createPortal(
+        <ul
+          role="listbox"
+          className="fixed z-50 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
+          style={{ top: pos.top, left: pos.left }}
+        >
+
             {COUNTRIES.map(c => {
               const active = c.code === value
               return (
@@ -179,8 +186,7 @@ function CountrySelect({ value, onChange }) {
                 </li>
               )
             })}
-          </ul>
-        </>,
+                  </ul>,
         document.body
       )}
     </div>
@@ -500,13 +506,13 @@ function ProductCard({
             {item.price || "—"}
           </p>
         </div>
-        <button
+          <button
           type="button"
           onClick={() => setExpanded(e => !e)}
           className="press flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
           aria-label={expanded ? "Collapse" : "Edit details"}
         >
-          <Pencil className="size-4" />
+          {expanded ? <ChevronUp className="size-4" /> : <Pencil className="size-4" />}
         </button>
       </div>
 
@@ -1169,7 +1175,9 @@ export default function Upload() {
             <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-[15px] font-bold text-foreground">Products</h2>
-                <span className="text-[13px] font-medium text-muted-foreground">Tap a card to edit</span>
+                                <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
+                  Tap <Pencil className="size-3.5" /> to edit
+                </span>
               </div>
               {items.map((item, i) => (
                 <ProductCard
