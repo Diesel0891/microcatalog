@@ -121,118 +121,69 @@ function Field({ label, children, hint }) {
 
 function CountrySelect({ value, onChange }) {
   const [open, setOpen] = useState(false)
-  const buttonRef = useRef(null)
-  const dropdownRef = useRef(null)
   const [pos, setPos] = useState({ top: 0, left: 0 })
+  const wrapperRef = useRef(null)
   const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
 
-  const handleOpen = (e) => {
-    e.stopPropagation()
-    e.preventDefault()
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 6, left: rect.left })
+  const toggle = () => {
+    if (!open && wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 8, left: rect.left })
     }
-    setOpen(true)
-  }
-
-  useEffect(() => {
-    if (!open) return
-    function handlePointerDown(e) {
-      if (
-        buttonRef.current?.contains(e.target) ||
-        dropdownRef.current?.contains(e.target)
-      ) {
-        return
-      }
-      setOpen(false)
-    }
-    document.addEventListener('pointerdown', handlePointerDown)
-    return () => document.removeEventListener('pointerdown', handlePointerDown)
-  }, [open])
-
-  return (
-    <>
-      <button
-        ref={buttonRef}
-        type="button"
-        onPointerDown={handleOpen}
-        className="press flex h-[52px] w-[4.5rem] shrink-0 items-center justify-center gap-1 rounded-2xl border border-border bg-secondary/50 px-2 text-[14px] font-semibold text-foreground transition-all duration-200"
-      >
-        <span className="text-base">{selected.flag}</span>
-        <span>{selected.code}</span>
-        <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
-      </button>
-
-      {open && createPortal(
-        <div
-function CountrySelect({ value, onChange }) {
-  const [open, setOpen] = useState(false)
-  const buttonRef = useRef(null)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-  const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
-
-  const handleOpen = (e) => {
-    e.stopPropagation()
-    e.preventDefault()
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 6, left: rect.left })
-    }
-    setOpen(true)
+    setOpen(o => !o)
   }
 
   return (
-    <>
+    <div ref={wrapperRef} className="relative">
       <button
-        ref={buttonRef}
         type="button"
-        onPointerDown={handleOpen}
-        className="press flex h-[52px] w-[4.5rem] shrink-0 items-center justify-center gap-1 rounded-2xl border border-border bg-secondary/50 px-2 text-[14px] font-semibold text-foreground transition-all duration-200"
+        onClick={toggle}
+        className="press flex h-[52px] w-[72px] items-center justify-center gap-1 rounded-2xl border border-border bg-secondary/50 px-2 text-[15px] font-semibold text-foreground"
+        aria-haspopup="listbox"
+        aria-expanded={open}
       >
         <span className="text-base">{selected.flag}</span>
-        <span>{selected.code}</span>
+        <span className="text-[13px]">{selected.code}</span>
         <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
       {open && createPortal(
         <>
-          {/* Backdrop blocks all clicks to elements underneath */}
           <div
-            className="fixed inset-0 z-[99]"
-            onPointerDown={() => setOpen(false)}
+            className="fixed inset-0 z-40"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
           />
-          <div
-            className="animate-expand fixed z-[100] w-36 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)]"
+          <ul
+            role="listbox"
+            className="fixed z-50 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
             style={{ top: pos.top, left: pos.left }}
           >
             {COUNTRIES.map(c => {
               const active = c.code === value
               return (
-                <button
-                  key={c.code}
-                  type="button"
-                  onPointerDown={(e) => {
-                    e.stopPropagation()
-                    onChange(c.code)
-                    setOpen(false)
-                  }}
-                  className={cn(
-                    "press flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
-                    active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
-                  )}
-                >
-                  <span className="text-lg">{c.flag}</span>
-                  <span className="flex-1 font-medium">{c.code}</span>
-                  {active ? <Check className="size-4 text-primary" /> : null}
-                </button>
+                <li key={c.code}>
+                  <button
+                    type="button"
+                    onClick={() => { onChange(c.code); setOpen(false) }}
+                    className={cn(
+                      "press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
+                      active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
+                    )}
+                  >
+                    <span className="text-lg">{c.flag}</span>
+                    <span className="flex-1 font-medium">{c.name}</span>
+                    <span className="text-sm text-muted-foreground">{c.dial}</span>
+                    {active ? <Check className="size-4 text-primary" /> : null}
+                  </button>
+                </li>
               )
             })}
-          </div>
+          </ul>
         </>,
         document.body
       )}
-    </>
+    </div>
   )
 }
 
