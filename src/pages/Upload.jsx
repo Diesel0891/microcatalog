@@ -129,9 +129,10 @@ function CountrySelect({ value, onChange }) {
           className="press h-[52px] appearance-none rounded-2xl border border-border bg-secondary/50 px-3.5 pr-9 text-[15px] font-semibold text-foreground"
         >
           {COUNTRIES.map(c => (
-            <option key={c.code} value={c.code}>
-              {c.flag} {c.name} ({c.dial})
+                        <option key={c.code} value={c.code}>
+              {c.flag} {c.code}
             </option>
+
           ))}
         </select>
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -244,24 +245,27 @@ function ShopCard({
               />
             </Field>
 
-                          <Field label="WhatsApp number" hint="Customers message this number to order.">
-                <div className="flex gap-2.5">
+                                        <Field label="WhatsApp number">
+                <div className="flex items-start gap-2.5">
                   <CountrySelect value={countryCode} onChange={setCountryCode} />
-                  <div className="relative flex-1">
-                    <Phone className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
-                    <input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value.replace(/[^\d\s]/g, ""))}
-                      onBlur={onPhoneBlur}
-                      inputMode="tel"
-                      placeholder="801 234 5678"
-                      className={cn(inputBase, "h-[52px] py-0 pl-11")}
-                    />
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Phone className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
+                      <input
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/[^\d\s]/g, ""))}
+                        onBlur={onPhoneBlur}
+                        inputMode="tel"
+                        placeholder="801 234 5678"
+                        className={cn(inputBase, "h-[52px] py-0 pl-11")}
+                      />
+                    </div>
+                    {phoneError ? (
+                      <span className="mt-1.5 block text-xs text-destructive">{phoneError}</span>
+                    ) : null}
+                    <span className="mt-1.5 block text-xs text-muted-foreground/80">Customers message this number to order.</span>
                   </div>
                 </div>
-                {phoneError ? (
-                  <span className="mt-1.5 block text-xs text-destructive">{phoneError}</span>
-                ) : null}
               </Field>
 
           </div>
