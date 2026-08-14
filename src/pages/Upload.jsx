@@ -119,69 +119,26 @@ function Field({ label, children, hint }) {
 /* ------------------------------------------------------------------ */
 
 function CountrySelect({ value, onChange }) {
-  const [open, setOpen] = useState(false)
-  const wrapperRef = useRef(null)
-  const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
+    const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
 
-      useEffect(() => {
-      if (!open) return
-      function handlePointerDown(e) {
-        if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-          setOpen(false)
-        }
-      }
-      document.addEventListener('pointerdown', handlePointerDown, true)
-      return () => {
-        document.removeEventListener('pointerdown', handlePointerDown, true)
-      }
-    }, [open])
-
-  return (
-    <div ref={wrapperRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="press flex h-[52px] items-center gap-2 rounded-2xl border border-border bg-secondary/50 px-3.5 text-[15px] font-semibold text-foreground"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span className="rounded-md bg-card px-1.5 py-0.5 text-xs font-bold text-muted-foreground ring-1 ring-border">
-          {selected.code}
-        </span>
-        <span>{selected.dial}</span>
-        <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
-      </button>
-
-      {open && (
-        <ul
-          role="listbox"
-          className="animate-expand absolute left-0 top-[60px] z-30 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
+    return (
+      <div className="relative shrink-0">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="press h-[52px] appearance-none rounded-2xl border border-border bg-secondary/50 px-3.5 pr-9 text-[15px] font-semibold text-foreground"
         >
-          {COUNTRIES.map(c => {
-            const active = c.code === value
-            return (
-              <li key={c.code}>
-                <button
-                  type="button"
-                  onClick={() => { onChange(c.code); setOpen(false) }}
-                  className={cn(
-                    "press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
-                    active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
-                  )}
-                >
-                  <span className="text-lg">{c.flag}</span>
-                  <span className="flex-1 font-medium">{c.name}</span>
-                  <span className="text-sm text-muted-foreground">{c.dial}</span>
-                  {active ? <Check className="size-4 text-primary" /> : null}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
-  )
-}
+          {COUNTRIES.map(c => (
+            <option key={c.code} value={c.code}>
+              {c.flag} {c.name} ({c.dial})
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      </div>
+    )
+  }
+
 
 /* ------------------------------------------------------------------ */
 /*  Shop details card                                                  */
