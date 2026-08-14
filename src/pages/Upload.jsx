@@ -126,7 +126,9 @@ function CountrySelect({ value, onChange }) {
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
 
-  const handleOpen = () => {
+  const handleOpen = (e) => {
+    e.stopPropagation()
+    e.preventDefault()
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
       setPos({ top: rect.bottom + 6, left: rect.left })
@@ -154,12 +156,12 @@ function CountrySelect({ value, onChange }) {
       <button
         ref={buttonRef}
         type="button"
-        onClick={handleOpen}
-        className="press flex h-[52px] shrink-0 items-center gap-1.5 rounded-2xl border border-border bg-secondary/50 px-2.5 text-[15px] font-semibold text-foreground"
+        onPointerDown={handleOpen}
+        className="press flex h-[52px] w-[4.5rem] shrink-0 items-center justify-center gap-1 rounded-2xl border border-border bg-secondary/50 px-2 text-[14px] font-semibold text-foreground transition-all duration-200"
       >
-        <span className="text-lg">{selected.flag}</span>
+        <span className="text-base">{selected.flag}</span>
         <span>{selected.code}</span>
-        <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
       {open && createPortal(
@@ -174,7 +176,7 @@ function CountrySelect({ value, onChange }) {
               <button
                 key={c.code}
                 type="button"
-                onClick={(e) => {
+                onPointerDown={(e) => {
                   e.stopPropagation()
                   onChange(c.code)
                   setOpen(false)
@@ -197,7 +199,6 @@ function CountrySelect({ value, onChange }) {
   )
 }
 
-
 /* ------------------------------------------------------------------ */
 /*  Shop details card                                                  */
 /* ------------------------------------------------------------------ */
@@ -215,6 +216,7 @@ function ShopCard({
   onLogoUpload,
 }) {
   const [collapsed, setCollapsed] = useState(false)
+  const country = COUNTRIES.find(c => c.code === countryCode) || COUNTRIES[0]
   const logoInput = useRef(null)
 
   return (
@@ -305,7 +307,7 @@ function ShopCard({
                                         <Field label="WhatsApp number">
                 <div className="flex items-start gap-2.5">
                   <CountrySelect value={countryCode} onChange={setCountryCode} />
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     <div className="relative">
                       <Phone className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                       <input
@@ -313,8 +315,8 @@ function ShopCard({
                         onChange={(e) => setPhone(e.target.value.replace(/[^\d\s]/g, ""))}
                         onBlur={onPhoneBlur}
                         inputMode="tel"
-                        placeholder="801 234 5678"
-                        className={cn(inputBase, "h-[52px] py-0 pl-11")}
+                        placeholder={country.placeholder}
+                        className={cn(inputBase, "h-[52px] w-full py-0 pl-11")}
                       />
                     </div>
                     {phoneError ? (
