@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { uploadToCloudinary } from '../lib/cloudinary'
@@ -119,26 +120,71 @@ function Field({ label, children, hint }) {
 /* ------------------------------------------------------------------ */
 
 function CountrySelect({ value, onChange }) {
-    const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
+  const [open, setOpen] = useState(false)
+  const buttonRef = useRef(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
 
-    return (
-      <div className="relative shrink-0">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="press h-[52px] appearance-none rounded-2xl border border-border bg-secondary/50 px-3.5 pr-9 text-[15px] font-semibold text-foreground"
-        >
-          {COUNTRIES.map(c => (
-                        <option key={c.code} value={c.code}>
-              {c.flag} {c.code}
-            </option>
-
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      </div>
-    )
+  const handleOpen = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 6, left: rect.left })
+    }
+    setOpen(true)
   }
+
+  useEffect(() => {
+    if (!open) return
+    function handlePointerDown(e) {
+      if (buttonRef.current && buttonRef.current.contains(e.target)) return
+      setOpen(false)
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [open])
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={handleOpen}
+        className="press flex h-[52px] items-center gap-2 rounded-2xl border border-border bg-secondary/50 px-3.5 text-[15px] font-semibold text-foreground"
+      >
+        <span className="text-lg">{selected.flag}</span>
+        <span>{selected.code}</span>
+        <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && createPortal(
+        <div
+          className="animate-expand fixed z-[100] w-40 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)]"
+          style={{ top: pos.top, left: pos.left }}
+        >
+          {COUNTRIES.map(c => {
+            const active = c.code === value
+            return (
+              <button
+                key={c.code}
+                type="button"
+                onClick={() => { onChange(c.code); setOpen(false) }}
+                className={cn(
+                  "press flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
+                  active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
+                )}
+              >
+                <span className="text-lg">{c.flag}</span>
+                <span className="flex-1 font-medium">{c.code}</span>
+                {active ? <Check className="size-4 text-primary" /> : null}
+              </button>
+            )
+          })}
+        </div>,
+        document.body
+      )}
+    </>
+  )
+}
 
 
 /* ------------------------------------------------------------------ */
