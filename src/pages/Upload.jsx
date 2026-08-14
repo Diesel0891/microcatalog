@@ -166,33 +166,70 @@ function CountrySelect({ value, onChange }) {
 
       {open && createPortal(
         <div
-          ref={dropdownRef}
-          className="animate-expand fixed z-[100] w-36 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)]"
-          style={{ top: pos.top, left: pos.left }}
-        >
-          {COUNTRIES.map(c => {
-            const active = c.code === value
-            return (
-              <button
-                key={c.code}
-                type="button"
-                onPointerDown={(e) => {
-                  e.stopPropagation()
-                  onChange(c.code)
-                  setOpen(false)
-                }}
-                className={cn(
-                  "press flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
-                  active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
-                )}
-              >
-                <span className="text-lg">{c.flag}</span>
-                <span className="flex-1 font-medium">{c.code}</span>
-                {active ? <Check className="size-4 text-primary" /> : null}
-              </button>
-            )
-          })}
-        </div>,
+function CountrySelect({ value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const buttonRef = useRef(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
+
+  const handleOpen = (e) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 6, left: rect.left })
+    }
+    setOpen(true)
+  }
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onPointerDown={handleOpen}
+        className="press flex h-[52px] w-[4.5rem] shrink-0 items-center justify-center gap-1 rounded-2xl border border-border bg-secondary/50 px-2 text-[14px] font-semibold text-foreground transition-all duration-200"
+      >
+        <span className="text-base">{selected.flag}</span>
+        <span>{selected.code}</span>
+        <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && createPortal(
+        <>
+          {/* Backdrop blocks all clicks to elements underneath */}
+          <div
+            className="fixed inset-0 z-[99]"
+            onPointerDown={() => setOpen(false)}
+          />
+          <div
+            className="animate-expand fixed z-[100] w-36 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)]"
+            style={{ top: pos.top, left: pos.left }}
+          >
+            {COUNTRIES.map(c => {
+              const active = c.code === value
+              return (
+                <button
+                  key={c.code}
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.stopPropagation()
+                    onChange(c.code)
+                    setOpen(false)
+                  }}
+                  className={cn(
+                    "press flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
+                    active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
+                  )}
+                >
+                  <span className="text-lg">{c.flag}</span>
+                  <span className="flex-1 font-medium">{c.code}</span>
+                  {active ? <Check className="size-4 text-primary" /> : null}
+                </button>
+              )
+            })}
+          </div>
+        </>,
         document.body
       )}
     </>
