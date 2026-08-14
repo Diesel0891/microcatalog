@@ -924,7 +924,7 @@ export default function Upload() {
       }
       await new Promise(r => setTimeout(r, 600))
       setUploading(null)
-)
+
   }, [sellerUuid, sellerPhone])
 
   // Update item
