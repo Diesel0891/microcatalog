@@ -122,6 +122,7 @@ function Field({ label, children, hint }) {
 function CountrySelect({ value, onChange }) {
   const [open, setOpen] = useState(false)
   const buttonRef = useRef(null)
+  const dropdownRef = useRef(null)
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
 
@@ -136,7 +137,12 @@ function CountrySelect({ value, onChange }) {
   useEffect(() => {
     if (!open) return
     function handlePointerDown(e) {
-      if (buttonRef.current && buttonRef.current.contains(e.target)) return
+      if (
+        buttonRef.current?.contains(e.target) ||
+        dropdownRef.current?.contains(e.target)
+      ) {
+        return
+      }
       setOpen(false)
     }
     document.addEventListener('pointerdown', handlePointerDown)
@@ -149,7 +155,7 @@ function CountrySelect({ value, onChange }) {
         ref={buttonRef}
         type="button"
         onClick={handleOpen}
-        className="press flex h-[52px] items-center gap-2 rounded-2xl border border-border bg-secondary/50 px-3.5 text-[15px] font-semibold text-foreground"
+        className="press flex h-[52px] shrink-0 items-center gap-1.5 rounded-2xl border border-border bg-secondary/50 px-2.5 text-[15px] font-semibold text-foreground"
       >
         <span className="text-lg">{selected.flag}</span>
         <span>{selected.code}</span>
@@ -158,7 +164,8 @@ function CountrySelect({ value, onChange }) {
 
       {open && createPortal(
         <div
-          className="animate-expand fixed z-[100] w-40 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)]"
+          ref={dropdownRef}
+          className="animate-expand fixed z-[100] w-36 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)]"
           style={{ top: pos.top, left: pos.left }}
         >
           {COUNTRIES.map(c => {
@@ -167,7 +174,11 @@ function CountrySelect({ value, onChange }) {
               <button
                 key={c.code}
                 type="button"
-                onClick={() => { onChange(c.code); setOpen(false) }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onChange(c.code)
+                  setOpen(false)
+                }}
                 className={cn(
                   "press flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
                   active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
