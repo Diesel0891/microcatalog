@@ -123,21 +123,20 @@ function CountrySelect({ value, onChange }) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const wrapperRef = useRef(null)
+  const dropdownRef = useRef(null)
   const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
-
   const toggle = () => {
     if (!open && wrapperRef.current) {
       const rect = wrapperRef.current.getBoundingClientRect()
       setPos({ top: rect.bottom + 8, left: rect.left })
     }
     setOpen(o => !o)
-  }
-    useEffect(() => {
+  }  useEffect(() => {
     if (!open) return
     function handlePointerDown(e) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false)
-      }
+      if (wrapperRef.current && wrapperRef.current.contains(e.target)) return
+      if (dropdownRef.current && dropdownRef.current.contains(e.target)) return
+      setOpen(false)
     }
     document.addEventListener('pointerdown', handlePointerDown, true)
     return () => {
@@ -160,11 +159,12 @@ function CountrySelect({ value, onChange }) {
       </button>
 
             {open && createPortal(
-        <ul
-          role="listbox"
-          className="fixed z-50 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
-          style={{ top: pos.top, left: pos.left }}
-        >
+                  <ul
+            ref={dropdownRef}
+            role="listbox"
+            className="fixed z-50 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
+            style={{ top: pos.top, left: pos.left }}
+          >
 
             {COUNTRIES.map(c => {
               const active = c.code === value
