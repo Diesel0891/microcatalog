@@ -40,7 +40,7 @@ export async function suggestProductDetails(imageUrl) {
 3. A suggested price in Malawian Kwacha (MK) format
 
 Respond ONLY in this exact JSON format:
-{"title": "...", "description": "...", "suggestedPrice": "MK X,XXX"}`
+{"title": "...", "description": "...", "price": "MK X,XXX"}`
 
   try {
     const { base64, mimeType } = await imageUrlToBase64(imageUrl)
@@ -83,7 +83,7 @@ Respond ONLY in this exact JSON format:
     return {
       title: result.title || '',
       description: result.description || '',
-      suggestedPrice: result.suggestedPrice || ''
+            price: result.price || ''
     }
   } catch (err) {
     logger.error('AI', 'AI Suggest failed', { message: err.message })
