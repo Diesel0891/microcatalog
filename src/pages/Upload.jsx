@@ -109,7 +109,7 @@ function Field({ label, children, hint }) {
     <label className="block">
       <span className="mb-2 block text-[13px] font-semibold text-muted-foreground">{label}</span>
       {children}
-      {hint ? <span className="mt-1.5 block text-xs text-muted-foreground/80">{hint}</span> : null}
+      {hint ? <span onClick={(e) => e.preventDefault()} className="mt-1.5 block text-xs text-muted-foreground/80">{hint}</span> : null}
     </label>
   )
 }
@@ -133,19 +133,6 @@ function CountrySelect({ value, onChange }) {
     setOpen(o => !o)
   }
 
-  useEffect(() => {
-    if (!open) return
-    function handlePointerDown(e) {
-      if (wrapperRef.current && wrapperRef.current.contains(e.target)) return
-      if (dropdownRef.current && dropdownRef.current.contains(e.target)) return
-      setOpen(false)
-    }
-    document.addEventListener('pointerdown', handlePointerDown, true)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, true)
-    }
-  }, [open])
-
   return (
     <div ref={wrapperRef} className="relative">
       <button
@@ -160,8 +147,14 @@ function CountrySelect({ value, onChange }) {
         <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
-            {open && createPortal(
-                  <ul
+      {open && createPortal(
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onPointerDown={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <ul
             ref={dropdownRef}
             role="listbox"
             className="fixed z-50 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
@@ -188,9 +181,11 @@ function CountrySelect({ value, onChange }) {
                 </li>
               )
             })}
-                  </ul>,
+        </ul>
+      </>,
         document.body
       )}
+
     </div>
   )
 }
