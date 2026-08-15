@@ -131,7 +131,9 @@ function CountrySelect({ value, onChange }) {
       setPos({ top: rect.bottom + 8, left: rect.left })
     }
     setOpen(o => !o)
-  }  useEffect(() => {
+  }
+
+  useEffect(() => {
     if (!open) return
     function handlePointerDown(e) {
       if (wrapperRef.current && wrapperRef.current.contains(e.target)) return
