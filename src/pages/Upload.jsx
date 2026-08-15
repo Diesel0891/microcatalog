@@ -1,17 +1,26 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import { uploadToCloudinary } from '../lib/cloudinary'
-import { suggestProductDetails } from '../lib/ai'
-import { compressImage } from '../lib/compressImage.js'
-import { logger } from '../lib/logger.js'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Store, Camera, Sparkles, Check, ChevronDown, ChevronUp, X, Phone,
-  Pencil, Trash2, Clock, Circle, CheckCircle2, ShoppingBag,
-  ImagePlus, MoreHorizontal, Eye, Loader2, AlertCircle
+  AlertCircle, Camera, ChevronDown, ChevronUp, Copy, ImagePlus,
+  Link as LinkIcon, Loader2, PartyPopper, Pencil, Plus, Share2,
+  Sparkles, Store, Trash2, UploadCloud, X, Check
 } from 'lucide-react'
 import { cn } from '../lib/cn.js'
+import { supabase } from '../lib/supabase'
+import { uploadToCloudinary } from '../lib/cloudinary'
+import { compressImage } from '../lib/compressImage.js'
+import { suggestProductDetails } from '../lib/ai'
+import { logger } from '../lib/logger.js'
+
+const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card focus:ring-4 focus:ring-primary/10"
+
+const STATUS_META = {
+  available: { label: 'Available', badge: 'bg-success-soft text-success' },
+  reserved: { label: 'Reserved', badge: 'bg-reserved-soft text-reserved' },
+  sold: { label: 'Sold', badge: 'bg-sold-soft text-muted-foreground' },
+}
 
 const COUNTRIES = [
   { code: 'MW', flag: '🇲🇼', name: 'Malawi', dial: '+265', placeholder: '0991 234 567', digits: 9, stripLeadingZero: true },
@@ -24,808 +33,437 @@ const COUNTRIES = [
   { code: 'OTHER', flag: '🌍', name: 'Other', dial: '+', placeholder: 'e.g. +447123456789', digits: 7, stripLeadingZero: false },
 ]
 
-const STATUS_META = {
-  available: {
-    label: 'Available',
-    badge: 'bg-success-soft text-success',
-    dotIcon: CheckCircle2,
-    sheetDesc: 'Ready to buy right now',
-  },
-  reserved: {
-    label: 'Reserved',
-    badge: 'bg-reserved-soft text-reserved',
-    dotIcon: Clock,
-    sheetDesc: 'On hold for a customer',
-  },
-  sold: {
-    label: 'Sold',
-    badge: 'bg-sold-soft text-muted-foreground',
-    dotIcon: Circle,
-    sheetDesc: 'No longer available',
-  },
+const spring = { type: 'spring', stiffness: 300, damping: 30 }
+
+function cleanPhone(raw, country) {
+  let digits = (raw || '').replace(/\D/g, '')
+  if (country?.stripLeadingZero) digits = digits.replace(/^0+/, '')
+  return digits
 }
 
-const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card focus:ring-4 focus:ring-primary/10"
-
-function detectCountry() {
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-    const map = {
-      'Africa/Blantyre': 'MW', 'Africa/Lilongwe': 'MW',
-      'Africa/Lusaka': 'ZM',
-      'Africa/Harare': 'ZW',
-      'Africa/Johannesburg': 'ZA', 'Africa/Pretoria': 'ZA',
-      'Africa/Dar_es_Salaam': 'TZ',
-      'Africa/Maputo': 'MZ',
-      'Africa/Gaborone': 'BW',
-    }
-    return map[tz] || 'MW'
-  } catch {
-    return 'MW'
-  }
-}
-
-
-/* ------------------------------------------------------------------ */
-/*  Small building blocks                                              */
-/* ------------------------------------------------------------------ */
-
-function StatusBadge({ status }) {
-  const meta = STATUS_META[status]
-  const Icon = meta.dotIcon
+function ErrorBanner({ message, onDismiss }) {
+  if (!message) return null
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold tracking-tight", meta.badge)}>
-      <Icon className="size-3.5" strokeWidth={2.4} />
-      {meta.label}
-    </span>
+    <motion.div
+      role="alert"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={spring}
+      className="mb-5 flex items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+    >
+      <AlertCircle className="size-4 shrink-0" />
+      <span className="flex-1">{message}</span>
+      <button
+        onClick={onDismiss}
+        className="rounded-lg p-1 text-destructive/70 transition hover:bg-destructive/10 hover:text-destructive"
+        aria-label="Dismiss error"
+      >
+        <X className="size-4" />
+      </button>
+    </motion.div>
   )
 }
-
-function Photo({ src, alt }) {
-    const [loaded, setLoaded] = useState(false)
-    const ref = useRef(null)
-
-    useEffect(() => {
-      if (ref.current?.complete && ref.current.naturalWidth > 0) setLoaded(true)
-    }, [])
-
-    return (
-      <div className="relative size-full">
-        {!loaded && <div className="absolute inset-0 shimmer-v0" />}
-        <img
-          ref={ref}
-          src={src || '/placeholder.svg'}
-          alt={alt}
-          onLoad={() => setLoaded(true)}
-          className={cn("size-full object-cover", loaded ? "animate-photo" : "opacity-0")}
-        />
-      </div>
-    )
-  }
-
-
-function Field({ label, children, hint }) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-[13px] font-semibold text-muted-foreground">{label}</span>
-      {children}
-      {hint ? <span onClick={(e) => e.preventDefault()} className="mt-1.5 block text-xs text-muted-foreground/80">{hint}</span> : null}
-    </label>
-  )
-}
-
-
-/* ------------------------------------------------------------------ */
-/*  Country selector                                                   */
-/* ------------------------------------------------------------------ */
 
 function CountrySelect({ value, onChange }) {
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-  const wrapperRef = useRef(null)
-  const dropdownRef = useRef(null)
-  const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0]
-  const toggle = () => {
-    if (!open && wrapperRef.current) {
-      const rect = wrapperRef.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 8, left: rect.left })
-    }
-    setOpen(o => !o)
-  }
+  const buttonRef = useRef(null)
+  const country = COUNTRIES.find((item) => item.code === value) || COUNTRIES[0]
+  const rect = buttonRef.current?.getBoundingClientRect()
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={toggle}
-        className="press flex h-[52px] w-[72px] items-center justify-center gap-1 rounded-2xl border border-border bg-secondary/50 px-2 text-[15px] font-semibold text-foreground"
-        aria-haspopup="listbox"
+        onClick={() => setOpen(!open)}
+        className={cn(inputBase, 'flex items-center justify-between gap-3 text-left')}
         aria-expanded={open}
       >
-        <span className="text-base">{selected.flag}</span>
-        <span className="text-[13px]">{selected.code}</span>
-        <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
+        <span className="flex items-center gap-2">
+          <span className="text-base leading-none">{country.flag}</span>
+          <span className="font-medium">{country.code}</span>
+        </span>
+        <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
       </button>
-
       {open && createPortal(
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onPointerDown={() => setOpen(false)}
-            aria-hidden="true"
-          />
-          <ul
-            ref={dropdownRef}
+          <button aria-label="Close country menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={spring}
+            className="fixed z-50 max-h-64 overflow-auto rounded-2xl border border-border bg-card/95 p-1 shadow-[var(--shadow-lift)] backdrop-blur-xl"
+            style={{ top: (rect?.bottom || 0) + 8, left: rect?.left, width: rect?.width }}
             role="listbox"
-            className="fixed z-50 max-h-72 w-64 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)] no-scrollbar"
-            style={{ top: pos.top, left: pos.left }}
           >
-
-            {COUNTRIES.map(c => {
-              const active = c.code === value
-              return (
-                <li key={c.code}>
-                  <button
-                    type="button"
-                    onClick={() => { onChange(c.code); setOpen(false) }}
-                    className={cn(
-                      "press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] transition-colors",
-                      active ? "bg-primary/10 text-foreground" : "text-foreground hover:bg-secondary",
-                    )}
-                  >
-                    <span className="text-lg">{c.flag}</span>
-                    <span className="flex-1 font-medium">{c.name}</span>
-                    <span className="text-sm text-muted-foreground">{c.dial}</span>
-                    {active ? <Check className="size-4 text-primary" /> : null}
-                  </button>
-                </li>
-              )
-            })}
-        </ul>
-      </>,
+            {COUNTRIES.map((item) => (
+              <button
+                key={item.code}
+                type="button"
+                onClick={() => { onChange(item.code); setOpen(false) }}
+                className={cn(
+                  'flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-secondary',
+                  item.code === value && 'bg-secondary/70'
+                )}
+                role="option"
+                aria-selected={item.code === value}
+              >
+                <span className="text-base leading-none">{item.flag}</span>
+                <span className="font-medium">{item.code}</span>
+                {item.code === value && <Check className="ml-auto size-4 text-primary" />}
+              </button>
+            ))}
+          </motion.div>
+        </>,
         document.body
       )}
-
     </div>
   )
 }
 
+function UploadSheet({ open, onClose, onFiles }) {
+  const galleryRef = useRef(null)
+  const cameraRef = useRef(null)
+  if (!open) return null
 
-/* ------------------------------------------------------------------ */
-/*  Shop details card                                                  */
-/* ------------------------------------------------------------------ */
+  const receive = (event) => {
+    if (event.target.files?.length) onFiles([...event.target.files])
+    event.target.value = ''
+    onClose()
+  }
 
-function ShopCard({
-  shopName, setShopName,
-  phone, setPhone,
-  countryCode, setCountryCode,
-  logoUrl,
-  onShopNameBlur,
-  onPhoneBlur,
-  phoneError,
-  saveState,
-  highlight,
-  onLogoUpload,
-}) {
-  const [collapsed, setCollapsed] = useState(false)
-  const country = COUNTRIES.find(c => c.code === countryCode) || COUNTRIES[0]
-  const logoInput = useRef(null)
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/20 p-4 backdrop-blur-sm sm:items-center">
+      <button aria-label="Close" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <motion.div
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 40, opacity: 0 }}
+        transition={spring}
+        className="relative w-full max-w-md rounded-[24px] border border-border bg-card p-5 shadow-[var(--shadow-lift)]"
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-foreground">Add product photo</p>
+            <p className="mt-1 text-sm text-muted-foreground">Choose the best image of your product.</p>
+          </div>
+          <button onClick={onClose} className="rounded-xl p-2 text-muted-foreground transition hover:bg-secondary" aria-label="Close">
+            <X className="size-5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => galleryRef.current?.click()} className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-secondary/50 p-5 text-sm font-medium text-foreground transition hover:bg-secondary">
+            <ImagePlus className="size-6 text-primary" />Gallery
+          </button>
+          <button onClick={() => cameraRef.current?.click()} className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-secondary/50 p-5 text-sm font-medium text-foreground transition hover:bg-secondary">
+            <Camera className="size-6 text-primary" />Camera
+          </button>
+        </div>
+        <input ref={galleryRef} className="hidden" type="file" accept="image/*" multiple onChange={receive} />
+        <input ref={cameraRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={receive} />
+      </motion.div>
+    </div>,
+    document.body
+  )
+}
 
+function ProductImage({ src, alt }) {
+  const [loaded, setLoaded] = useState(false)
   return (
-    <section
-      id="shop-details"
-      className={cn(
-        "animate-enter rounded-[20px] border bg-card p-5 shadow-[var(--shadow-card)] transition-shadow",
-        highlight ? "border-primary/50 ring-4 ring-primary/10" : "border-border",
+    <div className="relative size-24 shrink-0 overflow-hidden rounded-2xl bg-secondary sm:size-28">
+      {!loaded && <div className="shimmer-v0 absolute inset-0" />}
+      {src && (
+        <img
+          src={src}
+          alt={alt || 'Product'}
+          onLoad={() => setLoaded(true)}
+          className={cn('size-full object-cover transition-opacity duration-500', loaded ? 'opacity-100' : 'opacity-0')}
+        />
       )}
-      style={{ animationDelay: "80ms" }}
-    >
-      <div className="flex items-start gap-4">
-        {/* Logo upload */}
-        <button
-          type="button"
-          onClick={() => logoInput.current?.click()}
-          className="press group relative size-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-secondary"
-          aria-label="Upload shop logo"
-        >
-          {logoUrl ? (
-            <img src={logoUrl} alt="Shop logo" className="size-full object-cover" />
-          ) : (
-            <span className="flex size-full flex-col items-center justify-center gap-0.5 text-muted-foreground">
-              <Camera className="size-5" strokeWidth={2} />
-              <span className="text-[9px] font-semibold">Logo</span>
-            </span>
-          )}
-          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-foreground/55 py-1 text-[10px] font-semibold text-background opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-            Edit
-          </span>
-        </button>
-        <input ref={logoInput} type="file" accept="image/*" className="hidden" onChange={onLogoUpload} />
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h2 className="text-lg font-bold leading-tight text-foreground">
-                {shopName || "Your shop"}
-              </h2>
-              <p className="mt-0.5 text-[13px] text-muted-foreground">Shop profile</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setCollapsed(c => !c)}
-              className="press flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
-              aria-label={collapsed ? "Expand shop details" : "Collapse shop details"}
-            >
-              <ChevronDown className={cn("size-5 transition-transform duration-300", collapsed && "-rotate-90")} />
-            </button>
-          </div>
-
-          <div className="mt-1 h-4">
-            {saveState === 'saving' ? (
-              <span className="animate-fade inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="size-1.5 animate-pulse rounded-full bg-muted-foreground/60" />
-                Saving
-              </span>
-            ) : saveState === 'saved' ? (
-              <span className="animate-fade inline-flex items-center gap-1.5 text-xs text-success">
-                <Check className="size-3.5" strokeWidth={3} />
-                Saved
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      {/* Collapsible body */}
-      <div
-        className={cn(
-          "grid transition-[grid-template-rows] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]",
-        )}
-      >
-          <div className={cn("overflow-hidden", !collapsed && "overflow-visible")}>
-
-          <div className="mt-5 space-y-5">
-            <Field label="Shop name">
-              <input
-                value={shopName}
-                onChange={(e) => setShopName(e.target.value)}
-                onBlur={onShopNameBlur}
-                placeholder="e.g. Amara Threads"
-                className={inputBase}
-              />
-            </Field>
-
-                                        <Field label="WhatsApp number">
-                <div className="flex items-start gap-2.5">
-                  <CountrySelect value={countryCode} onChange={setCountryCode} />
-                  <div className="min-w-0 flex-1">
-                    <div className="relative">
-                      <Phone className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
-                      <input
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value.replace(/[^\d\s]/g, ""))}
-                        onBlur={onPhoneBlur}
-                        inputMode="tel"
-                        placeholder={country.placeholder}
-                        className={cn(inputBase, "h-[52px] w-full py-0 pl-11")}
-                      />
-                    </div>
-                    {phoneError ? (
-                      <span className="mt-1.5 block text-xs text-destructive">{phoneError}</span>
-                    ) : null}
-                    <span className="mt-1.5 block text-xs text-muted-foreground/80">Customers message this number to order.</span>
-                  </div>
-                </div>
-              </Field>
-
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Upload section                                                   */
-/* ------------------------------------------------------------------ */
-
-function UploadSection({ onFiles, uploading, hasProducts }) {
-  const galleryInput = useRef(null)
-  const cameraInput = useRef(null)
-
-  const handleFiles = (e) => {
-    if (e.target.files?.length) onFiles(e)
-    e.target.value = ''
-  }
-
-  if (hasProducts) {
-    return (
-      <div className="animate-enter" style={{ animationDelay: '160ms' }}>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => galleryInput.current?.click()}
-            className="press group flex-1 flex items-center gap-3 rounded-[20px] border border-dashed border-primary/35 bg-primary/[0.04] p-4 text-left transition-colors hover:bg-primary/[0.07]"
-          >
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary transition-transform group-active:scale-95">
-              <ImagePlus className="size-5" strokeWidth={2} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-bold text-foreground">Gallery</span>
-              <span className="mt-0.5 block text-[13px] text-muted-foreground">Pick from photos</span>
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => cameraInput.current?.click()}
-            className="press group flex-1 flex items-center gap-3 rounded-[20px] border border-dashed border-primary/35 bg-primary/[0.04] p-4 text-left transition-colors hover:bg-primary/[0.07]"
-          >
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary transition-transform group-active:scale-95">
-              <Camera className="size-5" strokeWidth={2} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-bold text-foreground">Camera</span>
-              <span className="mt-0.5 block text-[13px] text-muted-foreground">Snap a new photo</span>
-            </span>
-          </button>
-        </div>
-        <input
-          ref={galleryInput}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={handleFiles}
-        />
-        <input
-          ref={cameraInput}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleFiles}
-        />
-        {uploading ? (
-          <div className="animate-fade mt-3 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
-            <div className="flex items-center justify-between text-[13px]">
-              <span className="font-semibold text-foreground">
-                {uploading.count} {uploading.count === 1 ? 'photo' : 'photos'} uploading
-              </span>
-              <span className="tabular-nums text-muted-foreground">{Math.round(uploading.progress)}%</span>
-            </div>
-            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
-                style={{ width: `${uploading.progress}%` }}
-              />
-            </div>
-          </div>
-        ) : null}
-      </div>
-    )
-  }
-
-  return (
-    <div className="animate-enter flex flex-col items-center rounded-[20px] border border-dashed border-border bg-card/60 px-6 py-12 text-center" style={{ animationDelay: '240ms' }}>
-      <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <Camera className="size-7" strokeWidth={2} />
-      </div>
-      <h3 className="mt-4 text-[17px] font-bold text-foreground">Add your first product</h3>
-      <p className="mx-auto mt-1.5 max-w-[16rem] text-[13px] leading-relaxed text-muted-foreground">
-        Pick from your gallery or snap a photo.
-      </p>
-      <div className="mt-5 flex w-full max-w-[16rem] gap-3">
-        <button
-          type="button"
-          onClick={() => galleryInput.current?.click()}
-          className="press group flex flex-1 items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[13px] font-bold text-primary-foreground shadow-[0_8px_24px_oklch(0.64_0.16_41/0.3)]"
-        >
-          <ImagePlus className="size-4" />
-          Gallery
-        </button>
-        <button
-          type="button"
-          onClick={() => cameraInput.current?.click()}
-          className="press group flex flex-1 items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[13px] font-bold text-primary-foreground shadow-[0_8px_24px_oklch(0.64_0.16_41/0.3)]"
-        >
-          <Camera className="size-4" />
-          Camera
-        </button>
-      </div>
-      <input
-        ref={galleryInput}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={handleFiles}
-      />
-      <input
-        ref={cameraInput}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFiles}
-      />
     </div>
   )
 }
 
-/*  Product card                                                       */
-/* ------------------------------------------------------------------ */
-
-function ProductCard({
-  item,
-  index,
-  onUpdate,
-  onDelete,
-  onOpenStatus,
-  onSuggest,
-  suggestingId,
-}) {
-  const [expanded, setExpanded] = useState(false)
+function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSuggest, suggesting }) {
+  const status = STATUS_META[item.stock_status] || STATUS_META.available
+  const fieldClass = cn(inputBase, 'mt-1.5', suggesting && 'shimmer-v0 pointer-events-none text-transparent placeholder:text-transparent')
 
   return (
-    <article
-      className="animate-enter overflow-hidden rounded-[20px] border border-border bg-card shadow-[var(--shadow-card)] transition-shadow duration-300 hover:shadow-[var(--shadow-lift)]"
-      style={{ animationDelay: `${240 + index * 60}ms` }}
-    >
-      {/* Hero photo */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary">
-        <Photo src={item.image_url} alt={item.title || "Product photo"} />
-        <button
-          type="button"
-          onClick={() => onOpenStatus(item.id)}
-          className="press absolute left-3 top-3"
-          aria-label="Change stock status"
-        >
-          <StatusBadge status={item.stock_status} />
-        </button>
-        <button
-          type="button"
-          onClick={() => setExpanded(e => !e)}
-          className="press absolute bottom-3 right-3 flex h-9 items-center gap-1.5 rounded-full bg-card/85 px-3 text-[13px] font-semibold text-foreground shadow-sm backdrop-blur-md"
-        >
-          {expanded ? "Close" : "Details"}
-          <ChevronDown className={cn("size-4 transition-transform duration-300", expanded && "rotate-180")} />
-        </button>
-      </div>
-
-      {/* Summary row */}
-      <div className="flex items-start justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <h3 className="truncate text-[16px] font-bold text-foreground">
-            {item.title || "Untitled product"}
-          </h3>
-          <p className="mt-0.5 text-[15px] font-semibold text-primary">
-            {item.price || "—"}
-          </p>
-        </div>
-          <button
-          type="button"
-          onClick={() => setExpanded(e => !e)}
-          className="press flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
-          aria-label={expanded ? "Collapse" : "Edit details"}
-        >
-          {expanded ? <ChevronUp className="size-4" /> : <Pencil className="size-4" />}
-        </button>
-      </div>
-
-      {/* Unfolding editor */}
-      <div
-        className={cn(
-          "grid transition-[grid-template-rows] duration-400 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-        )}
-      >
-        <div className="overflow-hidden">
-          <div className="space-y-4 border-t border-border px-4 pb-4 pt-4">
-            {/* Title + AI suggest */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-[13px] font-semibold text-muted-foreground">Title</span>
-                <button
-                  type="button"
-                  onClick={() => onSuggest(item.id)}
-                  disabled={suggestingId === item.id}
-                  className={cn(
-                    "press inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.06] px-3 py-1.5 text-xs font-semibold text-primary transition-colors",
-                    suggestingId === item.id && "opacity-90",
-                  )}
-                >
-                  <Sparkles className={cn("size-3.5", suggestingId === item.id && "animate-pulse")} strokeWidth={2.4} />
-                  {suggestingId === item.id ? "Thinking…" : "Suggest details"}
-                </button>
-              </div>
-              <div className="relative">
-                <input
-                  value={item.title || ''}
-                  onChange={(e) => onUpdate(item.id, { title: e.target.value })}
-                  placeholder="Name your product"
-                  className={inputBase}
-                />
-                {suggestingId === item.id ? <span className="shimmer-v0 pointer-events-none absolute inset-0 rounded-2xl" /> : null}
-              </div>
+    <motion.article layout transition={spring} className="overflow-hidden rounded-[20px] border border-border bg-card/70 shadow-[var(--shadow-lift)] backdrop-blur-xl">
+      <div className="flex gap-4 p-3">
+        <ProductImage src={item.image_url} alt={item.title} />
+        <div className="min-w-0 flex-1 py-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="truncate font-semibold text-foreground">{item.title || 'Untitled product'}</h3>
+              <p className={cn('mt-1 font-medium', item.price ? 'text-foreground' : 'text-muted-foreground')}>
+                {item.price || 'Add a price'}
+              </p>
             </div>
-
-            {/* Price + size */}
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Price">
-                <input
-                  value={item.price || ''}
-                  onChange={(e) => onUpdate(item.id, { price: e.target.value })}
-                  placeholder="e.g. MK 15,000"
-                  className={inputBase}
-                />
-              </Field>
-              <Field label="Size / specs">
-                <div className="relative">
-                  <input
-                    value={item.size_specs || ''}
-                    onChange={(e) => onUpdate(item.id, { size_specs: e.target.value })}
-                    placeholder="S, M, L"
-                    className={inputBase}
-                  />
-                  {suggestingId === item.id ? <span className="shimmer-v0 pointer-events-none absolute inset-0 rounded-2xl" /> : null}
-                </div>
-              </Field>
-            </div>
-
-            {/* Description */}
-            <Field label="Description">
-              <div className="relative">
-                <textarea
-                  value={item.description || ''}
-                  onChange={(e) => onUpdate(item.id, { description: e.target.value })}
-                  placeholder="Tell customers what makes it special"
-                  rows={3}
-                  className={cn(inputBase, "resize-none leading-relaxed")}
-                />
-                {suggestingId === item.id ? <span className="shimmer-v0 pointer-events-none absolute inset-0 rounded-2xl" /> : null}
-              </div>
-            </Field>
-
-            {/* Notes */}
-            <Field label="Notes">
-              <input
-                value={item.extra_notes || ''}
-                onChange={(e) => onUpdate(item.id, { extra_notes: e.target.value })}
-                placeholder="e.g. Ships in 3 days"
-                className={inputBase}
-              />
-            </Field>
-
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center gap-1">
               <button
-                type="button"
-                onClick={() => onOpenStatus(item.id)}
-                className="press inline-flex items-center gap-2 rounded-full bg-secondary px-3.5 py-2 text-[13px] font-semibold text-foreground"
+                onClick={onToggle}
+                className="rounded-xl p-2 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                aria-label={open ? 'Collapse product' : 'Edit product'}
               >
-                Stock: {STATUS_META[item.stock_status].label}
-                <ChevronDown className="size-4 text-muted-foreground" />
+                {open ? <ChevronUp className="size-4" /> : <Pencil className="size-4" />}
               </button>
               <button
-                type="button"
-                onClick={() => onDelete(item.id)}
-                className="press inline-flex size-10 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label="Remove product"
+                onClick={onDeleteRequest}
+                className="rounded-xl p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Delete product"
               >
                 <Trash2 className="size-4" />
               </button>
             </div>
           </div>
+          <span className={cn('mt-3 inline-flex rounded-lg px-2.5 py-1 text-xs font-medium', status.badge)}>
+            {status.label}
+          </span>
         </div>
       </div>
-    </article>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={spring}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-border p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
+                  Title
+                  <input
+                    inputMode="text"
+                    className={fieldClass}
+                    value={item.title || ''}
+                    onChange={(e) => onChange({ title: e.target.value })}
+                    placeholder="e.g. Handwoven basket"
+                  />
+                </label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Price
+                  <input
+                    inputMode="decimal"
+                    className={fieldClass}
+                    value={item.price || ''}
+                    onChange={(e) => onChange({ price: e.target.value })}
+                    placeholder="MWK 12,000"
+                  />
+                </label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Size / Specs
+                  <input
+                    inputMode="text"
+                    className={fieldClass}
+                    value={item.size_specs || ''}
+                    onChange={(e) => onChange({ size_specs: e.target.value })}
+                    placeholder="Medium, 40cm"
+                  />
+                </label>
+                <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
+                  Description
+                  <textarea
+                    inputMode="text"
+                    rows={3}
+                    className={cn(fieldClass, 'resize-none')}
+                    value={item.description || ''}
+                    onChange={(e) => onChange({ description: e.target.value })}
+                    placeholder="Describe your product"
+                  />
+                </label>
+                <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
+                  Notes
+                  <input
+                    inputMode="text"
+                    className={fieldClass}
+                    value={item.extra_notes || ''}
+                    onChange={(e) => onChange({ extra_notes: e.target.value })}
+                    placeholder="Optional details"
+                  />
+                </label>
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(STATUS_META).map(([key, meta]) => (
+                    <button
+                      key={key}
+                      onClick={() => onChange({ stock_status: key })}
+                      className={cn(
+                        'rounded-lg px-2.5 py-1 text-xs font-medium transition',
+                        item.stock_status === key ? meta.badge : 'text-muted-foreground hover:bg-secondary'
+                      )}
+                    >
+                      {meta.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={onSuggest}
+                  disabled={suggesting}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 disabled:opacity-70"
+                >
+                  <Sparkles className={cn('size-4', suggesting && 'animate-pulse')} />
+                  {suggesting ? 'Thinking…' : 'Suggest details'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.article>
   )
 }
 
-
-/* ------------------------------------------------------------------ */
-/*  Stock status bottom sheet                                          */
-/* ------------------------------------------------------------------ */
-
-function StockSheet({ current, onSelect, onClose }) {
-  const order = ['available', 'reserved', 'sold']
-  return (
-    <div className="fixed inset-0 z-50">
-      <div className="animate-backdrop absolute inset-0 bg-foreground/30 backdrop-blur-[3px]" onClick={onClose} aria-hidden />
-      <div className="animate-sheet absolute inset-x-0 bottom-0 mx-auto max-w-[440px] rounded-t-[28px] border-t border-border bg-card p-5 pb-8 shadow-[var(--shadow-sheet)]">
-        <div className="mx-auto mb-5 h-1.5 w-11 rounded-full bg-border" />
-        <div className="animate-fade mb-4 flex items-center justify-between" style={{ animationDelay: "100ms" }}>
-          <h3 className="text-lg font-bold text-foreground">Stock status</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="press flex size-9 items-center justify-center rounded-full bg-secondary text-muted-foreground"
-            aria-label="Close"
+function DeleteConfirmSheet({ open, onCancel, onConfirm }) {
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="delete-confirm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/25 p-4 backdrop-blur-sm sm:items-center"
+        >
+          <button aria-label="Cancel" className="absolute inset-0 cursor-default" onClick={onCancel} />
+          <motion.div
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={spring}
+            className="relative w-full max-w-md rounded-t-[28px] border border-border bg-card p-6 text-center shadow-[var(--shadow-lift)] sm:rounded-[28px]"
           >
-            <X className="size-4.5" />
-          </button>
-        </div>
-
-        <div className="animate-fade space-y-2.5" style={{ animationDelay: "120ms" }}>
-          {order.map(s => {
-            const meta = STATUS_META[s]
-            const Icon = meta.dotIcon
-            const active = s === current
-            return (
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+              <Trash2 className="size-6" />
+            </div>
+            <p className="text-lg font-semibold text-foreground">Remove this product?</p>
+            <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground text-pretty">
+              This will permanently remove it from your catalog.
+            </p>
+            <div className="mt-5 flex gap-3">
               <button
-                key={s}
-                type="button"
-                onClick={() => onSelect(s)}
-                className={cn(
-                  "press flex w-full items-center gap-3.5 rounded-2xl border p-4 text-left transition-all",
-                  active
-                    ? "border-primary/50 bg-primary/[0.06] ring-4 ring-primary/10"
-                    : "border-border bg-card hover:bg-secondary",
-                )}
+                onClick={onCancel}
+                className="flex-1 rounded-2xl bg-secondary/70 px-5 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
               >
-                <span
-                  className={cn(
-                    "flex size-11 items-center justify-center rounded-xl",
-                    s === "available" && "bg-success-soft text-success",
-                    s === "reserved" && "bg-reserved-soft text-reserved",
-                    s === "sold" && "bg-sold-soft text-muted-foreground",
-                  )}
-                >
-                  <Icon className="size-5" strokeWidth={2.4} />
-                </span>
-                <span className="flex-1">
-                  <span className="block text-[15px] font-bold text-foreground">{meta.label}</span>
-                  <span className="block text-[13px] text-muted-foreground">{meta.sheetDesc}</span>
-                </span>
-                <span
-                  className={cn(
-                    "flex size-6 items-center justify-center rounded-full border-2 transition-colors",
-                    active ? "border-primary bg-primary text-primary-foreground" : "border-border",
-                  )}
-                >
-                  {active ? <Check className="size-3.5" strokeWidth={3.5} /> : null}
-                </span>
+                Cancel
               </button>
-            )
-          })}
-        </div>
-      </div>
-    </div>
+              <button
+                onClick={onConfirm}
+                className="flex-1 rounded-2xl bg-destructive px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+              >
+                Remove
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
   )
 }
-
-/* ------------------------------------------------------------------ */
-/*  Success modal                                                      */
-/* ------------------------------------------------------------------ */
-
-function SuccessModal({ link, onClose }) {
-  const [copied, setCopied] = useState(false)
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center">
-      <div className="animate-backdrop absolute inset-0 bg-foreground/40 backdrop-blur-md" onClick={onClose} aria-hidden />
-      <div className="animate-sheet relative mx-auto w-full max-w-[440px] rounded-t-[28px] bg-card p-7 pb-10 text-center shadow-[var(--shadow-sheet)] sm:rounded-[28px]">
-        <div className="animate-pop mx-auto flex size-20 items-center justify-center rounded-full bg-success-soft" style={{ animationDelay: "80ms" }}>
-          <svg viewBox="0 0 24 24" className="check-draw size-9 text-success" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 className="animate-fade mt-5 text-2xl font-bold text-foreground" style={{ animationDelay: "180ms" }}>
-          Your catalog is live
-        </h2>
-        <p className="animate-fade mx-auto mt-2 max-w-xs text-[15px] leading-relaxed text-muted-foreground" style={{ animationDelay: "220ms" }}>
-          Share this link anywhere. Customers tap a product and order straight to your WhatsApp.
-        </p>
-
-        <div className="animate-fade mt-6 flex items-center gap-2 rounded-2xl border border-border bg-secondary/60 p-2 pl-4" style={{ animationDelay: "260ms" }}>
-          <span className="min-w-0 flex-1 truncate text-left text-[14px] font-medium text-foreground">{link}</span>
-          <button
-            type="button"
-            onClick={() => {
-              navigator.clipboard?.writeText(link).catch(() => {})
-              setCopied(true)
-              window.setTimeout(() => setCopied(false), 1800)
-            }}
-            className="press flex h-11 items-center gap-1.5 rounded-xl bg-card px-3.5 text-[13px] font-semibold text-foreground ring-1 ring-border"
-          >
-            {copied ? <Check className="size-4 text-success" strokeWidth={3} /> : <span>Copy</span>}
-            {copied ? "Copied" : null}
-          </button>
-        </div>
-
-        <a
-          href={link}
-          target="_blank"
-          rel="noreferrer"
-          className="press mt-3 flex h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-primary text-[16px] font-bold text-primary-foreground shadow-[0_8px_24px_oklch(0.64_0.16_41/0.35)]"
-        >
-          <Eye className="size-5" />
-          View my catalog
-        </a>
-        <button
-          type="button"
-          onClick={onClose}
-          className="press mt-2 h-11 w-full rounded-2xl text-[15px] font-semibold text-muted-foreground"
-        >
-          Back to catalog
-        </button>
-      </div>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Main Upload component                                              */
-/* ------------------------------------------------------------------ */
 
 export default function Upload() {
   const { manageToken } = useParams()
 
-  const [items, setItems] = useState([])
-  const [totalItemCount, setTotalItemCount] = useState(0)
-  const [publishing, setPublishing] = useState(false)
-  const [published, setPublished] = useState(false)
-  const [sellerPhone, setSellerPhone] = useState('')
-  const [shopName, setShopName] = useState('')
   const [seller, setSeller] = useState(null)
-  const sellerUuid = seller?.uuid
   const [loadingSeller, setLoadingSeller] = useState(true)
-  const [savedFeedback, setSavedFeedback] = useState(null)
-  const [suggestingIds, setSuggestingIds] = useState(new Set())
-  const [selectedCountry, setSelectedCountry] = useState(detectCountry())
-  const [localPhone, setLocalPhone] = useState('')
-  const [inlineError, setInlineError] = useState(null)
-  const [phoneError, setPhoneError] = useState(null)
+  const sellerUuid = seller?.uuid
+
+  const [shopName, setShopName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [countryCode, setCountryCode] = useState('MW')
   const [logoUrl, setLogoUrl] = useState('')
-  const [statusFor, setStatusFor] = useState(null)
-  const [uploading, setUploading] = useState(null)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [sellerPhone, setSellerPhone] = useState('')
   const [needsPhone, setNeedsPhone] = useState(false)
 
+  const [items, setItems] = useState([])
+  const [uploading, setUploading] = useState(null)
+  const [inlineError, setInlineError] = useState(null)
+  const [suggestingId, setSuggestingId] = useState(null)
+  const [expandedId, setExpandedId] = useState(null)
+  const [deleteTargetId, setDeleteTargetId] = useState(null)
 
-  // Load seller
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [published, setPublished] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [logoUploading, setLogoUploading] = useState(false)
+
+  const logoInputRef = useRef(null)
+  const shopSectionRef = useRef(null)
+
+  const selectedCountry = COUNTRIES.find((c) => c.code === countryCode) || COUNTRIES[0]
+  const cleanedPhone = cleanPhone(phone, selectedCountry)
+  const validPhone = countryCode === 'OTHER'
+    ? cleanedPhone.length >= selectedCountry.digits
+    : cleanedPhone.length === selectedCountry.digits
+
+  const complete = [Boolean(shopName.trim()), validPhone, items.length > 0]
+  const completeCount = complete.filter(Boolean).length
+  const canPublish = completeCount === 3
+  const shopIncomplete = !shopName.trim() || !validPhone
+
   useEffect(() => {
     async function loadSeller() {
       try {
-        const { data } = await supabase.from('sellers').select('*').eq('manage_token', manageToken).single()
+        const { data } = await supabase
+          .from('sellers')
+          .select('*')
+          .eq('manage_token', manageToken)
+          .single()
+
         if (data) {
           setSeller(data)
           localStorage.setItem('microcatalog_manage_token', manageToken)
           localStorage.setItem('microcatalog_seller_uuid', data.uuid)
           setShopName(data.shop_name || '')
           setLogoUrl(data.logo_url || '')
+
           const fullPhone = data.phone || ''
           setSellerPhone(fullPhone)
           if (fullPhone) {
-            const country = COUNTRIES.find(c => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
+            const country = COUNTRIES.find((c) => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
             if (country) {
-              setSelectedCountry(country.code)
-              setLocalPhone(fullPhone.slice(country.dial.length))
+              setCountryCode(country.code)
+              setPhone(fullPhone.slice(country.dial.length))
             } else {
-              setSelectedCountry('OTHER')
-              setLocalPhone(fullPhone.replace(/^\+/, ''))
+              setCountryCode('OTHER')
+              setPhone(fullPhone.replace(/^\+/, ''))
             }
           }
         } else {
-          const { data: legacySeller } = await supabase.from('sellers').select('*').eq('uuid', manageToken).single()
-          if (legacySeller) {
-            setSeller(legacySeller)
-            localStorage.setItem('microcatalog_manage_token', legacySeller.manage_token)
-            localStorage.setItem('microcatalog_seller_uuid', legacySeller.uuid)
-            setShopName(legacySeller.shop_name || '')
-            setLogoUrl(legacySeller.logo_url || '')
-            const fullPhone = legacySeller.phone || ''
+          const { data: legacy } = await supabase
+            .from('sellers')
+            .select('*')
+            .eq('uuid', manageToken)
+            .single()
+
+          if (legacy) {
+            setSeller(legacy)
+            localStorage.setItem('microcatalog_manage_token', legacy.manage_token)
+            localStorage.setItem('microcatalog_seller_uuid', legacy.uuid)
+            setShopName(legacy.shop_name || '')
+            setLogoUrl(legacy.logo_url || '')
+
+            const fullPhone = legacy.phone || ''
             setSellerPhone(fullPhone)
             if (fullPhone) {
-              const country = COUNTRIES.find(c => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
+              const country = COUNTRIES.find((c) => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
               if (country) {
-                setSelectedCountry(country.code)
-                setLocalPhone(fullPhone.slice(country.dial.length))
+                setCountryCode(country.code)
+                setPhone(fullPhone.slice(country.dial.length))
               } else {
-                setSelectedCountry('OTHER')
-                setLocalPhone(fullPhone.replace(/^\+/, ''))
+                setCountryCode('OTHER')
+                setPhone(fullPhone.replace(/^\+/, ''))
               }
             }
-            window.location.replace(`/#/u/${legacySeller.manage_token}`)
+            window.location.replace(`/#/u/${legacy.manage_token}`)
             return
           }
         }
@@ -838,10 +476,9 @@ export default function Upload() {
     loadSeller()
   }, [manageToken])
 
-  // Load items
   useEffect(() => {
     if (!sellerUuid) return
-    async function loadData() {
+    async function loadItems() {
       try {
         const { data, error } = await supabase
           .from('catalog_items')
@@ -850,213 +487,191 @@ export default function Upload() {
           .order('created_at', { ascending: false })
         if (error) throw error
         setItems(data || [])
-        setTotalItemCount(data?.length || 0)
       } catch (err) {
-        logger.error('Upload', 'Load data error', { message: err.message })
+        logger.error('Upload', 'Load items error', { message: err.message })
       }
     }
-    loadData()
+    loadItems()
   }, [sellerUuid])
-
-
-  const validateLocalPhone = useCallback(() => {
-    const country = COUNTRIES.find(c => c.code === selectedCountry)
-    if (!country) return false
-    let cleaned = localPhone.replace(/\D/g, '')
-    if (country.stripLeadingZero && cleaned.startsWith('0')) {
-      cleaned = cleaned.slice(1)
-    }
-    return cleaned.length === country.digits
-  }, [selectedCountry, localPhone])
 
   const autoSaveShopName = useCallback(async () => {
     const trimmed = shopName.trim()
-    if (!trimmed) return
-    await supabase.from('sellers').update({ shop_name: trimmed }).eq('uuid', sellerUuid)
-    setSavedFeedback('shopName')
-    setTimeout(() => setSavedFeedback(null), 2000)
+    if (!trimmed || !sellerUuid) return
+    try {
+      const { error } = await supabase
+        .from('sellers')
+        .update({ shop_name: trimmed })
+        .eq('uuid', sellerUuid)
+      if (error) throw error
+    } catch (err) {
+      logger.error('Upload', 'Shop name save failed', { message: err.message })
+    }
   }, [sellerUuid, shopName])
 
   const autoSavePhone = useCallback(async () => {
-    if (!validateLocalPhone()) {
-      setPhoneError('Please enter a valid phone number')
-      return
+    if (!validPhone || !sellerUuid) return
+    const fullPhone = selectedCountry.dial + cleanedPhone
+    try {
+      const { error } = await supabase
+        .from('sellers')
+        .update({ phone: fullPhone, country_code: selectedCountry.code })
+        .eq('uuid', sellerUuid)
+      if (error) throw error
+      setSellerPhone(fullPhone)
+    } catch (err) {
+      logger.error('Upload', 'Phone save failed', { message: err.message })
     }
-    setPhoneError(null)
-    const country = COUNTRIES.find(c => c.code === selectedCountry)
-    let cleaned = localPhone.replace(/\D/g, '')
-    if (country.stripLeadingZero && cleaned.startsWith('0')) {
-      cleaned = cleaned.slice(1)
-    }
-    const fullPhone = country.dial + cleaned
-    await supabase.from('sellers').update({ phone: fullPhone }).eq('uuid', sellerUuid)
-    await supabase.from('catalog_items').update({ seller_phone: fullPhone }).eq('seller_uuid', sellerUuid)
-    setSellerPhone(fullPhone)
-    setSavedFeedback('phone')
-    setTimeout(() => setSavedFeedback(null), 2000)
-  }, [sellerUuid, selectedCountry, localPhone, validateLocalPhone])
+  }, [sellerUuid, selectedCountry, cleanedPhone, validPhone])
 
-  const handleLogoUpload = useCallback(async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleLogo = useCallback(async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !sellerUuid) return
+    setInlineError(null)
+    setLogoUploading(true)
     try {
       const compressed = await compressImage(file)
       const url = await uploadToCloudinary(compressed)
       setLogoUrl(url)
-      await supabase.from('sellers').update({ logo_url: url }).eq('uuid', sellerUuid)
-      setSavedFeedback('logo')
-      setTimeout(() => setSavedFeedback(null), 2000)
+      const { error } = await supabase
+        .from('sellers')
+        .update({ logo_url: url })
+        .eq('uuid', sellerUuid)
+      if (error) throw error
     } catch (err) {
       logger.error('Upload', 'Logo upload failed', { message: err.message })
-      setInlineError('Logo upload failed. Please try again.')
+      setInlineError('We could not upload that logo. Please try again.')
+    } finally {
+      setLogoUploading(false)
     }
   }, [sellerUuid])
 
-  // File upload
-  const handleFileSelect = useCallback(async (e) => {
-    const files = Array.from(e.target.files || [])
+  const updateItem = useCallback(async (id, patch) => {
+    setItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item))
+    try {
+      const { error } = await supabase.from('catalog_items').update(patch).eq('id', id)
+      if (error) throw error
+    } catch (err) {
+      logger.error('Upload', 'Autosave failed', { itemId: id, patch, message: err.message })
+    }
+  }, [])
+
+  const handleFiles = useCallback(async (files) => {
     if (!files.length || !sellerUuid) return
-
-    setUploading({ count: files.length, progress: 0 })
     setInlineError(null)
+    setUploading({ count: files.length, progress: 0 })
 
-    const newItems = files.map((file) => ({
-      id: crypto.randomUUID(),
-      file,
-      image_url: '',
-      title: '',
-      price: '',
-      description: '',
-      size_specs: '',
-      extra_notes: '',
-      published: false,
-      seller_phone: sellerPhone || null,
-      stock_status: 'available',
-    }))
+    try {
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index]
 
-    setItems(prev => [...newItems, ...prev])
-    setTotalItemCount(prev => prev + files.length)
+        setUploading({ count: files.length, progress: Math.round(((index + 0.3) / files.length) * 100) })
+        const compressed = await compressImage(file)
 
-          let completed = 0
-      for (let i = 0; i < newItems.length; i++) {
-        const item = newItems[i]
-        try {
-          setUploading(u => u ? { ...u, progress: (i / files.length) * 100 + (0.15 / files.length) * 100 } : null)
-          const fileToUpload = await compressImage(item.file)
+        setUploading({ count: files.length, progress: Math.round(((index + 0.6) / files.length) * 100) })
+        const imageUrl = await uploadToCloudinary(compressed)
 
-          setUploading(u => u ? { ...u, progress: (i / files.length) * 100 + (0.55 / files.length) * 100 } : null)
-          const imageUrl = await uploadToCloudinary(fileToUpload)
+        setUploading({ count: files.length, progress: Math.round(((index + 0.9) / files.length) * 100) })
+        const { data: dbItem, error } = await supabase
+          .from('catalog_items')
+          .insert({
+            seller_uuid: sellerUuid,
+            image_url: imageUrl,
+            title: '',
+            price: '',
+            description: '',
+            size_specs: '',
+            extra_notes: '',
+            published: false,
+            seller_phone: sellerPhone || null,
+            stock_status: 'available',
+          })
+          .select()
+          .single()
+        if (error) throw error
 
-          setUploading(u => u ? { ...u, progress: (i / files.length) * 100 + (0.85 / files.length) * 100 } : null)
-          const { error } = await supabase
-            .from('catalog_items')
-            .insert({
-              seller_uuid: sellerUuid,
-              image_url: imageUrl,
-              title: item.title,
-              price: item.price,
-              description: item.description,
-              size_specs: item.size_specs,
-              extra_notes: item.extra_notes,
-              published: false,
-              seller_phone: sellerPhone || null,
-              stock_status: 'available',
-            })
-            .select()
-            .single()
+        setItems((current) => [...current, {
+          id: dbItem.id,
+          image_url: imageUrl,
+          title: '',
+          price: '',
+          description: '',
+          size_specs: '',
+          extra_notes: '',
+          stock_status: 'available',
+          published: false,
+          seller_phone: sellerPhone || null,
+          created_at: dbItem.created_at,
+        }])
 
-          if (error) throw error
-
-          setItems(prev => prev.map(it => it.id === item.id ? { ...it, image_url: imageUrl, file: null } : it))
-          completed++
-          setUploading(u => u ? { ...u, progress: (completed / files.length) * 100 } : null)
-        } catch (err) {
-          logger.error('Upload', 'Image upload failed', { message: err.message })
-          setInlineError('Upload failed: Please check your internet connection.')
-          setUploading(null)
-          return
-        }
+        setUploading({ count: files.length, progress: Math.round(((index + 1) / files.length) * 100) })
       }
-      await new Promise(r => setTimeout(r, 600))
+      setTimeout(() => setUploading(null), 600)
+    } catch (err) {
+      logger.error('Upload', 'Image upload failed', { message: err.message })
+      setInlineError('We could not upload that photo. Please try again.')
       setUploading(null)
-
+    }
   }, [sellerUuid, sellerPhone])
 
-  // Update item
-  const updateItem = useCallback(async (id, updates) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
-    const dbField = Object.keys(updates)[0]
+  const suggest = useCallback(async (item) => {
+    setSuggestingId(item.id)
+    setInlineError(null)
     try {
-      await supabase.from('catalog_items').update({ [dbField]: updates[dbField] }).eq('id', id)
-    } catch (err) {
-      logger.error('Upload', 'Autosave failed', { itemId: id, field: dbField, error: err.message })
-    }
-  }, [])
-
-  // Delete item
-  const deleteItem = useCallback(async (id) => {
-    setItems(prev => prev.filter(i => i.id !== id))
-    setTotalItemCount(prev => prev - 1)
-    try {
-      await supabase.from('catalog_items').delete().eq('id', id)
-    } catch (err) {
-      logger.error('Upload', 'Delete failed', { message: err.message })
-    }
-  }, [])
-
-  // AI suggest
-  const handleSuggest = useCallback(async (id) => {
-    const item = items.find(i => i.id === id)
-    if (!item) return
-    setSuggestingIds(prev => new Set(prev).add(id))
-    try {
-      const suggestion = await suggestProductDetails(item.image_url)
-      if (suggestion) {
-        setItems(prev => prev.map(i => i.id === id ? {
-          ...i,
-          title: i.title || suggestion.title || '',
-          price: i.price || suggestion.price || '',
-          description: i.description || suggestion.description || '',
-          size_specs: i.size_specs || suggestion.size_specs || '',
-        } : i))
-        await supabase.from('catalog_items').update({
-          title: suggestion.title || item.title,
-          price: suggestion.price || item.price,
-          description: suggestion.description || item.description,
-          size_specs: suggestion.size_specs || item.size_specs,
-        }).eq('id', id)
+      const details = await suggestProductDetails(item.image_url)
+      if (details) {
+        const patch = {
+          title: item.title || details.title || '',
+          price: item.price || details.price || '',
+          description: item.description || details.description || '',
+          size_specs: item.size_specs || details.size_specs || '',
+        }
+        await updateItem(item.id, patch)
       }
     } catch (err) {
       logger.error('Upload', 'AI Suggest failed', { message: err.message })
+      setInlineError('Suggestions are unavailable right now. You can still add details manually.')
     } finally {
-      setSuggestingIds(prev => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
+      setSuggestingId(null)
     }
-  }, [items])
+  }, [updateItem])
 
-  // Stock status
-  const handleStatusChange = useCallback(async (id, status) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, stock_status: status } : i))
-    try {
-      await supabase.from('catalog_items').update({ stock_status: status }).eq('id', id)
-    } catch (err) {
-      logger.error('Upload', 'Status update failed', { message: err.message })
-    }
+  const handleDeleteRequest = useCallback((id) => {
+    setDeleteTargetId(id)
   }, [])
 
-  // Publish
-  const handlePublish = useCallback(async () => {
-    if (!validateLocalPhone()) {
-      setNeedsPhone(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteTargetId) return
+    const id = deleteTargetId
+    setDeleteTargetId(null)
+    setItems((current) => current.filter((item) => item.id !== id))
+    try {
+      const { error } = await supabase.from('catalog_items').delete().eq('id', id)
+      if (error) throw error
+    } catch (err) {
+      logger.error('Upload', 'Delete failed', { itemId: id, message: err.message })
+      setInlineError('Failed to delete product. Please try again.')
+    }
+  }, [deleteTargetId])
+
+  const publish = useCallback(async () => {
+    if (!canPublish) {
+      if (shopIncomplete) {
+        setNeedsPhone(true)
+        setProfileOpen(true)
+        requestAnimationFrame(() => shopSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+      }
       return
     }
+    setInlineError(null)
     setPublishing(true)
     try {
-      await supabase.from('catalog_items').update({ published: true }).eq('seller_uuid', sellerUuid)
+      const { error } = await supabase
+        .from('catalog_items')
+        .update({ published: true })
+        .eq('seller_uuid', sellerUuid)
+      if (error) throw error
+      setItems((current) => current.map((item) => ({ ...item, published: true })))
       setPublished(true)
     } catch (err) {
       logger.error('Upload', 'Publish failed', { message: err.message })
@@ -1064,179 +679,340 @@ export default function Upload() {
     } finally {
       setPublishing(false)
     }
-  }, [sellerUuid, validateLocalPhone])
+  }, [sellerUuid, canPublish, shopIncomplete])
 
-  const catalogLink = `https://microcatalog.vercel.app/#/c/${sellerUuid}`
-
-  const activeItem = statusFor ? items.find(i => i.id === statusFor) : null
+  const storeUrl = sellerUuid ? `https://microcatalog.vercel.app/#/c/${sellerUuid}` : ''
+  const shortLink = sellerUuid ? `microcatalog.vercel.app/#/c/${sellerUuid}` : ''
 
   if (loadingSeller) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="relative mx-auto max-w-[440px] pb-32">
-        {/* Header */}
-        <header className="animate-enter sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-          <div className="flex items-center gap-3 px-5 py-3.5">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_4px_12px_oklch(0.64_0.16_41/0.3)]">
-              <Store className="size-5" strokeWidth={2.2} />
+    <main className="min-h-screen bg-background px-4 pb-28 text-foreground sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        <header className="flex items-center justify-between py-6">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Store className="size-4" />
             </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-[19px] font-bold leading-tight text-foreground">Your catalog</h1>
-              <p className="text-[13px] font-medium text-muted-foreground">
-                {totalItemCount} {totalItemCount === 1 ? "product" : "products"}
-              </p>
+            <div>
+              <p className="text-sm font-semibold">Catalog</p>
+              {shopName && <p className="text-xs text-muted-foreground">{shopName}</p>}
             </div>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen(o => !o)}
-                className="press flex size-10 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
-                aria-label="More actions"
-              >
-                <MoreHorizontal className="size-5" />
-              </button>
-              {menuOpen ? (
-                <>
-                  <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} aria-hidden />
-                  <div className="animate-expand absolute right-0 top-12 z-30 w-48 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-lift)]">
-                    <button
-                      type="button"
-                      onClick={() => { setMenuOpen(false); document.getElementById('shop-details')?.scrollIntoView({ behavior: 'smooth' }) }}
-                      className="press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] font-medium text-foreground hover:bg-secondary"
-                    >
-                      <Pencil className="size-4 text-muted-foreground" />
-                      Edit shop
-                    </button>
-                    <a
-                      href={`/#/c/${sellerUuid}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={() => setMenuOpen(false)}
-                      className="press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] font-medium text-foreground hover:bg-secondary"
-                    >
-                      <Eye className="size-4 text-muted-foreground" />
-                      Preview catalog
-                    </a>
-                  </div>
-                </>
-              ) : null}
+          </div>
+          <div className="flex items-center gap-3 rounded-full border border-border bg-card/70 px-3 py-2 backdrop-blur-xl">
+            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-secondary">
+              <motion.div
+                animate={{ width: `${(completeCount / 3) * 100}%` }}
+                transition={spring}
+                className="h-full rounded-full bg-primary"
+              />
             </div>
+            <span className="text-xs font-medium text-muted-foreground">{completeCount} of 3 complete</span>
           </div>
         </header>
 
-        {/* Body */}
-        <main className="space-y-6 px-5 pt-6">
-          {inlineError && (
-            <div className="animate-rise rounded-2xl border border-destructive/20 bg-destructive/5 p-4 flex items-start gap-2 text-[13px] leading-snug text-destructive">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" />
-              <span>{inlineError}</span>
+        <ErrorBanner message={inlineError} onDismiss={() => setInlineError(null)} />
+
+        <section ref={shopSectionRef} className="mb-8 scroll-mt-4">
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-2xl border border-border bg-card/60 p-3 text-left shadow-[var(--shadow-lift)] backdrop-blur-xl transition-all",
+              needsPhone && "ring-4 ring-primary/20 border-primary/50"
+            )}
+          >
+            <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-secondary">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Shop logo" className="size-full object-cover" />
+              ) : (
+                <Store className="size-5 text-muted-foreground" />
+              )}
             </div>
-          )}
-
-          <ShopCard
-            shopName={shopName}
-            setShopName={setShopName}
-            phone={localPhone}
-            setPhone={setLocalPhone}
-            countryCode={selectedCountry}
-            setCountryCode={setSelectedCountry}
-            logoUrl={logoUrl}
-            setLogoUrl={setLogoUrl}
-            saveState={savedFeedback === 'shopName' || savedFeedback === 'phone' || savedFeedback === 'logo' ? 'saved' : 'idle'}
-            highlight={needsPhone}
-            onLogoUpload={handleLogoUpload}
-            onShopNameBlur={autoSaveShopName}
-            onPhoneBlur={autoSavePhone}
-            phoneError={phoneError}
-          />
-
-          {needsPhone && !sellerPhone && (
-            <div className="animate-expand -mt-3 flex items-start gap-2.5 rounded-2xl border border-reserved/30 bg-reserved-soft/70 p-3.5">
-              <Phone className="mt-0.5 size-4 shrink-0 text-reserved" />
-              <p className="text-[13px] leading-relaxed text-foreground">
-                Add your WhatsApp number above so customers can reach you. It only takes a second — then you're ready to publish.
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{shopName || 'Your shop'}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {cleanedPhone ? `${selectedCountry.dial} ${cleanedPhone}` : 'No number'}
               </p>
             </div>
-          )}
+            {profileOpen ? (
+              <ChevronUp className="size-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="size-4 text-muted-foreground" />
+            )}
+          </button>
 
-          <UploadSection onFiles={handleFileSelect} uploading={uploading} hasProducts={items.length > 0} />
-
-          {items.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <h2 className="text-[15px] font-bold text-foreground">Products</h2>
-                                <span className="flex items-center gap-1 text-[13px] font-medium text-muted-foreground">
-                  Tap <Pencil className="size-3.5" /> to edit
-                </span>
-              </div>
-              {items.map((item, i) => (
-                <ProductCard
-                  key={item.id}
-                  item={item}
-                  index={i}
-                  onUpdate={updateItem}
-                  onDelete={deleteItem}
-                  onOpenStatus={setStatusFor}
-                  onSuggest={handleSuggest}
-                  suggestingId={suggestingIds.has(item.id) ? item.id : null}
-                />
-              ))}
-            </div>
-          )}
-        </main>
-
-
-
-        {/* Publish bar */}
-        <div className="fixed inset-x-0 bottom-0 z-40">
-          <div className="mx-auto max-w-[440px] px-5 pb-5">
-            <div className="rounded-[22px] border border-border/70 bg-background/80 p-2 shadow-[0_-6px_30px_oklch(0.3_0.02_60/0.1)] backdrop-blur-xl">
-              <button
-                type="button"
-                onClick={handlePublish}
-                disabled={publishing || items.length === 0}
-                className={cn(
-                  "press flex h-[56px] w-full items-center justify-center gap-2.5 rounded-2xl text-[16px] font-bold transition-all",
-                  items.length === 0
-                    ? "bg-secondary text-muted-foreground"
-                    : "bg-primary text-primary-foreground shadow-[0_8px_24px_oklch(0.64_0.16_41/0.35)]",
-                )}
+          <AnimatePresence initial={false}>
+            {profileOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={spring}
+                className="overflow-hidden"
               >
-                {publishing ? (
-                  <>
-                    <span className="size-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
-                    Publishing…
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag className="size-5" strokeWidth={2.2} />
-                    Publish catalog
-                  </>
-                )}
+                <div className="mt-3 grid gap-4 rounded-2xl border border-border bg-card/60 p-4 shadow-[var(--shadow-lift)] backdrop-blur-xl">
+                  <div className="flex items-start gap-4">
+                    <button
+                      type="button"
+                      onClick={() => logoInputRef.current?.click()}
+                      className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-secondary/50 text-muted-foreground transition hover:border-primary/40 hover:bg-secondary"
+                      aria-label="Upload shop logo"
+                    >
+                      {logoUploading ? (
+                        <div className="shimmer-v0 absolute inset-0" />
+                      ) : logoUrl ? (
+                        <motion.img
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={spring}
+                          src={logoUrl}
+                          alt="Shop logo"
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex flex-col items-center gap-1.5">
+                          <Store className="size-6" />
+                          <span className="text-[11px] font-medium">Add logo</span>
+                        </span>
+                      )}
+                    </button>
+                    <input ref={logoInputRef} className="hidden" type="file" accept="image/*" onChange={handleLogo} />
+                    <div className="flex-1">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Shop name
+                        <input
+                          className={cn(inputBase, 'mt-1.5')}
+                          value={shopName}
+                          onChange={(e) => setShopName(e.target.value)}
+                          onBlur={autoSaveShopName}
+                          placeholder="Your shop name"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-1.5 text-xs font-medium text-muted-foreground">Phone number</p>
+                    <div className="grid grid-cols-[7.5rem_1fr] gap-2">
+                      <CountrySelect
+                        value={countryCode}
+                        onChange={(code) => {
+                          const next = COUNTRIES.find((c) => c.code === code) || COUNTRIES[0]
+                          setPhone((prev) => cleanPhone(prev, next))
+                          setCountryCode(code)
+                        }}
+                      />
+                      <input
+                        className={cn(inputBase, validPhone && 'border-success/50 ring-4 ring-success/10')}
+                        value={cleanedPhone}
+                        onChange={(e) => setPhone(cleanPhone(e.target.value, selectedCountry))}
+                        onBlur={autoSavePhone}
+                        placeholder={selectedCountry.placeholder}
+                        inputMode="tel"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Products</h2>
+            {items.length > 0 && (
+              <button
+                onClick={() => setSheetOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+              >
+                <Plus className="size-4" />Add
               </button>
-            </div>
+            )}
           </div>
-        </div>
+
+          {uploading && (
+            <div className="relative z-20 mb-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-lift)]">
+              <div className="mb-2.5 flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 font-medium text-foreground">
+                  <UploadCloud className="size-4 text-primary" />
+                  {uploading.count} {uploading.count === 1 ? 'photo' : 'photos'} uploading
+                </span>
+                <span className="font-semibold tabular-nums text-primary">{uploading.progress}%</span>
+              </div>
+              <div className="h-3 w-full overflow-hidden rounded-full bg-secondary shadow-[inset_0_1px_2px_oklch(0.3_0.03_60_/_.12)]">
+                <motion.div
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${Math.max(uploading.progress, 6)}%` }}
+                  transition={spring}
+                  className="relative h-full min-w-[0.75rem] rounded-full bg-primary"
+                >
+                  <span className="shimmer-v0 absolute inset-0 rounded-full" />
+                </motion.div>
+              </div>
+            </div>
+          )}
+
+          {items.length === 0 && !uploading ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={spring}
+              className="flex flex-col items-center gap-5 rounded-[24px] border border-border bg-card/50 px-6 py-14 text-center shadow-[var(--shadow-lift)] backdrop-blur-xl"
+            >
+              <div>
+                <p className="text-lg font-semibold text-foreground text-balance">
+                  Start with your best product photo
+                </p>
+                <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground text-pretty">
+                  Your catalog is waiting for its first item.
+                </p>
+              </div>
+              <button
+                onClick={() => setSheetOpen(true)}
+                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90"
+              >
+                <Plus className="size-4" />Add product
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div layout className="flex flex-col gap-3">
+              <AnimatePresence initial={false}>
+                {items.map((item) => (
+                  <ProductCard
+                    key={item.id}
+                    item={item}
+                    open={expandedId === item.id}
+                    onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                    onChange={(patch) => updateItem(item.id, patch)}
+                    onDeleteRequest={() => handleDeleteRequest(item.id)}
+                    onSuggest={() => suggest(item)}
+                    suggesting={suggestingId === item.id}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </section>
       </div>
 
-      {activeItem && (
-        <StockSheet
-          current={activeItem.stock_status}
-          onClose={() => setStatusFor(null)}
-          onSelect={(s) => handleStatusChange(activeItem.id, s)}
-        />
-      )}
+      <AnimatePresence>
+        {sheetOpen && <UploadSheet open={sheetOpen} onClose={() => setSheetOpen(false)} onFiles={handleFiles} />}
+      </AnimatePresence>
 
-      {published && (
-        <SuccessModal link={catalogLink} onClose={() => setPublished(false)} />
+      <DeleteConfirmSheet
+        open={Boolean(deleteTargetId)}
+        onCancel={() => setDeleteTargetId(null)}
+        onConfirm={handleDeleteConfirm}
+      />
+
+      <AnimatePresence>
+        {items.length > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={spring}
+            className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/60 px-4 py-3.5 backdrop-blur-xl sm:px-6"
+          >
+            <div className="mx-auto max-w-3xl">
+              {shopIncomplete ? (
+                <button
+                  onClick={() => {
+                    setNeedsPhone(true)
+                    setProfileOpen(true)
+                    requestAnimationFrame(() => shopSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-secondary/70 px-5 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+                >
+                  Add shop details to publish <span aria-hidden>→</span>
+                </button>
+              ) : (
+                <button
+                  onClick={publish}
+                  disabled={publishing}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90 disabled:opacity-70"
+                >
+                  {publishing ? (
+                    <>
+                      <span className="size-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
+                      Publishing…
+                    </>
+                  ) : (
+                    <>
+                      <Check className="size-4" />Publish catalog
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {createPortal(
+        <AnimatePresence>
+          {published && (
+            <motion.div
+              key="publish-celebration"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/25 p-4 backdrop-blur-sm sm:items-center"
+            >
+              <button aria-label="Close" className="absolute inset-0 cursor-default" onClick={() => setPublished(false)} />
+              <motion.div
+                initial={{ y: '100%', opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: '100%', opacity: 0 }}
+                transition={spring}
+                className="relative w-full max-w-md rounded-t-[28px] border border-border bg-card p-6 text-center shadow-[var(--shadow-lift)] sm:rounded-[28px]"
+              >
+                <button onClick={() => setPublished(false)} className="absolute right-4 top-4 rounded-xl p-2 text-muted-foreground transition hover:bg-secondary" aria-label="Close">
+                  <X className="size-5" />
+                </button>
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.05 }}
+                  className="mx-auto mb-4 flex size-16 items-center justify-center rounded-3xl bg-success-soft text-success"
+                >
+                  <PartyPopper className="size-8" />
+                </motion.div>
+                <p className="text-xl font-semibold text-foreground text-balance">Your store is live!</p>
+                <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground text-pretty">
+                  Share this link with your customers and start selling.
+                </p>
+                <div className="mt-5 flex items-center gap-2 rounded-2xl border border-border bg-secondary/50 px-4 py-3 text-left">
+                  <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{shortLink}</span>
+                  <button
+                    onClick={() => { navigator?.clipboard?.writeText?.(storeUrl); setCopied(true); setTimeout(() => setCopied(false), 1600) }}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-card px-2.5 py-1.5 text-xs font-medium text-foreground shadow-[var(--shadow-lift)] transition hover:bg-secondary"
+                  >
+                    {copied ? <><Check className="size-3.5 text-success" />Copied</> : <><Copy className="size-3.5" />Copy</>}
+                  </button>
+                </div>
+                <div className="mt-5 flex flex-col gap-2">
+                  <a href={storeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90">
+                    <Share2 className="size-4" />View storefront
+                  </a>
+                  <button onClick={() => setPublished(false)} className="rounded-2xl px-5 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary">
+                    Done
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
-    </div>
+    </main>
   )
 }
