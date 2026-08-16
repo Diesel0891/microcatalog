@@ -14,7 +14,7 @@ import { compressImage } from '../lib/compressImage.js'
 import { suggestProductDetails } from '../lib/ai'
 import { logger } from '../lib/logger.js'
 
-const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/8"
+const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card"
 
 const STATUS_META = {
   available: { label: 'Available', badge: 'bg-success-soft text-success' },
@@ -1090,11 +1090,13 @@ const handleRemoveLogo = useCallback(async () => {
                         }}
                       />
                       <input
-                        className={cn(inputBase, phone.length > 0 && !validPhone && 'border-destructive ring-2 ring-destructive/15 focus:!border-destructive focus:!ring-destructive/20', validPhone && !phoneError && 'border-success ring-2 ring-success/15 focus:!border-success focus:!ring-success/20', phoneError && 'border-destructive ring-2 ring-destructive/15 focus:!border-destructive focus:!ring-destructive/20')}
+                        className={cn(inputBase, phone.length > 0 && !validPhone && 'border-destructive', validPhone && !phoneError && 'border-success', phoneError && 'border-destructive')}
                         value={phone}
                         onChange={(e) => { setPhoneError(''); setPhone((e.target.value || '').replace(/\D/g, '')) }}
                         onBlur={() => {
-                          if (!validPhone) {
+                          if (phone.length === 0) {
+                            setPhoneError('')
+                          } else if (!validPhone) {
                             setPhoneError(`Enter a valid ${selectedCountry.name} WhatsApp number`)
                           } else {
                             setPhoneError('')
