@@ -659,9 +659,11 @@ export default function Upload() {
           }
           // Migration: if localStorage has phone but Supabase doesn't, backfill
           if (!data.phone && storedPhone) {
-            const migrationCountry = COUNTRIES.find((c) => storedPhone.startsWith(c.dial) && c.code !== 'OTHER')
-            const migrationCode = migrationCountry ? migrationCountry.code : 'OTHER'
-            supabase.from('sellers').update({ phone: storedPhone, country_code: migrationCode }).eq('uuid', data.uuid).catch(() => {})
+            supabase.from('sellers').update({ phone: storedPhone }).eq('uuid', data.uuid).then(({ error }) => {
+              if (error) console.warn('Migration error:', error.message)
+            }).catch((err) => {
+              console.warn('Migration exception:', err.message)
+            })
           }
         } else {
           const { data: legacy } = await supabase
@@ -693,9 +695,11 @@ export default function Upload() {
             }
             // Migration: if localStorage has phone but Supabase doesn't, backfill
             if (!legacy.phone && storedPhone) {
-              const migrationCountry = COUNTRIES.find((c) => storedPhone.startsWith(c.dial) && c.code !== 'OTHER')
-              const migrationCode = migrationCountry ? migrationCountry.code : 'OTHER'
-              supabase.from('sellers').update({ phone: storedPhone, country_code: migrationCode }).eq('uuid', legacy.uuid).catch(() => {})
+              supabase.from('sellers').update({ phone: storedPhone }).eq('uuid', legacy.uuid).then(({ error }) => {
+                if (error) console.warn('Migration error:', error.message)
+              }).catch((err) => {
+                console.warn('Migration exception:', err.message)
+              })
             }
             window.location.replace(`/#/u/${legacy.manage_token}`)
             return
@@ -784,9 +788,12 @@ export default function Upload() {
     try {
       const { error } = await supabase
         .from('sellers')
-        .update({ phone: fullPhone, country_code: selectedCountry.code })
+        .update({ phone: fullPhone })
         .eq('uuid', sellerUuid)
-      if (error) throw error
+      if (error) {
+        console.warn('Phone save error:', error.message, error.code, error.details)
+        throw error
+      }
       setSellerPhone(fullPhone)
     } catch (err) {
       logger.error('Upload', 'Phone save failed', { attempt, message: err.message })
