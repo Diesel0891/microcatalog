@@ -494,6 +494,7 @@ export default function Upload() {
       setCountryCode('OTHER')
       setPhone(sellerPhone.replace(/^\+/, ''))
     }
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- rehydration: must not rerun when phone changes
   }, [sellerPhone])
 
   useEffect(() => {
