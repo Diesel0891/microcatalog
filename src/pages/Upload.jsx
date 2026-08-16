@@ -215,11 +215,27 @@ function ProductImage({ src, alt }) {
 }
 
 function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSuggest, suggesting }) {
+  const cardRef = useRef(null)
   const status = STATUS_META[item.stock_status] || STATUS_META.available
   const fieldClass = cn(inputBase, 'mt-1.5', suggesting && 'shimmer-v0 pointer-events-none text-transparent placeholder:text-transparent')
 
+  useEffect(() => {
+    if (!open || !cardRef.current) return
+    const timer = setTimeout(() => {
+      requestAnimationFrame(() => {
+        const rect = cardRef.current.getBoundingClientRect()
+        const stickyBarHeight = 80
+        const viewportBottom = window.innerHeight - stickyBarHeight
+        if (rect.bottom > viewportBottom) {
+          cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
+        }
+      })
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [open])
+
   return (
-    <motion.article layout transition={spring} className="overflow-hidden rounded-[20px] border border-border bg-card/70 shadow-[var(--shadow-lift)] backdrop-blur-xl">
+    <motion.article ref={cardRef} layout transition={spring} className="overflow-hidden rounded-[20px] border border-border bg-card/70 shadow-[var(--shadow-lift)] backdrop-blur-xl scroll-mb-24">
       <div className="flex gap-4 p-3">
         <ProductImage src={item.image_url} alt={item.title} />
         <div className="min-w-0 flex-1 py-1">
