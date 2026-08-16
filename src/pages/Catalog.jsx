@@ -36,6 +36,18 @@ function Catalog() {
           setSellerPhone(sellerData.phone || '')
           setShopName(sellerData.shop_name || '')
           setLogoUrl(sellerData.logo_url || '')
+
+          // Fire-and-forget view count (deduplicated per browser, 24h TTL)
+          const viewKey = `microcatalog_viewed_${sellerUuid}`
+          const lastViewed = localStorage.getItem(viewKey)
+          const now = Date.now()
+          if (!lastViewed || now - parseInt(lastViewed, 10) >= 24 * 60 * 60 * 1000) {
+            localStorage.setItem(viewKey, String(now))
+            supabase.rpc('increment_seller_counter', {
+              p_seller_uuid: sellerUuid,
+              p_field: 'view_count'
+            }).catch(() => {})
+          }
         } else {
           setSellerNotFound(true)
           setLoading(false)
@@ -219,6 +231,7 @@ function Catalog() {
         item={selectedItem}
         onWhatsApp={openWhatsApp}
         onClose={() => setSelectedItem(null)}
+        sellerUuid={sellerUuid}
       />
     </div>
   )

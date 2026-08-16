@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  AlertCircle, Camera, ChevronDown, ChevronUp, Copy, ImagePlus,
-  Link as LinkIcon, Loader2, PartyPopper, Pencil, Plus, ExternalLink,
+  AlertCircle, BarChart3, Camera, ChevronDown, ChevronRight, ChevronUp, Copy, ImagePlus,
+  Link as LinkIcon, Lightbulb, Loader2, PartyPopper, Pencil, Plus, ExternalLink,
   Sparkles, Store, Trash2, UploadCloud, X, Check
 } from 'lucide-react'
 import { cn } from '../lib/cn.js'
@@ -396,6 +396,115 @@ function DeleteConfirmSheet({ open, onCancel, onConfirm }) {
   )
 }
 
+function InsightsSheet({ open, onClose, viewCount, inquiryCount }) {
+  const rate = viewCount > 0 ? Math.round((inquiryCount / viewCount) * 1000) / 10 : 0
+  const gaugeWidth = Math.min((rate / 10) * 100, 100)
+  const gaugeColor = rate < 1 ? 'var(--muted-foreground)' : rate < 5 ? 'var(--primary)' : 'var(--success)'
+
+  const [animatedRate, setAnimatedRate] = useState(0)
+  useEffect(() => {
+    if (!open) return
+    const start = performance.now()
+    const duration = 800
+    const tick = (now) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setAnimatedRate(Math.round(rate * eased * 10) / 10)
+      if (progress < 1) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }, [open, rate])
+
+  const message = (() => {
+    if (viewCount === 0) return 'Share your catalog link to start tracking activity.'
+    if (inquiryCount === 0) return 'Your catalog is getting views. Make sure your WhatsApp number is correct and your prices are competitive.'
+    if (rate < 1) return 'Your catalog is getting views but few inquiries. Consider improving your product photos or descriptions.'
+    if (rate < 5) return 'Your catalog is converting well. Keep sharing your link to reach more customers.'
+    return 'Excellent engagement! Your catalog is highly compelling.'
+  })()
+
+  if (!open) return null
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          key="insights"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/25 p-4 backdrop-blur-sm sm:items-center"
+        >
+          <button aria-label="Close" className="absolute inset-0 cursor-default" onClick={onClose} />
+          <motion.div
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={spring}
+            className="relative w-full max-w-md rounded-t-[28px] border border-border bg-card p-6 text-center shadow-[var(--shadow-lift)] sm:rounded-[28px]"
+          >
+            <button onClick={onClose} className="absolute right-4 top-4 rounded-xl p-2 text-muted-foreground transition hover:bg-secondary" aria-label="Close">
+              <X className="size-5" />
+            </button>
+
+            <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <BarChart3 className="size-7" />
+            </div>
+            <p className="text-lg font-semibold text-foreground">Insights</p>
+
+            <div className="mt-6 rounded-[24px] border border-border bg-card/60 p-6 shadow-[var(--shadow-lift)] backdrop-blur-xl">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Inquiry Rate</p>
+              <p className="mt-2 text-4xl font-bold tracking-tight text-foreground">
+                {viewCount === 0 ? '—' : `${animatedRate.toFixed(1)}%`}
+              </p>
+
+              <div className="mt-4">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                  <motion.div
+                    initial={{ width: '0%' }}
+                    animate={{ width: `${gaugeWidth}%` }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: gaugeColor }}
+                  />
+                </div>
+                <div className="mt-1.5 flex justify-between text-[10px] font-medium text-muted-foreground">
+                  <span>0%</span>
+                  <span>5%</span>
+                  <span>10%</span>
+                </div>
+              </div>
+
+              <p className="mt-4 text-sm text-muted-foreground">
+                {inquiryCount.toLocaleString()} inquiries from {viewCount.toLocaleString()} catalog views
+              </p>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-border bg-secondary/30 p-4 text-left">
+              <div className="flex items-start gap-3">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Lightbulb className="size-4" />
+                </div>
+                <p className="text-sm leading-relaxed text-foreground">{message}</p>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="mt-5 w-full rounded-2xl bg-secondary/70 px-5 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+            >
+              Done
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  )
+}
+
 export default function Upload() {
   const { manageToken } = useParams()
 
@@ -424,6 +533,9 @@ export default function Upload() {
   const [publishing, setPublishing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
+  const [viewCount, setViewCount] = useState(0)
+  const [inquiryCount, setInquiryCount] = useState(0)
+  const [insightsOpen, setInsightsOpen] = useState(false)
 
   const logoInputRef = useRef(null)
   const shopSectionRef = useRef(null)
@@ -454,6 +566,8 @@ export default function Upload() {
           localStorage.setItem('microcatalog_seller_uuid', data.uuid)
           setShopName(data.shop_name || '')
           setLogoUrl(data.logo_url || '')
+          setViewCount(data.view_count || 0)
+          setInquiryCount(data.inquiry_count || 0)
 
           const fullPhone = data.phone || localStorage.getItem(`microcatalog_phone_${data.uuid}`) || ''
           setSellerPhone(fullPhone)
@@ -480,6 +594,8 @@ export default function Upload() {
             localStorage.setItem('microcatalog_seller_uuid', legacy.uuid)
             setShopName(legacy.shop_name || '')
             setLogoUrl(legacy.logo_url || '')
+            setViewCount(legacy.view_count || 0)
+            setInquiryCount(legacy.inquiry_count || 0)
 
             const fullPhone = legacy.phone || localStorage.getItem(`microcatalog_phone_${legacy.uuid}`) || ''
             setSellerPhone(fullPhone)
@@ -914,6 +1030,21 @@ const handleRemoveLogo = useCallback(async () => {
                           </p>
                         )}
                   </div>
+                  <button
+                    onClick={() => setInsightsOpen(true)}
+                    className="flex w-full items-center justify-between rounded-xl border border-border bg-card/40 px-4 py-3 text-left transition hover:bg-card/70"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <BarChart3 className="size-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Insights</p>
+                        <p className="text-xs text-muted-foreground">{viewCount.toLocaleString()} views · {inquiryCount.toLocaleString()} inquiries</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -1006,6 +1137,13 @@ const handleRemoveLogo = useCallback(async () => {
         open={Boolean(deleteTargetId)}
         onCancel={() => setDeleteTargetId(null)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <InsightsSheet
+        open={insightsOpen}
+        onClose={() => setInsightsOpen(false)}
+        viewCount={viewCount}
+        inquiryCount={inquiryCount}
       />
 
       <AnimatePresence>

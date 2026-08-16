@@ -20,9 +20,10 @@ import StockStatusBadge from './StockStatusBadge.jsx'
  * @param {string} props.sellerPhone - Seller's WhatsApp number.
  * @param {(item: Object) => void} props.onWhatsApp - Opens WhatsApp with pre-filled message.
  * @param {() => void} props.onClose - Closes the sheet.
+ * @param {string} props.sellerUuid - Seller UUID for analytics.
  * @returns {JSX.Element|null}
  */
-export default function ItemDetailSheet({ item, onWhatsApp, onClose }) {
+export default function ItemDetailSheet({ item, onWhatsApp, onClose, sellerUuid }) {
   return (
     <AnimatePresence>
       {item && (
@@ -101,7 +102,18 @@ export default function ItemDetailSheet({ item, onWhatsApp, onClose }) {
               {/* WhatsApp CTA */}
               <div className="pt-4">
                 <button
-                  onClick={() => onWhatsApp(item)}
+                  onClick={() => {
+                    // Fire-and-forget inquiry count
+                    if (sellerUuid) {
+                      import('../lib/supabase').then(({ supabase }) => {
+                        supabase.rpc('increment_seller_counter', {
+                          p_seller_uuid: sellerUuid,
+                          p_field: 'inquiry_count'
+                        }).catch(() => {})
+                      })
+                    }
+                    onWhatsApp(item)
+                  }}
                   className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-sm transition bg-charcoal-950 text-white hover:bg-charcoal-800 active:scale-[0.98]">
                   <MessageCircle className="w-5 h-5" strokeWidth={2} />
                   Message on WhatsApp
