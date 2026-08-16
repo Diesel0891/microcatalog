@@ -65,6 +65,28 @@ function ErrorBanner({ message, onDismiss }) {
   )
 }
 
+function CircularProgress({ value, size = 44, strokeWidth = 3.5 }) {
+  const r = (size - strokeWidth) / 2
+  const c = 2 * Math.PI * r
+  const pct = Math.round(value)
+  return (
+    <svg width={size} height={size} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} className="shrink-0">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={strokeWidth} />
+      <motion.circle
+        cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--primary)"
+        strokeWidth={strokeWidth} strokeLinecap="round" strokeDasharray={c}
+        initial={{ strokeDashoffset: c }}
+        animate={{ strokeDashoffset: c - (value / 100) * c }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+      <text x="50%" y="50%" textAnchor="middle" dy=".35em" className="text-[9px] font-bold" style={{ fill: 'var(--primary)' }}>
+        {pct}%
+      </text>
+    </svg>
+  )
+}
+
 function CountrySelect({ value, onChange }) {
   const [open, setOpen] = useState(false)
   const buttonRef = useRef(null)
@@ -728,30 +750,49 @@ const handleRemoveLogo = useCallback(async () => {
   return (
     <main className="min-h-screen bg-background px-4 pb-28 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
-        <header className="flex items-center justify-between py-6">
+        <header className="flex items-center justify-between py-5">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Store className="size-4" />
+            <div className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-black/5">
+              <img
+                src="https://res.cloudinary.com/a3udr8l4/image/upload/w_128,h_128,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png"
+                alt="Infini"
+                width={32}
+                height={32}
+                className="size-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; const fallback = e.currentTarget.parentElement.querySelector('.fallback-icon'); if (fallback) fallback.style.display = 'flex' }}
+              />
+              <div className="fallback-icon absolute inset-0 hidden items-center justify-center bg-primary text-primary-foreground">
+                <Store className="size-4" />
+              </div>
             </div>
             <div>
-              <p className="text-sm font-semibold">Catalog</p>
-              {shopName && <p className="text-xs text-muted-foreground">{shopName}</p>}
+              <p className="text-sm font-semibold">
+                {completeCount === 3 ? 'Your catalog' : "Let's set up your catalog"}
+              </p>
+              {completeCount < 3 && (
+                <p className="text-xs text-muted-foreground">Step {completeCount + 1} of 3</p>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-full border border-border bg-card/70 px-3 py-2 backdrop-blur-xl">
-            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-secondary">
+          <AnimatePresence>
+            {completeCount < 3 && (
               <motion.div
-                animate={{ width: `${(completeCount / 3) * 100}%` }}
-                transition={spring}
-                className="h-full rounded-full bg-primary"
-              />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground">{completeCount} of 3 complete</span>
-          </div>
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <CircularProgress value={(completeCount / 3) * 100} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </header>
 
         <ErrorBanner message={inlineError} onDismiss={() => setInlineError(null)} />
 
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shop details</p>
+        </div>
         <section ref={shopSectionRef} className="mb-8 scroll-mt-4">
           <button
             onClick={() => setProfileOpen(!profileOpen)}
