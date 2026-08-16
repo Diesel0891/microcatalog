@@ -19,7 +19,7 @@ const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 
 const STATUS_META = {
   available: { label: 'Available', badge: 'bg-success-soft text-success' },
   reserved: { label: 'Reserved', badge: 'bg-reserved-soft text-reserved' },
-  sold: { label: 'Sold', badge: 'bg-sold-soft text-muted-foreground' },
+  sold: { label: 'Sold', badge: 'bg-sold-soft text-sold' },
 }
 
 const COUNTRIES = [
@@ -70,6 +70,13 @@ function CountrySelect({ value, onChange }) {
   const buttonRef = useRef(null)
   const country = COUNTRIES.find((item) => item.code === value) || COUNTRIES[0]
   const rect = buttonRef.current?.getBoundingClientRect()
+
+  useEffect(() => {
+    if (!open) return
+    const handleScroll = () => setOpen(false)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [open])
 
   return (
     <div className="relative">
@@ -380,6 +387,7 @@ export default function Upload() {
   const [logoUrl, setLogoUrl] = useState('')
   const [sellerPhone, setSellerPhone] = useState('')
   const [needsPhone, setNeedsPhone] = useState(false)
+  const [phoneError, setPhoneError] = useState('')
 
   const [items, setItems] = useState([])
   const [uploading, setUploading] = useState(null)
@@ -545,6 +553,16 @@ export default function Upload() {
       setLogoUploading(false)
     }
   }, [sellerUuid])
+
+const handleRemoveLogo = useCallback(async () => {
+  if (!sellerUuid) return
+  setLogoUrl('')
+  try {
+    await supabase.from('sellers').update({ logo_url: null }).eq('uuid', sellerUuid)
+  } catch (err) {
+    logger.error('Upload', 'Logo removal failed', { message: err.message })
+  }
+}, [sellerUuid])
 
   const updateItem = useCallback(async (id, patch) => {
     setItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item))
@@ -737,7 +755,7 @@ export default function Upload() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{shopName || 'Your shop'}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {cleanedPhone ? `${selectedCountry.dial} ${cleanedPhone}` : 'No number'}
+                {!phone ? 'Add your WhatsApp number to publish' : validPhone ? `${selectedCountry.dial} ${cleanedPhone}` : 'Invalid WhatsApp number'}
               </p>
             </div>
             {profileOpen ? (
@@ -767,14 +785,24 @@ export default function Upload() {
                       {logoUploading ? (
                         <div className="shimmer-v0 absolute inset-0" />
                       ) : logoUrl ? (
-                        <motion.img
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={spring}
-                          src={logoUrl}
-                          alt="Shop logo"
-                          className="size-full object-cover"
-                        />
+                        <>
+                          <motion.img
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={spring}
+                            src={logoUrl}
+                            alt="Shop logo"
+                            className="size-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleRemoveLogo() }}
+                            className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-foreground/60 text-background backdrop-blur-sm transition hover:bg-foreground/80"
+                            aria-label="Remove logo"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </>
                       ) : (
                         <span className="flex flex-col items-center gap-1.5">
                           <Store className="size-6" />
@@ -797,8 +825,8 @@ export default function Upload() {
                     </div>
                   </div>
                   <div>
-                    <p className="mb-1.5 text-xs font-medium text-muted-foreground">Phone number</p>
                     <div className="grid grid-cols-[7.5rem_1fr] gap-2">
+                      <p className="col-span-2 mb-1.5 text-xs font-medium text-muted-foreground">WhatsApp phone number</p>
                       <CountrySelect
                         value={countryCode}
                         onChange={(code) => {
@@ -808,14 +836,27 @@ export default function Upload() {
                         }}
                       />
                       <input
-                        className={cn(inputBase, validPhone && 'border-success/50 ring-4 ring-success/10')}
-                        value={cleanedPhone}
-                        onChange={(e) => setPhone(cleanPhone(e.target.value, selectedCountry))}
-                        onBlur={autoSavePhone}
+                        className={cn(inputBase, validPhone && !phoneError && 'border-success/50 ring-4 ring-success/10', phoneError && 'border-destructive/50 ring-4 ring-destructive/10')}
+                        value={phone}
+                        onChange={(e) => { setPhoneError(''); setPhone((e.target.value || '').replace(/\D/g, '')) }}
+                        onBlur={() => {
+                          if (!validPhone) {
+                            setPhoneError(`Enter a valid ${selectedCountry.name} WhatsApp number`)
+                          } else {
+                            setPhoneError('')
+                            autoSavePhone()
+                          }
+                        }}
                         placeholder={selectedCountry.placeholder}
                         inputMode="tel"
                       />
                     </div>
+                        {phoneError && (
+                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive">
+                            <AlertCircle className="size-3.5 shrink-0" />
+                            {phoneError}
+                          </p>
+                        )}
                   </div>
                 </div>
               </motion.div>
