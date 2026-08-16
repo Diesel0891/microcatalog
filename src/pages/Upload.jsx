@@ -14,7 +14,7 @@ import { compressImage } from '../lib/compressImage.js'
 import { suggestProductDetails } from '../lib/ai'
 import { logger } from '../lib/logger.js'
 
-const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card focus:ring-4 focus:ring-primary/10"
+const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/8"
 
 const STATUS_META = {
   available: { label: 'Available', badge: 'bg-success-soft text-success' },
@@ -433,7 +433,7 @@ export default function Upload() {
           setShopName(data.shop_name || '')
           setLogoUrl(data.logo_url || '')
 
-          const fullPhone = data.phone || ''
+          const fullPhone = data.phone || localStorage.getItem(`microcatalog_phone_${data.uuid}`) || ''
           setSellerPhone(fullPhone)
           if (fullPhone) {
             const country = COUNTRIES.find((c) => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
@@ -459,7 +459,7 @@ export default function Upload() {
             setShopName(legacy.shop_name || '')
             setLogoUrl(legacy.logo_url || '')
 
-            const fullPhone = legacy.phone || ''
+            const fullPhone = legacy.phone || localStorage.getItem(`microcatalog_phone_${legacy.uuid}`) || ''
             setSellerPhone(fullPhone)
             if (fullPhone) {
               const country = COUNTRIES.find((c) => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
@@ -531,6 +531,8 @@ export default function Upload() {
   const autoSavePhone = useCallback(async () => {
     if (!validPhone || !sellerUuid) return
     const fullPhone = selectedCountry.dial + cleanedPhone
+  localStorage.setItem(`microcatalog_phone_${sellerUuid}`, fullPhone)
+  localStorage.setItem(`microcatalog_country_${sellerUuid}`, selectedCountry.code)
     try {
       const { error } = await supabase
         .from('sellers')
@@ -848,7 +850,7 @@ const handleRemoveLogo = useCallback(async () => {
                         }}
                       />
                       <input
-                        className={cn(inputBase, phone.length > 0 && !validPhone && 'border-destructive ring-4 ring-destructive/20 focus:!border-destructive focus:!ring-destructive/20', validPhone && !phoneError && 'border-success ring-4 ring-success/20 focus:!border-success focus:!ring-success/20', phoneError && 'border-destructive ring-4 ring-destructive/20 focus:!border-destructive focus:!ring-destructive/20')}
+                        className={cn(inputBase, phone.length > 0 && !validPhone && 'border-destructive ring-2 ring-destructive/15 focus:!border-destructive focus:!ring-destructive/20', validPhone && !phoneError && 'border-success ring-2 ring-success/15 focus:!border-success focus:!ring-success/20', phoneError && 'border-destructive ring-2 ring-destructive/15 focus:!border-destructive focus:!ring-destructive/20')}
                         value={phone}
                         onChange={(e) => { setPhoneError(''); setPhone((e.target.value || '').replace(/\D/g, '')) }}
                         onBlur={() => {
