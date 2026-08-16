@@ -48,7 +48,11 @@ function Catalog() {
               p_seller_uuid: sellerUuid,
               p_date: today,
               p_field: 'views'
-            }).catch(() => {})
+            }).then(({ error }) => {
+              if (error) console.warn('View tracking error:', error.message)
+            }).catch((err) => {
+              console.warn('View tracking exception:', err.message)
+            })
           }
         } else {
           setSellerNotFound(true)
@@ -234,6 +238,7 @@ function Catalog() {
         onWhatsApp={openWhatsApp}
         onClose={() => setSelectedItem(null)}
         sellerUuid={sellerUuid}
+        sellerPhone={sellerPhone}
       />
     </div>
   )

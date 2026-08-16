@@ -21,9 +21,10 @@ import StockStatusBadge from './StockStatusBadge.jsx'
  * @param {(item: Object) => void} props.onWhatsApp - Opens WhatsApp with pre-filled message.
  * @param {() => void} props.onClose - Closes the sheet.
  * @param {string} props.sellerUuid - Seller UUID for analytics.
+ * @param {string} [props.sellerPhone] - Seller's phone for CTA validation.
  * @returns {JSX.Element|null}
  */
-export default function ItemDetailSheet({ item, onWhatsApp, onClose, sellerUuid }) {
+export default function ItemDetailSheet({ item, onWhatsApp, onClose, sellerUuid, sellerPhone }) {
   return (
     <AnimatePresence>
       {item && (
@@ -101,32 +102,38 @@ export default function ItemDetailSheet({ item, onWhatsApp, onClose, sellerUuid 
 
               {/* WhatsApp CTA */}
               <div className="pt-4">
-                <button
-                  onClick={() => {
-                    // Fire-and-forget daily inquiry tracking
-                    if (sellerUuid) {
-                      const today = new Date().toISOString().slice(0, 10)
-                      import('../lib/supabase').then(({ supabase }) => {
-                        supabase.rpc('track_daily_metric', {
-                          p_seller_uuid: sellerUuid,
-                          p_date: today,
-                          p_field: 'inquiries'
-                        }).catch(() => {})
-                        // Per-product inquiry counter
-                        if (item?.id) {
-                          supabase.from('catalog_items')
-                            .update({ inquiry_count: (item.inquiry_count || 0) + 1 })
-                            .eq('id', item.id)
-                            .catch(() => {})
-                        }
-                      })
-                    }
-                    onWhatsApp(item)
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-sm transition bg-charcoal-950 text-white hover:bg-charcoal-800 active:scale-[0.98]">
-                  <MessageCircle className="w-5 h-5" strokeWidth={2} />
-                  Message on WhatsApp
-                </button>
+                {sellerPhone ? (
+                  <button
+                    onClick={() => {
+                      // Fire-and-forget daily inquiry tracking
+                      if (sellerUuid) {
+                        const today = new Date().toISOString().slice(0, 10)
+                        import('../lib/supabase').then(({ supabase }) => {
+                          supabase.rpc('track_daily_metric', {
+                            p_seller_uuid: sellerUuid,
+                            p_date: today,
+                            p_field: 'inquiries'
+                          }).catch((err) => { console.warn('Analytics error:', err) })
+                          // Per-product inquiry counter
+                          if (item?.id) {
+                            supabase.from('catalog_items')
+                              .update({ inquiry_count: (item.inquiry_count || 0) + 1 })
+                              .eq('id', item.id)
+                              .catch(() => {})
+                          }
+                        })
+                      }
+                      onWhatsApp(item)
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-sm transition bg-charcoal-950 text-white hover:bg-charcoal-800 active:scale-[0.98]">
+                    <MessageCircle className="w-5 h-5" strokeWidth={2} />
+                    Message on WhatsApp
+                  </button>
+                ) : (
+                  <div className="w-full rounded-xl border border-border bg-secondary/50 px-4 py-4 text-center">
+                    <p className="text-sm font-medium text-muted-foreground">Seller hasn't added a contact number yet</p>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

@@ -746,11 +746,11 @@ export default function Upload() {
     }
   }, [sellerUuid, shopName])
 
-  const autoSavePhone = useCallback(async () => {
+  const autoSavePhone = useCallback(async (attempt = 1) => {
     if (!validPhone || !sellerUuid) return
     const fullPhone = selectedCountry.dial + cleanedPhone
-  localStorage.setItem(`microcatalog_phone_${sellerUuid}`, fullPhone)
-  localStorage.setItem(`microcatalog_country_${sellerUuid}`, selectedCountry.code)
+    localStorage.setItem(`microcatalog_phone_${sellerUuid}`, fullPhone)
+    localStorage.setItem(`microcatalog_country_${sellerUuid}`, selectedCountry.code)
     try {
       const { error } = await supabase
         .from('sellers')
@@ -759,7 +759,10 @@ export default function Upload() {
       if (error) throw error
       setSellerPhone(fullPhone)
     } catch (err) {
-      logger.error('Upload', 'Phone save failed', { message: err.message })
+      logger.error('Upload', 'Phone save failed', { attempt, message: err.message })
+      if (attempt < 3) {
+        setTimeout(() => autoSavePhone(attempt + 1), 1000 * attempt)
+      }
     }
   }, [sellerUuid, selectedCountry, cleanedPhone, validPhone])
 
