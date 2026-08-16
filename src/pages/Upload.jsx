@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   AlertCircle, Camera, ChevronDown, ChevronUp, Copy, ImagePlus,
-  Link as LinkIcon, Loader2, PartyPopper, Pencil, Plus, Share2,
+  Link as LinkIcon, Loader2, PartyPopper, Pencil, Plus, ExternalLink,
   Sparkles, Store, Trash2, UploadCloud, X, Check
 } from 'lucide-react'
 import { cn } from '../lib/cn.js'
@@ -485,6 +485,18 @@ export default function Upload() {
   }, [manageToken])
 
   useEffect(() => {
+    if (!sellerPhone || phone) return
+    const country = COUNTRIES.find((c) => sellerPhone.startsWith(c.dial) && c.code !== 'OTHER')
+    if (country) {
+      setCountryCode(country.code)
+      setPhone(sellerPhone.slice(country.dial.length))
+    } else {
+      setCountryCode('OTHER')
+      setPhone(sellerPhone.replace(/^\+/, ''))
+    }
+  }, [sellerPhone])
+
+  useEffect(() => {
     if (!sellerUuid) return
     async function loadItems() {
       try {
@@ -825,8 +837,8 @@ const handleRemoveLogo = useCallback(async () => {
                     </div>
                   </div>
                   <div>
+                      <p className="mb-1.5 text-xs font-medium text-muted-foreground">WhatsApp phone number</p>
                     <div className="grid grid-cols-[7.5rem_1fr] gap-2">
-                      <p className="col-span-2 mb-1.5 text-xs font-medium text-muted-foreground">WhatsApp phone number</p>
                       <CountrySelect
                         value={countryCode}
                         onChange={(code) => {
@@ -836,7 +848,7 @@ const handleRemoveLogo = useCallback(async () => {
                         }}
                       />
                       <input
-                        className={cn(inputBase, validPhone && !phoneError && 'border-success/50 ring-4 ring-success/10', phoneError && 'border-destructive/50 ring-4 ring-destructive/10')}
+                        className={cn(inputBase, phone.length > 0 && !validPhone && 'border-destructive ring-4 ring-destructive/20 focus:!border-destructive focus:!ring-destructive/20', validPhone && !phoneError && 'border-success ring-4 ring-success/20 focus:!border-success focus:!ring-success/20', phoneError && 'border-destructive ring-4 ring-destructive/20 focus:!border-destructive focus:!ring-destructive/20')}
                         value={phone}
                         onChange={(e) => { setPhoneError(''); setPhone((e.target.value || '').replace(/\D/g, '')) }}
                         onBlur={() => {
@@ -1042,7 +1054,7 @@ const handleRemoveLogo = useCallback(async () => {
                 </div>
                 <div className="mt-5 flex flex-col gap-2">
                   <a href={storeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90">
-                    <Share2 className="size-4" />View storefront
+                    <ExternalLink className="size-4" />View storefront
                   </a>
                   <button onClick={() => setPublished(false)} className="rounded-2xl px-5 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary">
                     Done

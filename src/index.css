@@ -266,7 +266,7 @@
 
 /* Stock status colors */
 :root {
-  --success: oklch(0.62 0.12 156);
+  --success: oklch(0.65 0.18 156);
   --success-foreground: oklch(0.99 0.01 80);
   --success-soft: oklch(0.95 0.04 156);
   --reserved: oklch(0.66 0.13 66);
