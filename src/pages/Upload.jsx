@@ -396,10 +396,45 @@ function DeleteConfirmSheet({ open, onCancel, onConfirm }) {
   )
 }
 
-function InsightsSheet({ open, onClose, viewCount, inquiryCount }) {
-  const rate = viewCount > 0 ? Math.round((inquiryCount / viewCount) * 1000) / 10 : 0
-  const gaugeWidth = Math.min((rate / 10) * 100, 100)
-  const gaugeColor = rate < 1 ? 'var(--muted-foreground)' : rate < 5 ? 'var(--primary)' : 'var(--success)'
+function Sparkline({ data, width = 280, height = 48, barWidth = 6, gap = 3 }) {
+  const max = Math.max(...data.map((d) => d.views || 0), 1)
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      {data.map((d, i) => {
+        const h = Math.max(((d.views || 0) / max) * height, 2)
+        const x = i * (barWidth + gap)
+        const isRecent = i >= data.length - 7
+        return (
+          <motion.rect
+            key={d.date}
+            x={x}
+            y={height - h}
+            width={barWidth}
+            height={h}
+            rx={2}
+            initial={{ height: 0, y: height }}
+            animate={{ height: h, y: height - h }}
+            transition={{ duration: 0.5, delay: i * 0.03, ease: [0.22, 1, 0.36, 1] }}
+            fill={isRecent ? 'var(--primary)' : 'var(--border)'}
+          />
+        )
+      })}
+    </svg>
+  )
+}
+
+function InsightsSheet({ open, onClose, analytics, items }) {
+  const totalViews = analytics.reduce((s, d) => s + (d.views || 0), 0)
+  const totalInquiries = analytics.reduce((s, d) => s + (d.inquiries || 0), 0)
+  const rate = totalViews > 0 ? Math.round((totalInquiries / totalViews) * 1000) / 10 : 0
+
+  const prevSlice = analytics.slice(0, Math.max(analytics.length - 30, 0))
+  const prevViews = prevSlice.reduce((s, d) => s + (d.views || 0), 0)
+  const prevInquiries = prevSlice.reduce((s, d) => s + (d.inquiries || 0), 0)
+  const prevRate = prevViews > 0 ? Math.round((prevInquiries / prevViews) * 1000) / 10 : 0
+
+  const trend = prevRate === 0 ? null : rate - prevRate
+  const trendPct = prevRate === 0 ? null : Math.round(((rate - prevRate) / prevRate) * 1000) / 10
 
   const [animatedRate, setAnimatedRate] = useState(0)
   useEffect(() => {
@@ -416,9 +451,14 @@ function InsightsSheet({ open, onClose, viewCount, inquiryCount }) {
     requestAnimationFrame(tick)
   }, [open, rate])
 
+  const topProducts = [...items]
+    .filter((i) => (i.inquiry_count || 0) > 0)
+    .sort((a, b) => (b.inquiry_count || 0) - (a.inquiry_count || 0))
+    .slice(0, 3)
+
   const message = (() => {
-    if (viewCount === 0) return 'Share your catalog link to start tracking activity.'
-    if (inquiryCount === 0) return 'Your catalog is getting views. Make sure your WhatsApp number is correct and your prices are competitive.'
+    if (totalViews === 0) return 'Share your catalog link to start tracking activity.'
+    if (totalInquiries === 0) return 'Your catalog is getting views. Make sure your WhatsApp number is correct and your prices are competitive.'
     if (rate < 1) return 'Your catalog is getting views but few inquiries. Consider improving your product photos or descriptions.'
     if (rate < 5) return 'Your catalog is converting well. Keep sharing your link to reach more customers.'
     return 'Excellent engagement! Your catalog is highly compelling.'
@@ -443,7 +483,7 @@ function InsightsSheet({ open, onClose, viewCount, inquiryCount }) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={spring}
-            className="relative w-full max-w-md rounded-t-[28px] border border-border bg-card p-6 text-center shadow-[var(--shadow-lift)] sm:rounded-[28px]"
+            className="relative w-full max-w-md rounded-t-[28px] border border-border bg-card p-6 text-center shadow-[var(--shadow-lift)] sm:rounded-[28px] max-h-[85vh] overflow-y-auto"
           >
             <button onClick={onClose} className="absolute right-4 top-4 rounded-xl p-2 text-muted-foreground transition hover:bg-secondary" aria-label="Close">
               <X className="size-5" />
@@ -455,32 +495,53 @@ function InsightsSheet({ open, onClose, viewCount, inquiryCount }) {
             <p className="text-lg font-semibold text-foreground">Insights</p>
 
             <div className="mt-6 rounded-[24px] border border-border bg-card/60 p-6 shadow-[var(--shadow-lift)] backdrop-blur-xl">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Inquiry Rate</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">30-Day Inquiry Rate</p>
               <p className="mt-2 text-4xl font-bold tracking-tight text-foreground">
-                {viewCount === 0 ? '—' : `${animatedRate.toFixed(1)}%`}
+                {totalViews === 0 ? '—' : `${animatedRate.toFixed(1)}%`}
               </p>
 
-              <div className="mt-4">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                  <motion.div
-                    initial={{ width: '0%' }}
-                    animate={{ width: `${gaugeWidth}%` }}
-                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: gaugeColor }}
-                  />
+              {analytics.length > 1 && (
+                <div className="mt-4 flex justify-center">
+                  <Sparkline data={analytics} />
                 </div>
-                <div className="mt-1.5 flex justify-between text-[10px] font-medium text-muted-foreground">
-                  <span>0%</span>
-                  <span>5%</span>
-                  <span>10%</span>
-                </div>
+              )}
+
+              <div className="mt-4 flex items-center justify-center gap-1.5 text-sm">
+                {trend !== null && trend !== 0 && (
+                  <span className={cn('inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold', trend > 0 ? 'bg-success-soft text-success' : 'bg-destructive/10 text-destructive')}>
+                    {trend > 0 ? '↑' : '↓'} {Math.abs(trendPct).toFixed(1)}%
+                  </span>
+                )}
+                <span className="text-muted-foreground">
+                  {trend === null || trend === 0 ? 'Not enough historical data' : 'vs previous 30 days'}
+                </span>
               </div>
 
-              <p className="mt-4 text-sm text-muted-foreground">
-                {inquiryCount.toLocaleString()} inquiries from {viewCount.toLocaleString()} catalog views
+              <p className="mt-3 text-sm text-muted-foreground">
+                {totalInquiries.toLocaleString()} inquiries from {totalViews.toLocaleString()} views
               </p>
             </div>
+
+            {topProducts.length > 0 && (
+              <div className="mt-4 rounded-[24px] border border-border bg-card/60 p-5 shadow-[var(--shadow-lift)] backdrop-blur-xl text-left">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Top Products</p>
+                <div className="mt-3 space-y-3">
+                  {topProducts.map((product, idx) => (
+                    <div key={product.id} className="flex items-center gap-3">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-muted-foreground">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{product.title || 'Untitled'}</p>
+                      </div>
+                      <span className="text-xs font-semibold text-primary">
+                        {product.inquiry_count || 0}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-4 rounded-2xl border border-border bg-secondary/30 p-4 text-left">
               <div className="flex items-start gap-3">
@@ -533,9 +594,8 @@ export default function Upload() {
   const [publishing, setPublishing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
-  const [viewCount, setViewCount] = useState(0)
-  const [inquiryCount, setInquiryCount] = useState(0)
   const [insightsOpen, setInsightsOpen] = useState(false)
+  const [analytics, setAnalytics] = useState([])
 
   const logoInputRef = useRef(null)
   const shopSectionRef = useRef(null)
@@ -566,8 +626,7 @@ export default function Upload() {
           localStorage.setItem('microcatalog_seller_uuid', data.uuid)
           setShopName(data.shop_name || '')
           setLogoUrl(data.logo_url || '')
-          setViewCount(data.view_count || 0)
-          setInquiryCount(data.inquiry_count || 0)
+
 
           const fullPhone = data.phone || localStorage.getItem(`microcatalog_phone_${data.uuid}`) || ''
           setSellerPhone(fullPhone)
@@ -594,8 +653,7 @@ export default function Upload() {
             localStorage.setItem('microcatalog_seller_uuid', legacy.uuid)
             setShopName(legacy.shop_name || '')
             setLogoUrl(legacy.logo_url || '')
-            setViewCount(legacy.view_count || 0)
-            setInquiryCount(legacy.inquiry_count || 0)
+
 
             const fullPhone = legacy.phone || localStorage.getItem(`microcatalog_phone_${legacy.uuid}`) || ''
             setSellerPhone(fullPhone)
@@ -634,6 +692,27 @@ export default function Upload() {
     }
   // oxlint-disable-next-line react-hooks/exhaustive-deps -- rehydration: must not rerun when phone changes
   }, [sellerPhone])
+
+  useEffect(() => {
+    if (!sellerUuid) return
+    async function loadAnalytics() {
+      try {
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+        const { data, error } = await supabase
+          .from('seller_analytics')
+          .select('date, views, inquiries')
+          .eq('seller_uuid', sellerUuid)
+          .gte('date', thirtyDaysAgo.toISOString().slice(0, 10))
+          .order('date', { ascending: true })
+        if (error) throw error
+        setAnalytics(data || [])
+      } catch (err) {
+        logger.error('Upload', 'Load analytics error', { message: err.message })
+      }
+    }
+    loadAnalytics()
+  }, [sellerUuid])
 
   useEffect(() => {
     if (!sellerUuid) return
@@ -1040,7 +1119,7 @@ const handleRemoveLogo = useCallback(async () => {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-foreground">Insights</p>
-                        <p className="text-xs text-muted-foreground">{viewCount.toLocaleString()} views · {inquiryCount.toLocaleString()} inquiries</p>
+                        <p className="text-xs text-muted-foreground">30-day activity</p>
                       </div>
                     </div>
                     <ChevronRight className="size-4 text-muted-foreground" />
@@ -1142,8 +1221,8 @@ const handleRemoveLogo = useCallback(async () => {
       <InsightsSheet
         open={insightsOpen}
         onClose={() => setInsightsOpen(false)}
-        viewCount={viewCount}
-        inquiryCount={inquiryCount}
+        analytics={analytics}
+        items={items}
       />
 
       <AnimatePresence>

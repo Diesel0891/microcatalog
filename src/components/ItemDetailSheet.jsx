@@ -103,13 +103,22 @@ export default function ItemDetailSheet({ item, onWhatsApp, onClose, sellerUuid 
               <div className="pt-4">
                 <button
                   onClick={() => {
-                    // Fire-and-forget inquiry count
+                    // Fire-and-forget daily inquiry tracking
                     if (sellerUuid) {
+                      const today = new Date().toISOString().slice(0, 10)
                       import('../lib/supabase').then(({ supabase }) => {
-                        supabase.rpc('increment_seller_counter', {
+                        supabase.rpc('track_daily_metric', {
                           p_seller_uuid: sellerUuid,
-                          p_field: 'inquiry_count'
+                          p_date: today,
+                          p_field: 'inquiries'
                         }).catch(() => {})
+                        // Per-product inquiry counter
+                        if (item?.id) {
+                          supabase.from('catalog_items')
+                            .update({ inquiry_count: (item.inquiry_count || 0) + 1 })
+                            .eq('id', item.id)
+                            .catch(() => {})
+                        }
                       })
                     }
                     onWhatsApp(item)
