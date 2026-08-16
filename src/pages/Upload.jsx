@@ -766,6 +766,13 @@ export default function Upload() {
     }
   }, [sellerUuid, selectedCountry, cleanedPhone, validPhone])
 
+  // Debounced auto-save: save phone 800ms after user stops typing if valid
+  useEffect(() => {
+    if (!validPhone || !sellerUuid || !phone) return
+    const timer = setTimeout(() => autoSavePhone(), 800)
+    return () => clearTimeout(timer)
+  }, [validPhone, sellerUuid, phone, autoSavePhone])
+
   const handleLogo = useCallback(async (event) => {
     const file = event.target.files?.[0]
     event.target.value = ''

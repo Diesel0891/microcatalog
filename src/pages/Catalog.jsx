@@ -33,7 +33,8 @@ function Catalog() {
           .single()
 
         if (sellerData) {
-          setSellerPhone(sellerData.phone || '')
+          const storedPhone = localStorage.getItem(`microcatalog_phone_${sellerUuid}`) || ''
+          setSellerPhone(sellerData.phone || storedPhone)
           setShopName(sellerData.shop_name || '')
           setLogoUrl(sellerData.logo_url || '')
 
