@@ -644,7 +644,8 @@ export default function Upload() {
           setLogoUrl(data.logo_url || '')
 
 
-          const fullPhone = data.phone || localStorage.getItem(`microcatalog_phone_${data.uuid}`) || ''
+          const storedPhone = localStorage.getItem(`microcatalog_phone_${data.uuid}`) || ''
+          const fullPhone = data.phone || storedPhone
           setSellerPhone(fullPhone)
           if (fullPhone) {
             const country = COUNTRIES.find((c) => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
@@ -655,6 +656,12 @@ export default function Upload() {
               setCountryCode('OTHER')
               setPhone(fullPhone.replace(/^\+/, ''))
             }
+          }
+          // Migration: if localStorage has phone but Supabase doesn't, backfill
+          if (!data.phone && storedPhone) {
+            const migrationCountry = COUNTRIES.find((c) => storedPhone.startsWith(c.dial) && c.code !== 'OTHER')
+            const migrationCode = migrationCountry ? migrationCountry.code : 'OTHER'
+            supabase.from('sellers').update({ phone: storedPhone, country_code: migrationCode }).eq('uuid', data.uuid).catch(() => {})
           }
         } else {
           const { data: legacy } = await supabase
@@ -671,7 +678,8 @@ export default function Upload() {
             setLogoUrl(legacy.logo_url || '')
 
 
-            const fullPhone = legacy.phone || localStorage.getItem(`microcatalog_phone_${legacy.uuid}`) || ''
+            const storedPhone = localStorage.getItem(`microcatalog_phone_${legacy.uuid}`) || ''
+            const fullPhone = legacy.phone || storedPhone
             setSellerPhone(fullPhone)
             if (fullPhone) {
               const country = COUNTRIES.find((c) => fullPhone.startsWith(c.dial) && c.code !== 'OTHER')
@@ -682,6 +690,12 @@ export default function Upload() {
                 setCountryCode('OTHER')
                 setPhone(fullPhone.replace(/^\+/, ''))
               }
+            }
+            // Migration: if localStorage has phone but Supabase doesn't, backfill
+            if (!legacy.phone && storedPhone) {
+              const migrationCountry = COUNTRIES.find((c) => storedPhone.startsWith(c.dial) && c.code !== 'OTHER')
+              const migrationCode = migrationCountry ? migrationCountry.code : 'OTHER'
+              supabase.from('sellers').update({ phone: storedPhone, country_code: migrationCode }).eq('uuid', legacy.uuid).catch(() => {})
             }
             window.location.replace(`/#/u/${legacy.manage_token}`)
             return
@@ -778,6 +792,8 @@ export default function Upload() {
       logger.error('Upload', 'Phone save failed', { attempt, message: err.message })
       if (attempt < 3) {
         setTimeout(() => autoSavePhone(attempt + 1), 1000 * attempt)
+      } else {
+        setInlineError('We could not save your phone number. Please check your connection and try again.')
       }
     }
   }, [sellerUuid, selectedCountry, cleanedPhone, validPhone])
