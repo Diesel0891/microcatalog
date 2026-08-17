@@ -218,7 +218,7 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
   const cardRef = useRef(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const status = STATUS_META[item.stock_status] || STATUS_META.available
-  const fieldClass = cn(inputBase, 'field-input', suggesting && 'shimmer-v0 pointer-events-none text-transparent placeholder:text-transparent')
+  const fieldClass = cn(inputBase, 'mt-1.5', suggesting && 'shimmer-v0 pointer-events-none text-transparent placeholder:text-transparent')
 
   useEffect(() => {
     if (!open || !cardRef.current) return
@@ -291,30 +291,26 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
 
               {/* Primary fields — always visible */}
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="field-group sm:col-span-2">
+                <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
+                  Title
                   <input
-                    id={`product-title-${item.id}`}
                     inputMode="text"
                     className={fieldClass}
                     value={item.title || ''}
                     onChange={(e) => onChange({ title: e.target.value })}
-                    placeholder=" "
-                    autoComplete="off"
+                    placeholder="e.g. Handwoven basket"
                   />
-                  <label htmlFor={`product-title-${item.id}`} className="field-label">Title</label>
-                </div>
-                <div className="field-group">
+                </label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Price
                   <input
-                    id={`product-price-${item.id}`}
                     inputMode="decimal"
                     className={fieldClass}
                     value={item.price || ''}
                     onChange={(e) => onChange({ price: e.target.value })}
-                    placeholder=" "
-                    autoComplete="off"
+                    placeholder="MWK 12,000"
                   />
-                  <label htmlFor={`product-price-${item.id}`} className="field-label">Price</label>
-                </div>
+                </label>
               </div>
 
               {/* Progressive disclosure toggle */}
@@ -339,43 +335,37 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
                     className="overflow-hidden"
                   >
                     <div className="grid gap-3 pt-3 sm:grid-cols-2">
-                      <div className="field-group">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Size / Specs
                         <input
-                          id={`product-specs-${item.id}`}
                           inputMode="text"
                           className={fieldClass}
                           value={item.size_specs || ''}
                           onChange={(e) => onChange({ size_specs: e.target.value })}
-                          placeholder=" "
-                          autoComplete="off"
+                          placeholder="Medium, 40cm"
                         />
-                        <label htmlFor={`product-specs-${item.id}`} className="field-label">Size / Specs</label>
-                      </div>
-                      <div className="field-group-textarea sm:col-span-2">
+                      </label>
+                      <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
+                        Description
                         <textarea
-                          id={`product-desc-${item.id}`}
                           inputMode="text"
                           rows={3}
                           className={cn(fieldClass, 'resize-none')}
                           value={item.description || ''}
                           onChange={(e) => onChange({ description: e.target.value })}
-                          placeholder=" "
-                          autoComplete="off"
+                          placeholder="Describe your product"
                         />
-                        <label htmlFor={`product-desc-${item.id}`} className="field-label">Description</label>
-                      </div>
-                      <div className="field-group sm:col-span-2">
+                      </label>
+                      <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
+                        Notes
                         <input
-                          id={`product-notes-${item.id}`}
                           inputMode="text"
                           className={fieldClass}
                           value={item.extra_notes || ''}
                           onChange={(e) => onChange({ extra_notes: e.target.value })}
-                          placeholder=" "
-                          autoComplete="off"
+                          placeholder="Optional details"
                         />
-                        <label htmlFor={`product-notes-${item.id}`} className="field-label">Notes</label>
-                      </div>
+                      </label>
                     </div>
                   </motion.div>
                 )}
@@ -1158,21 +1148,20 @@ const handleRemoveLogo = useCallback(async () => {
                     </button>
                     <input ref={logoInputRef} className="hidden" type="file" accept="image/*" onChange={handleLogo} />
                     <div className="flex-1">
-                      <div className="field-group">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Shop name
                         <input
-                          id="shop-name"
-                          className={cn(inputBase, 'field-input')}
+                          className={cn(inputBase, 'mt-1.5')}
                           value={shopName}
                           onChange={(e) => setShopName(e.target.value)}
                           onBlur={autoSaveShopName}
-                          placeholder=" "
-                          autoComplete="off"
+                          placeholder="Your shop name"
                         />
-                        <label htmlFor="shop-name" className="field-label">Shop name</label>
-                      </div>
+                      </label>
                     </div>
                   </div>
-                  <div className="field-group">
+                  <div>
+                      <p className="mb-1.5 text-xs font-medium text-muted-foreground">WhatsApp phone number</p>
                     <div className="grid grid-cols-[7.5rem_1fr] gap-2">
                       <CountrySelect
                         value={countryCode}
@@ -1183,8 +1172,7 @@ const handleRemoveLogo = useCallback(async () => {
                         }}
                       />
                       <input
-                        id="shop-phone"
-                        className={cn(inputBase, 'field-input', phone.length > 0 && !validPhone && 'border-destructive', validPhone && !phoneError && 'border-success', phoneError && 'border-destructive')}
+                        className={cn(inputBase, phone.length > 0 && !validPhone && 'border-destructive', validPhone && !phoneError && 'border-success', phoneError && 'border-destructive')}
                         value={phone}
                         onChange={(e) => { setPhoneError(''); setPhone((e.target.value || '').replace(/\D/g, '')) }}
                         onBlur={() => {
@@ -1197,18 +1185,16 @@ const handleRemoveLogo = useCallback(async () => {
                             autoSavePhone()
                           }
                         }}
-                        placeholder=" "
+                        placeholder={selectedCountry.placeholder}
                         inputMode="tel"
-                        autoComplete="off"
                       />
                     </div>
-                    <label htmlFor="shop-phone" className="field-label">WhatsApp number</label>
-                    {phoneError && (
-                      <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive">
-                        <AlertCircle className="size-3.5 shrink-0" />
-                        {phoneError}
-                      </p>
-                    )}
+                        {phoneError && (
+                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive">
+                            <AlertCircle className="size-3.5 shrink-0" />
+                            {phoneError}
+                          </p>
+                        )}
                   </div>
                   <button
                     onClick={() => setInsightsOpen(true)}
