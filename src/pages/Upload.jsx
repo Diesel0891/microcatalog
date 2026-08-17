@@ -231,9 +231,9 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
           cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
         }
       })
-    }, 200)
+    }, 350)
     return () => clearTimeout(timer)
-  }, [open])
+  }, [open, detailsOpen])
 
   return (
     <motion.article ref={cardRef} layout transition={spring} className="overflow-hidden rounded-[20px] border border-border bg-card/70 shadow-[var(--shadow-lift)] backdrop-blur-xl scroll-mb-24">
