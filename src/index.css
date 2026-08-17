@@ -404,3 +404,44 @@
   .shimmer-v0 { animation: none; }
   .press:active { transform: none; }
 }
+
+/* ===== Phase 1: CSS Foundation + Micro-Interactions ===== */
+
+/* Gap 1: Input focus micro-interactions */
+.field-input:focus {
+  transform: scale(1.01);
+  box-shadow: 0 0 0 3px oklch(0.64 0.16 41 / 0.12), 0 4px 16px oklch(0.3 0.02 60 / 0.06);
+}
+
+/* Gap 2: Error banner entrance animation */
+@keyframes error-banner-enter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.error-banner-enter {
+  animation: error-banner-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Gap 3: Celebration animation for new product */
+@keyframes product-enter {
+  0%   { opacity: 0; transform: scale(0.92); }
+  60%  { opacity: 1; transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.product-enter {
+  animation: product-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Gap 5: Staggered entrance delays */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+/* Reduced motion for Phase 1 animations */
+@media (prefers-reduced-motion: reduce) {
+  .field-input:focus { transform: none; box-shadow: none; }
+  .error-banner-enter { animation: none; opacity: 1; transform: none; }
+  .product-enter { animation: none; opacity: 1; transform: none; }
+}
