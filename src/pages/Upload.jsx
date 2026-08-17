@@ -214,7 +214,7 @@ function ProductImage({ src, alt }) {
   )
 }
 
-function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSuggest, suggesting }) {
+function ProductCard({ item, open, isNew, onToggle, onChange, onDeleteRequest, onSuggest, suggesting }) {
   const cardRef = useRef(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const status = STATUS_META[item.stock_status] || STATUS_META.available
@@ -236,7 +236,7 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
   }, [open, detailsOpen])
 
   return (
-    <motion.article ref={cardRef} layout transition={spring} className="overflow-hidden rounded-[20px] border border-border bg-card/70 shadow-[var(--shadow-lift)] backdrop-blur-xl scroll-mb-24">
+    <motion.article ref={cardRef} layout transition={spring} className={cn("overflow-hidden rounded-[20px] border border-border bg-card/70 shadow-[var(--shadow-lift)] backdrop-blur-xl scroll-mb-24", isNew && "product-enter")}>
       <div className="flex gap-4 p-3">
         <ProductImage src={item.image_url} alt={item.title} />
         <div className="min-w-0 flex-1 py-1">
@@ -668,6 +668,7 @@ export default function Upload() {
   const [suggestingId, setSuggestingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [deleteTargetId, setDeleteTargetId] = useState(null)
+  const [newItemIds, setNewItemIds] = useState(new Set())
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -691,6 +692,13 @@ export default function Upload() {
   const completeCount = complete.filter(Boolean).length
   const canPublish = completeCount === 3
   const shopIncomplete = !shopName.trim() || !validPhone
+
+  // Auto-clear new-item celebration after 1.5s
+  useEffect(() => {
+    if (newItemIds.size === 0) return
+    const timer = setTimeout(() => setNewItemIds(new Set()), 1500)
+    return () => clearTimeout(timer)
+  }, [newItemIds])
 
   useEffect(() => {
     async function loadSeller() {
@@ -967,6 +975,7 @@ const handleRemoveLogo = useCallback(async () => {
           seller_phone: sellerPhone || null,
           created_at: dbItem.created_at,
         }])
+        setNewItemIds((prev) => new Set(prev).add(dbItem.id))
 
         setUploading({ count: files.length, progress: Math.round(((index + 1) / files.length) * 100) })
       }
@@ -1311,6 +1320,7 @@ const handleRemoveLogo = useCallback(async () => {
                     key={item.id}
                     item={item}
                     open={expandedId === item.id}
+                    isNew={newItemIds.has(item.id)}
                     onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
                     onChange={(patch) => updateItem(item.id, patch)}
                     onDeleteRequest={() => handleDeleteRequest(item.id)}
