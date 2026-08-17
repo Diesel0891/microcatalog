@@ -242,10 +242,19 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
         <div className="min-w-0 flex-1 py-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate font-semibold text-foreground">{item.title || 'Untitled product'}</h3>
+              <h3 className="truncate font-semibold text-foreground">{item.title || 'What are you selling?'}</h3>
               <p className={cn('mt-1 font-medium', item.price ? 'text-foreground' : 'text-muted-foreground')}>
-                {item.price || 'Add a price'}
+                {item.price || 'Name your price'}
               </p>
+              {(() => {
+                const detailCount = [item.size_specs, item.description, item.extra_notes].filter(Boolean).length
+                return detailCount > 0 && !open ? (
+                  <span className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/70">
+                    <span className="size-1.5 rounded-full bg-primary/40" />
+                    {detailCount} detail{detailCount !== 1 ? 's' : ''}
+                  </span>
+                ) : null
+              })()}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -316,12 +325,12 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
               {/* Progressive disclosure toggle */}
               <button
                 onClick={() => setDetailsOpen((v) => !v)}
-                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-secondary/50"
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 py-2.5 px-4 text-sm font-medium text-muted-foreground transition hover:bg-secondary/50 press"
               >
                 {detailsOpen ? 'Show less' : 'Add more details'}
-                <motion.span animate={{ rotate: detailsOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <span className={cn('transition-transform duration-200', detailsOpen && 'rotate-180')}>
                   <ChevronDown className="size-4" />
-                </motion.span>
+                </span>
               </button>
 
               {/* Secondary fields — collapsed by default */}
@@ -335,37 +344,57 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
                     className="overflow-hidden"
                   >
                     <div className="grid gap-3 pt-3 sm:grid-cols-2">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Size / Specs
-                        <input
-                          inputMode="text"
-                          className={fieldClass}
-                          value={item.size_specs || ''}
-                          onChange={(e) => onChange({ size_specs: e.target.value })}
-                          placeholder="Medium, 40cm"
-                        />
-                      </label>
-                      <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
-                        Description
-                        <textarea
-                          inputMode="text"
-                          rows={3}
-                          className={cn(fieldClass, 'resize-none')}
-                          value={item.description || ''}
-                          onChange={(e) => onChange({ description: e.target.value })}
-                          placeholder="Describe your product"
-                        />
-                      </label>
-                      <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
-                        Notes
-                        <input
-                          inputMode="text"
-                          className={fieldClass}
-                          value={item.extra_notes || ''}
-                          onChange={(e) => onChange({ extra_notes: e.target.value })}
-                          placeholder="Optional details"
-                        />
-                      </label>
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ ...spring, delay: 0 }}
+                      >
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Size / Specs
+                          <input
+                            inputMode="text"
+                            className={fieldClass}
+                            value={item.size_specs || ''}
+                            onChange={(e) => onChange({ size_specs: e.target.value })}
+                            placeholder="Medium, 40cm"
+                          />
+                        </label>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ ...spring, delay: 0.05 }}
+                        className="sm:col-span-2"
+                      >
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Description
+                          <textarea
+                            inputMode="text"
+                            rows={3}
+                            className={cn(fieldClass, 'resize-none')}
+                            value={item.description || ''}
+                            onChange={(e) => onChange({ description: e.target.value })}
+                            placeholder="Describe your product"
+                          />
+                        </label>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ ...spring, delay: 0.1 }}
+                        className="sm:col-span-2"
+                      >
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Notes
+                          <input
+                            inputMode="text"
+                            className={fieldClass}
+                            value={item.extra_notes || ''}
+                            onChange={(e) => onChange({ extra_notes: e.target.value })}
+                            placeholder="Optional details"
+                          />
+                        </label>
+                      </motion.div>
                     </div>
                   </motion.div>
                 )}
@@ -380,7 +409,7 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
                       key={key}
                       onClick={() => onChange({ stock_status: key })}
                       className={cn(
-                        'flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition-all duration-200',
+                        'flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition-all duration-200 press',
                         item.stock_status === key
                           ? cn(meta.badge, 'border-transparent shadow-sm')
                           : 'border-border bg-card text-muted-foreground hover:bg-secondary/60'
