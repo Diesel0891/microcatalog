@@ -216,8 +216,9 @@ function ProductImage({ src, alt }) {
 
 function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSuggest, suggesting }) {
   const cardRef = useRef(null)
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const status = STATUS_META[item.stock_status] || STATUS_META.available
-  const fieldClass = cn(inputBase, 'mt-1.5', suggesting && 'shimmer-v0 pointer-events-none text-transparent placeholder:text-transparent')
+  const fieldClass = cn(inputBase, 'field-input', suggesting && 'shimmer-v0 pointer-events-none text-transparent placeholder:text-transparent')
 
   useEffect(() => {
     if (!open || !cardRef.current) return
@@ -278,82 +279,127 @@ function ProductCard({ item, open, onToggle, onChange, onDeleteRequest, onSugges
             className="overflow-hidden"
           >
             <div className="border-t border-border p-4">
+              {/* Suggest Details — moved to top */}
+              <button
+                onClick={onSuggest}
+                disabled={suggesting}
+                className="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary transition hover:bg-primary/10 disabled:opacity-70"
+              >
+                <Sparkles className={cn('size-4', suggesting && 'animate-pulse')} />
+                {suggesting ? 'Thinking…' : 'Suggest details'}
+              </button>
+
+              {/* Primary fields — always visible */}
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
-                  Title
+                <div className="field-group sm:col-span-2">
                   <input
+                    id={`product-title-${item.id}`}
                     inputMode="text"
                     className={fieldClass}
                     value={item.title || ''}
                     onChange={(e) => onChange({ title: e.target.value })}
-                    placeholder="e.g. Handwoven basket"
+                    placeholder=" "
+                    autoComplete="off"
                   />
-                </label>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Price
+                  <label htmlFor={`product-title-${item.id}`} className="field-label">Title</label>
+                </div>
+                <div className="field-group">
                   <input
+                    id={`product-price-${item.id}`}
                     inputMode="decimal"
                     className={fieldClass}
                     value={item.price || ''}
                     onChange={(e) => onChange({ price: e.target.value })}
-                    placeholder="MWK 12,000"
+                    placeholder=" "
+                    autoComplete="off"
                   />
-                </label>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Size / Specs
-                  <input
-                    inputMode="text"
-                    className={fieldClass}
-                    value={item.size_specs || ''}
-                    onChange={(e) => onChange({ size_specs: e.target.value })}
-                    placeholder="Medium, 40cm"
-                  />
-                </label>
-                <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
-                  Description
-                  <textarea
-                    inputMode="text"
-                    rows={3}
-                    className={cn(fieldClass, 'resize-none')}
-                    value={item.description || ''}
-                    onChange={(e) => onChange({ description: e.target.value })}
-                    placeholder="Describe your product"
-                  />
-                </label>
-                <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
-                  Notes
-                  <input
-                    inputMode="text"
-                    className={fieldClass}
-                    value={item.extra_notes || ''}
-                    onChange={(e) => onChange({ extra_notes: e.target.value })}
-                    placeholder="Optional details"
-                  />
-                </label>
+                  <label htmlFor={`product-price-${item.id}`} className="field-label">Price</label>
+                </div>
               </div>
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-1.5">
+
+              {/* Progressive disclosure toggle */}
+              <button
+                onClick={() => setDetailsOpen((v) => !v)}
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-secondary/50"
+              >
+                {detailsOpen ? 'Show less' : 'Add more details'}
+                <motion.span animate={{ rotate: detailsOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                  <ChevronDown className="size-4" />
+                </motion.span>
+              </button>
+
+              {/* Secondary fields — collapsed by default */}
+              <AnimatePresence initial={false}>
+                {detailsOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={spring}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid gap-3 pt-3 sm:grid-cols-2">
+                      <div className="field-group">
+                        <input
+                          id={`product-specs-${item.id}`}
+                          inputMode="text"
+                          className={fieldClass}
+                          value={item.size_specs || ''}
+                          onChange={(e) => onChange({ size_specs: e.target.value })}
+                          placeholder=" "
+                          autoComplete="off"
+                        />
+                        <label htmlFor={`product-specs-${item.id}`} className="field-label">Size / Specs</label>
+                      </div>
+                      <div className="field-group-textarea sm:col-span-2">
+                        <textarea
+                          id={`product-desc-${item.id}`}
+                          inputMode="text"
+                          rows={3}
+                          className={cn(fieldClass, 'resize-none')}
+                          value={item.description || ''}
+                          onChange={(e) => onChange({ description: e.target.value })}
+                          placeholder=" "
+                          autoComplete="off"
+                        />
+                        <label htmlFor={`product-desc-${item.id}`} className="field-label">Description</label>
+                      </div>
+                      <div className="field-group sm:col-span-2">
+                        <input
+                          id={`product-notes-${item.id}`}
+                          inputMode="text"
+                          className={fieldClass}
+                          value={item.extra_notes || ''}
+                          onChange={(e) => onChange({ extra_notes: e.target.value })}
+                          placeholder=" "
+                          autoComplete="off"
+                        />
+                        <label htmlFor={`product-notes-${item.id}`} className="field-label">Notes</label>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Status — bottom, single line, subtle buttons */}
+              <div className="mt-4 flex items-center gap-3">
+                <span className="shrink-0 text-xs font-medium text-muted-foreground">Status</span>
+                <div className="flex flex-1 gap-2">
                   {Object.entries(STATUS_META).map(([key, meta]) => (
                     <button
                       key={key}
                       onClick={() => onChange({ stock_status: key })}
                       className={cn(
-                        'rounded-lg px-2.5 py-1 text-xs font-medium transition',
-                        item.stock_status === key ? meta.badge : 'text-muted-foreground hover:bg-secondary'
+                        'flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition-all duration-200',
+                        item.stock_status === key
+                          ? cn(meta.badge, 'border-transparent shadow-sm')
+                          : 'border-border bg-card text-muted-foreground hover:bg-secondary/60'
                       )}
                     >
                       {meta.label}
                     </button>
                   ))}
                 </div>
-                <button
-                  onClick={onSuggest}
-                  disabled={suggesting}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2 text-sm font-medium text-primary transition hover:bg-primary/10 disabled:opacity-70"
-                >
-                  <Sparkles className={cn('size-4', suggesting && 'animate-pulse')} />
-                  {suggesting ? 'Thinking…' : 'Suggest details'}
-                </button>
               </div>
             </div>
           </motion.div>
@@ -1112,20 +1158,21 @@ const handleRemoveLogo = useCallback(async () => {
                     </button>
                     <input ref={logoInputRef} className="hidden" type="file" accept="image/*" onChange={handleLogo} />
                     <div className="flex-1">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Shop name
+                      <div className="field-group">
                         <input
-                          className={cn(inputBase, 'mt-1.5')}
+                          id="shop-name"
+                          className={cn(inputBase, 'field-input')}
                           value={shopName}
                           onChange={(e) => setShopName(e.target.value)}
                           onBlur={autoSaveShopName}
-                          placeholder="Your shop name"
+                          placeholder=" "
+                          autoComplete="off"
                         />
-                      </label>
+                        <label htmlFor="shop-name" className="field-label">Shop name</label>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                      <p className="mb-1.5 text-xs font-medium text-muted-foreground">WhatsApp phone number</p>
+                  <div className="field-group">
                     <div className="grid grid-cols-[7.5rem_1fr] gap-2">
                       <CountrySelect
                         value={countryCode}
@@ -1136,7 +1183,8 @@ const handleRemoveLogo = useCallback(async () => {
                         }}
                       />
                       <input
-                        className={cn(inputBase, phone.length > 0 && !validPhone && 'border-destructive', validPhone && !phoneError && 'border-success', phoneError && 'border-destructive')}
+                        id="shop-phone"
+                        className={cn(inputBase, 'field-input', phone.length > 0 && !validPhone && 'border-destructive', validPhone && !phoneError && 'border-success', phoneError && 'border-destructive')}
                         value={phone}
                         onChange={(e) => { setPhoneError(''); setPhone((e.target.value || '').replace(/\D/g, '')) }}
                         onBlur={() => {
@@ -1149,16 +1197,18 @@ const handleRemoveLogo = useCallback(async () => {
                             autoSavePhone()
                           }
                         }}
-                        placeholder={selectedCountry.placeholder}
+                        placeholder=" "
                         inputMode="tel"
+                        autoComplete="off"
                       />
                     </div>
-                        {phoneError && (
-                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive">
-                            <AlertCircle className="size-3.5 shrink-0" />
-                            {phoneError}
-                          </p>
-                        )}
+                    <label htmlFor="shop-phone" className="field-label">WhatsApp number</label>
+                    {phoneError && (
+                      <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive">
+                        <AlertCircle className="size-3.5 shrink-0" />
+                        {phoneError}
+                      </p>
+                    )}
                   </div>
                   <button
                     onClick={() => setInsightsOpen(true)}
