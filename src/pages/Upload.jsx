@@ -669,6 +669,7 @@ export default function Upload() {
   const [expandedId, setExpandedId] = useState(null)
   const [deleteTargetId, setDeleteTargetId] = useState(null)
   const [newItemIds, setNewItemIds] = useState(new Set())
+  const [saveStatus, setSaveStatus] = useState(null)
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -676,6 +677,7 @@ export default function Upload() {
   const [publishing, setPublishing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
+  const [publishBarDismissed, setPublishBarDismissed] = useState(() => sessionStorage.getItem('microcatalog_dismiss_publish_bar') === '1')
   const [insightsOpen, setInsightsOpen] = useState(false)
   const [analytics, setAnalytics] = useState([])
 
@@ -842,14 +844,18 @@ export default function Upload() {
   const autoSaveShopName = useCallback(async () => {
     const trimmed = shopName.trim()
     if (!trimmed || !sellerUuid) return
+    setSaveStatus('saving')
     try {
       const { error } = await supabase
         .from('sellers')
         .update({ shop_name: trimmed })
         .eq('uuid', sellerUuid)
       if (error) throw error
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus((s) => s === 'saved' ? null : s), 2000)
     } catch (err) {
       logger.error('Upload', 'Shop name save failed', { message: err.message })
+      setSaveStatus(null)
     }
   }, [sellerUuid, shopName])
 
@@ -858,6 +864,7 @@ export default function Upload() {
     const fullPhone = selectedCountry.dial + cleanedPhone
     localStorage.setItem(`microcatalog_phone_${sellerUuid}`, fullPhone)
     localStorage.setItem(`microcatalog_country_${sellerUuid}`, selectedCountry.code)
+    setSaveStatus('saving')
     try {
       const { error } = await supabase
         .from('sellers')
@@ -868,6 +875,8 @@ export default function Upload() {
         throw error
       }
       setSellerPhone(fullPhone)
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus((s) => s === 'saved' ? null : s), 2000)
     } catch (err) {
       logger.error('Upload', 'Phone save failed', { attempt, message: err.message })
       if (attempt < 3) {
@@ -1186,16 +1195,28 @@ const handleRemoveLogo = useCallback(async () => {
                     </button>
                     <input ref={logoInputRef} className="hidden" type="file" accept="image/*" onChange={handleLogo} />
                     <div className="flex-1">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Shop name
-                        <input
-                          className={cn(inputBase, 'mt-1.5')}
-                          value={shopName}
-                          onChange={(e) => setShopName(e.target.value)}
-                          onBlur={autoSaveShopName}
-                          placeholder="Your shop name"
-                        />
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-medium text-muted-foreground">Shop name</label>
+                        {saveStatus === 'saving' && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground/60">
+                            <span className="size-1.5 rounded-full bg-primary/50 animate-pulse" />
+                            Saving…
+                          </span>
+                        )}
+                        {saveStatus === 'saved' && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-success">
+                            <Check className="size-3" />
+                            Saved
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        className={cn(inputBase, 'mt-1.5 field-input')}
+                        value={shopName}
+                        onChange={(e) => setShopName(e.target.value)}
+                        onBlur={autoSaveShopName}
+                        placeholder="Your shop name"
+                      />
                     </div>
                   </div>
                   <div>
@@ -1210,7 +1231,7 @@ const handleRemoveLogo = useCallback(async () => {
                         }}
                       />
                       <input
-                        className={cn(inputBase, phone.length > 0 && !validPhone && 'border-destructive', validPhone && !phoneError && 'border-success', phoneError && 'border-destructive')}
+                        className={cn(inputBase, 'field-input', phone.length > 0 && !validPhone && 'border-destructive', validPhone && !phoneError && 'border-success', phoneError && 'border-destructive')}
                         value={phone}
                         onChange={(e) => { setPhoneError(''); setPhone((e.target.value || '').replace(/\D/g, '')) }}
                         onBlur={() => {
@@ -1228,7 +1249,7 @@ const handleRemoveLogo = useCallback(async () => {
                       />
                     </div>
                         {phoneError && (
-                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive">
+                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive error-banner-enter">
                             <AlertCircle className="size-3.5 shrink-0" />
                             {phoneError}
                           </p>
@@ -1352,7 +1373,7 @@ const handleRemoveLogo = useCallback(async () => {
       />
 
       <AnimatePresence>
-        {items.length > 0 && (
+        {items.length > 0 && !publishBarDismissed && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -1360,7 +1381,17 @@ const handleRemoveLogo = useCallback(async () => {
             transition={spring}
             className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/60 px-4 py-3.5 backdrop-blur-xl sm:px-6"
           >
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-3xl relative">
+              <button
+                onClick={() => {
+                  setPublishBarDismissed(true)
+                  sessionStorage.setItem('microcatalog_dismiss_publish_bar', '1')
+                }}
+                className="absolute -top-1 right-0 rounded-lg p-1 text-muted-foreground/50 transition hover:bg-secondary hover:text-muted-foreground"
+                aria-label="Dismiss publish bar"
+              >
+                <X className="size-4" />
+              </button>
               {shopIncomplete ? (
                 <button
                   onClick={() => {
