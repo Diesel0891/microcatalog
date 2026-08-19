@@ -675,6 +675,8 @@ export default function Upload() {
   const [deleteTargetId, setDeleteTargetId] = useState(null)
   const [newItemIds, setNewItemIds] = useState(new Set())
   const [saveStatus, setSaveStatus] = useState(null)
+  const [isOnline, setIsOnline] = useState(true)
+  const writeQueue = useRef([])
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -706,6 +708,27 @@ export default function Upload() {
     const timer = setTimeout(() => setNewItemIds(new Set()), 1500)
     return () => clearTimeout(timer)
   }, [newItemIds])
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      const queue = writeQueue.current
+      writeQueue.current = []
+      queue.forEach(({ id, patch }) => {
+        supabase.from('catalog_items').update(patch).eq('id', id).then(({ error }) => {
+          if (error) writeQueue.current.push({ id, patch, timestamp: Date.now() })
+        })
+      })
+    }
+    const handleOffline = () => setIsOnline(false)
+    setIsOnline(navigator.onLine)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   useEffect(() => {
     async function loadSeller() {
@@ -934,13 +957,22 @@ const handleRemoveLogo = useCallback(async () => {
 
   const updateItem = useCallback(async (id, patch) => {
     setItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item))
+    if (!isOnline) {
+      writeQueue.current.push({ id, patch, timestamp: Date.now() })
+      setSaveStatus('queued')
+      setTimeout(() => setSaveStatus((s) => s === 'queued' ? null : s), 2000)
+      return
+    }
     try {
       const { error } = await supabase.from('catalog_items').update(patch).eq('id', id)
       if (error) throw error
     } catch (err) {
       logger.error('Upload', 'Autosave failed', { itemId: id, patch, message: err.message })
+      writeQueue.current.push({ id, patch, timestamp: Date.now() })
+      setSaveStatus('queued')
+      setTimeout(() => setSaveStatus((s) => s === 'queued' ? null : s), 2000)
     }
-  }, [])
+  }, [isOnline])
 
   const handleFiles = useCallback(async (files) => {
     if (!files.length || !sellerUuid) return
@@ -1081,6 +1113,12 @@ const handleRemoveLogo = useCallback(async () => {
 
   return (
     <main className="min-h-screen bg-background px-4 pb-28 text-foreground sm:px-6">
+      {!isOnline && (
+        <div className="sticky top-0 z-40 mb-4 flex items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-medium text-warning">
+          <AlertCircle className="size-4 shrink-0" />
+          <span>You are offline. Changes will sync when you are back online.</span>
+        </div>
+      )}
       <div className="mx-auto max-w-3xl">
         <header className="flex items-center justify-between py-5">
           <div className="flex items-center gap-3">
@@ -1212,6 +1250,12 @@ const handleRemoveLogo = useCallback(async () => {
                           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-success">
                             <Check className="size-3" />
                             Saved
+                          </span>
+                        )}
+                        {saveStatus === 'queued' && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-warning">
+                            <AlertCircle className="size-3" />
+                            Queued
                           </span>
                         )}
                       </div>
