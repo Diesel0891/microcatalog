@@ -307,6 +307,7 @@ function ProductCard({ item, open, isNew, onToggle, onChange, onDeleteRequest, o
                     className={fieldClass}
                     value={item.title || ''}
                     onChange={(e) => onChange({ title: e.target.value })}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.closest('label')?.nextElementSibling?.querySelector('input,textarea')?.focus() } }}
                     placeholder="e.g. Handwoven basket"
                   />
                 </label>
@@ -317,6 +318,7 @@ function ProductCard({ item, open, isNew, onToggle, onChange, onDeleteRequest, o
                     className={fieldClass}
                     value={item.price || ''}
                     onChange={(e) => onChange({ price: e.target.value })}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const grid = e.target.closest('.grid'); grid?.querySelector('input[placeholder^="Medium"]')?.focus() } }}
                     placeholder="MWK 12,000"
                   />
                 </label>
@@ -356,6 +358,7 @@ function ProductCard({ item, open, isNew, onToggle, onChange, onDeleteRequest, o
                             className={fieldClass}
                             value={item.size_specs || ''}
                             onChange={(e) => onChange({ size_specs: e.target.value })}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const grid = e.target.closest('.grid'); grid?.querySelector('textarea')?.focus() } }}
                             placeholder="Medium, 40cm"
                           />
                         </label>
@@ -374,6 +377,7 @@ function ProductCard({ item, open, isNew, onToggle, onChange, onDeleteRequest, o
                             className={cn(fieldClass, 'resize-none')}
                             value={item.description || ''}
                             onChange={(e) => onChange({ description: e.target.value })}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const grid = e.target.closest('.grid'); grid?.querySelector('input[placeholder^="Optional"]')?.focus() } }}
                             placeholder="Describe your product"
                           />
                         </label>
@@ -391,6 +395,7 @@ function ProductCard({ item, open, isNew, onToggle, onChange, onDeleteRequest, o
                             className={fieldClass}
                             value={item.extra_notes || ''}
                             onChange={(e) => onChange({ extra_notes: e.target.value })}
+                            onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault() }}
                             placeholder="Optional details"
                           />
                         </label>
