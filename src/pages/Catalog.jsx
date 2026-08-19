@@ -8,7 +8,7 @@ import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
 import SkeletonLoader from '../components/SkeletonLoader.jsx'
 import FadeImage from '../components/FadeImage.jsx'
 import { motion } from 'framer-motion'
-import { MessageCircle, Store, Edit3 } from 'lucide-react'
+import { MessageCircle, Store, Edit3, X } from 'lucide-react'
 
 function Catalog() {
   const { sellerUuid } = useParams()
@@ -185,10 +185,17 @@ function Catalog() {
         <div className="max-w-lg mx-auto px-4 py-2">
           <a
             href="/#/"
-            className="block bg-charcoal-950 text-white rounded-xl p-4 text-center hover:bg-charcoal-800 active:scale-[0.98] transition"
+            className="relative block bg-charcoal-950 text-white rounded-xl p-4 text-center hover:bg-charcoal-800 active:scale-[0.98] transition"
           >
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); localStorage.setItem('microcatalog_dismiss_viral', '1'); e.target.closest('.max-w-lg').style.display = 'none' }}
+              className="absolute right-2 top-2 rounded-lg p-1 text-white/40 transition hover:text-white/80 hover:bg-white/10"
+              aria-label="Dismiss"
+            >
+              <X className="size-3.5" />
+            </button>
             <p className="text-sm font-medium">
-              Love this catalog? <span className="text-copper-400">Create your own — it's free →</span>
+              Sell on WhatsApp too? <span className="text-copper-400">Create your catalog →</span>
             </p>
           </a>
         </div>

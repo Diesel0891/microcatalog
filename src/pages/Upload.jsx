@@ -292,11 +292,14 @@ function ProductCard({ item, open, isNew, onToggle, onChange, onDeleteRequest, o
               <button
                 onClick={onSuggest}
                 disabled={suggesting}
-                className="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary transition hover:bg-primary/10 disabled:opacity-70"
+                className="mb-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary transition hover:bg-primary/10 disabled:opacity-70"
               >
                 <Sparkles className={cn('size-4', suggesting && 'animate-pulse')} />
-                {suggesting ? 'Thinking…' : 'Suggest details'}
+                {suggesting ? 'Thinking…' : 'Auto-fill details'}
               </button>
+              <p className="mb-4 text-[11px] text-center text-muted-foreground/60">
+                Your photo is analyzed by the system to suggest details. It is not stored.
+              </p>
 
               {/* Primary fields — always visible */}
               <div className="grid gap-3 sm:grid-cols-2">
@@ -1137,7 +1140,7 @@ const handleRemoveLogo = useCallback(async () => {
             </div>
             <div>
               <p className="text-sm font-semibold">
-                {completeCount === 3 ? 'Your catalog' : "Let's set up your catalog"}
+                {shopName.trim() || 'Your catalog'}
               </p>
               {completeCount < 3 && (
                 <p className="text-xs text-muted-foreground">Step {completeCount + 1} of 3</p>
@@ -1505,7 +1508,7 @@ const handleRemoveLogo = useCallback(async () => {
                 >
                   <PartyPopper className="size-8" />
                 </motion.div>
-                <p className="text-xl font-semibold text-foreground text-balance">Your store is live!</p>
+                <p className="text-xl font-semibold text-foreground text-balance">Your catalog is live!</p>
                 <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground text-pretty">
                   Share this link with your customers and start selling.
                 </p>
