@@ -687,7 +687,6 @@ export default function Upload() {
   const [publishing, setPublishing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
-  const [publishBarDismissed, setPublishBarDismissed] = useState(() => sessionStorage.getItem('microcatalog_dismiss_publish_bar') === '1')
   const [insightsOpen, setInsightsOpen] = useState(false)
   const [analytics, setAnalytics] = useState([])
 
@@ -1425,7 +1424,7 @@ const handleRemoveLogo = useCallback(async () => {
       />
 
       <AnimatePresence>
-        {items.length > 0 && !publishBarDismissed && (
+        {items.length > 0 && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -1434,16 +1433,6 @@ const handleRemoveLogo = useCallback(async () => {
             className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/60 px-4 py-3.5 backdrop-blur-xl sm:px-6"
           >
             <div className="mx-auto max-w-3xl relative">
-              <button
-                onClick={() => {
-                  setPublishBarDismissed(true)
-                  sessionStorage.setItem('microcatalog_dismiss_publish_bar', '1')
-                }}
-                className="absolute -top-1 right-0 rounded-lg p-1 text-muted-foreground/50 transition hover:bg-secondary hover:text-muted-foreground"
-                aria-label="Dismiss publish bar"
-              >
-                <X className="size-4" />
-              </button>
               {shopIncomplete ? (
                 <button
                   onClick={() => {
