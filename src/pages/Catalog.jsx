@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
+import { cn } from '../lib/cn.js'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger.js'
-import StockStatusBadge from '../components/StockStatusBadge.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
 import SkeletonLoader from '../components/SkeletonLoader.jsx'
@@ -21,6 +21,7 @@ function Catalog() {
   const [isOwner, setIsOwner] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
   const [sellerNotFound, setSellerNotFound] = useState(false)
+  const [scrollY, setScrollY] = useState(0)
 
   useEffect(() => {
     async function fetchData() {
@@ -84,6 +85,12 @@ function Catalog() {
     const storedUuid = localStorage.getItem('microcatalog_seller_uuid')
     setIsOwner(storedUuid === sellerUuid)
   }, [sellerUuid])
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
     const openWhatsApp = (item) => {
       let message
@@ -215,9 +222,7 @@ function Catalog() {
                       <span className="text-white/80 font-bold text-2xl tracking-widest drop-shadow-lg">SOLD</span>
                     </div>
                   )}
-                  <div className="absolute top-2 left-2">
-                    <StockStatusBadge status={item.stock_status} size="xs" />
-                  </div>
+
                 </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -229,6 +234,14 @@ function Catalog() {
             )
           })}
         </div>
+
+      {/* Scroll indicator */}
+      {items.length >= 4 && (
+        <div className={cn(
+          "fixed bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none transition-opacity duration-300 z-20",
+          scrollY > 20 ? "opacity-0" : "opacity-100"
+        )} />
+      )}
 
       {/* Footer */}
       <div className="max-w-lg mx-auto px-4 mt-8 text-center">
