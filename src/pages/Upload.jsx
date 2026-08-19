@@ -14,7 +14,7 @@ import { compressImage } from '../lib/compressImage.js'
 import { suggestProductDetails } from '../lib/ai'
 import { logger } from '../lib/logger.js'
 
-const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card"
+const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card"
 
 const STATUS_META = {
   available: { label: 'Available', badge: 'bg-success-soft text-success' },

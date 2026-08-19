@@ -110,7 +110,7 @@ export default function Home() {
           <h1 className="mt-7 text-[2rem] font-extrabold tracking-tight text-foreground">
             Infini
           </h1>
-          <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground text-pretty">
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground text-pretty">
             Your WhatsApp catalog, in 2 minutes
           </p>
         </header>
@@ -186,7 +186,7 @@ export default function Home() {
             type="button"
             onClick={() => setRecoveryOpen((v) => !v)}
             aria-expanded={recoveryOpen}
-            className="group flex w-full items-center justify-center gap-1.5 py-2 text-[15px] font-semibold text-foreground/80 transition-colors hover:text-foreground"
+            className="group flex w-full items-center justify-center gap-1.5 py-2 text-base font-semibold text-foreground/80 transition-colors hover:text-foreground"
           >
             Manage an existing catalog
             <ArrowRight
@@ -252,7 +252,7 @@ export default function Home() {
                   type="submit"
                   aria-busy={recovering}
                   disabled={recovering}
-                  className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary text-[15px] font-bold text-primary-foreground shadow-[0_10px_24px_-12px_rgba(180,80,30,0.55)] transition-all duration-150 ease-out active:scale-[0.98] disabled:cursor-default disabled:opacity-90"
+                  className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-bold text-primary-foreground shadow-[0_10px_24px_-12px_rgba(180,80,30,0.55)] transition-all duration-150 ease-out active:scale-[0.98] disabled:cursor-default disabled:opacity-90"
                 >
                   {recovering ? (
                     <>
