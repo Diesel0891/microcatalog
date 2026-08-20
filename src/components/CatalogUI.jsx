@@ -100,20 +100,27 @@ export function ScrollPositionIndicator({ count, activeIndex, minProducts = 8 })
   if (count <= minProducts) return null
   return (
     <div
-      className="pointer-events-none fixed right-2 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-1.5"
+      className="pointer-events-none fixed right-2 top-1/2 z-30 flex -translate-y-1/2 flex-col gap-2"
       aria-hidden="true"
     >
-      {Array.from({ length: count }).map((_, i) => (
-        <span
-          key={i}
-          className="h-1 w-1 rounded-full border transition-all duration-300"
-          style={{
-            borderColor: COLOR.hairlineGold,
-            backgroundColor: i === activeIndex ? COLOR.goldPrimary : 'transparent',
-            transitionTimingFunction: EASE,
-          }}
-        />
-      ))}
+      {Array.from({ length: count }).map((_, i) => {
+        const isActive = i === activeIndex
+        return (
+          <span
+            key={i}
+            className="transition-all duration-300"
+            style={{
+              width: isActive ? '12px' : '4px',
+              height: '4px',
+              borderRadius: '9999px',
+              backgroundColor: isActive ? COLOR.goldPrimary : 'transparent',
+              border: `0.5px solid ${COLOR.hairlineGold}`,
+              transitionTimingFunction: EASE,
+              opacity: isActive ? 1 : 0.5,
+            }}
+          />
+        )
+      })}
     </div>
   )
 }

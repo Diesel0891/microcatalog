@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { logger } from '../lib/logger.js'
-import { ChevronDown } from 'lucide-react'
 
 import CatalogFeedCard from '../components/CatalogFeedCard.jsx'
 import CatalogDetailSheet from '../components/CatalogDetailSheet.jsx'
@@ -138,7 +137,6 @@ export default function Catalog() {
   const [addedFlash, setAddedFlash] = useState({})
   const [toastVisible, setToastVisible] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
-  const [trayExpanded, setTrayExpanded] = useState(false)
 
   // Overlay state
   const [portalOpen, setPortalOpen] = useState(false)
@@ -291,13 +289,7 @@ export default function Catalog() {
     }, ADDED_CONFIRMATION_DURATION_MS)
   }, [])
 
-  const handleRemoveInquiry = useCallback((key) => {
-    setInquiry((prev) => prev.filter((item) => item.key !== key))
-  }, [])
 
-  const handleQuantityChange = useCallback((key, quantity) => {
-    setInquiry((prev) => prev.map((item) => (item.key === key ? { ...item, quantity } : item)))
-  }, [])
 
   const handleDwell = useCallback((productId, ms) => {
     if (ms < DWELL_SAMPLE_SIZE_MS) return
@@ -403,19 +395,26 @@ export default function Catalog() {
         isVisible={true}
       />
 
-      {/* Pull-down handle */}
+      {/* Discover pill button */}
       <button
         onClick={() => setPortalOpen(true)}
         aria-label="Open discovery portal"
         aria-expanded={portalOpen}
-        className="absolute inset-x-0 top-14 z-20 flex flex-col items-center gap-0.5 pt-2"
+        className="absolute left-1/2 top-14 z-20 -translate-x-1/2 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors"
+        style={{
+          borderColor: '#3A301A',
+          color: '#A0A5AD',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(8px)',
+        }}
       >
-        <span
-          className="h-1 w-9 rounded-full border"
-          style={{ borderColor: '#3A301A', backgroundColor: 'rgba(197,160,89,0.25)' }}
-          aria-hidden="true"
-        />
-        <ChevronDown className="h-3 w-3" style={{ color: '#A0A5AD' }} aria-hidden="true" />
+        <span className="inline-flex items-center gap-1.5">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          Discover
+        </span>
       </button>
 
       {/* Owner edit link (preserved from current) */}
@@ -504,13 +503,9 @@ export default function Catalog() {
         onSendWhatsapp={() => detailProduct && sendWhatsapp(detailProduct)}
       />
 
-      {/* Inquiry tray + floating badge (A1) */}
+      {/* Persistent bottom inquiry bar */}
       <CatalogInquiryTray
         items={inquiry}
-        expanded={trayExpanded}
-        onToggle={() => setTrayExpanded((v) => !v)}
-        onRemove={handleRemoveInquiry}
-        onQuantityChange={handleQuantityChange}
         onSend={() => sendWhatsapp()}
         shopName={shopName}
       />
