@@ -10,6 +10,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet" />
     <style>body{background:#000}</style>
+  
+  <script>
+    window.addEventListener('error', function(e) {
+      var div = document.createElement('div');
+      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#000;color:#C5A059;padding:20px;font-family:monospace;font-size:12px;white-space:pre-wrap;overflow:auto;';
+      div.textContent = 'ERROR:\n' + e.message + '\n\n' + (e.filename || '') + ':' + (e.lineno || '') + '\n\n' + (e.error && e.error.stack ? e.error.stack : '');
+      document.body.appendChild(div);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var div = document.createElement('div');
+      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#000;color:#C5A059;padding:20px;font-family:monospace;font-size:12px;white-space:pre-wrap;overflow:auto;';
+      div.textContent = 'PROMISE REJECTION:\n' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)) + '\n\n' + (e.reason && e.reason.stack ? e.reason.stack : '');
+      document.body.appendChild(div);
+    });
+  </script>
+
   </head>
   <body>
     <div id="root"></div>
