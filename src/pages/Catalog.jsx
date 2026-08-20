@@ -370,6 +370,15 @@ export default function Catalog() {
   const isOverlayActive = portalOpen || detailProductId !== null
   const manageToken = localStorage.getItem('microcatalog_manage_token')
 
+  // Defensive: if products array is somehow invalid, show fallback
+  if (!Array.isArray(products)) {
+    return (
+      <div className="h-dvh w-full flex items-center justify-center" style={{ backgroundColor: '#000000', color: '#A0A5AD' }}>
+        <p className="text-sm">Loading catalog...</p>
+      </div>
+    )
+  }
+
   return (
     <main className="infini-catalog relative mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden" style={{ backgroundColor: COLOR.void }}>
       {/* B1: Persistent identity strip */}
