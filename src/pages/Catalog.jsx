@@ -18,6 +18,7 @@ import CatalogSkeleton from '../components/CatalogSkeleton.jsx'
  * ----------------------------------------------------------------------------*/
 const VIRAL_BANNER_INTERVAL = 6
 const DISCOVERY_PORTAL_OVERSCROLL_THRESHOLD = 60
+const DWELL_SAMPLE_SIZE_MS = 800
 const ADDED_CONFIRMATION_DURATION_MS = 1600
 
 const COLOR = {
@@ -121,6 +122,7 @@ export default function Catalog() {
   // Feed state
   const [activeIndex, setActiveIndex] = useState(0)
   const [imageIndices, setImageIndices] = useState({})
+  const [dwellTimes, setDwellTimes] = useState({})
   const [dismissedBanners, setDismissedBanners] = useState(new Set())
 
   // Inquiry cart state (A1)
@@ -297,6 +299,11 @@ export default function Catalog() {
     setInquiry((prev) => prev.map((item) => (item.key === key ? { ...item, quantity } : item)))
   }, [])
 
+  const handleDwell = useCallback((productId, ms) => {
+    if (ms < DWELL_SAMPLE_SIZE_MS) return
+    setDwellTimes((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + ms }))
+  }, [])
+
 
   const cycleImage = useCallback((product, direction) => {
     setImageIndices((prev) => {
@@ -345,6 +352,13 @@ export default function Catalog() {
   }, [inquiry, sellerPhone, shopName, sellerUuid])
 
   // Dwell recommendations
+  const dwellRecommendations = useMemo(() => {
+    return Object.entries(dwellTimes)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 2)
+      .map(([id]) => products.find((p) => p.id === id))
+      .filter(Boolean)
+  }, [dwellTimes, products])
 
   // Loading / error states
   if (loading) return <CatalogSkeleton />
@@ -442,6 +456,7 @@ export default function Catalog() {
               onCycleImage={(dir) => cycleImage(product, dir)}
               isAdded={addedFlash[product.id] || isProductAdded(product)}
               onAdd={() => handleAdd(product)}
+              onDwell={(ms) => handleDwell(product.id, ms)}
               onOpenDetail={() => setDetailProductId(product.id)}
             />,
           ]
@@ -470,6 +485,7 @@ export default function Catalog() {
         products={products}
         query={query}
         onQueryChange={setQuery}
+        dwellRecommendations={dwellRecommendations}
         onOpenProduct={(id) => {
           setPortalOpen(false)
           setDetailProductId(id)
