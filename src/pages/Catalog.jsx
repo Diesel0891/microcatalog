@@ -185,11 +185,11 @@ export default function Catalog() {
           if (!lastViewed || now - parseInt(lastViewed, 10) >= 24 * 60 * 60 * 1000) {
             localStorage.setItem(viewKey, String(now))
             const today = new Date().toISOString().slice(0, 10)
-            supabase.rpc('track_daily_metric', {
+            void (async () => { try { await supabase.rpc('track_daily_metric', {
               p_seller_uuid: sellerUuid,
               p_date: today,
               p_field: 'views'
-            }).catch(() => {})
+            }); } catch {} })()
           }
         } else {
           setSellerNotFound(true)
@@ -335,11 +335,11 @@ export default function Catalog() {
     // Track inquiry metrics
     if (sellerUuid) {
       const today = new Date().toISOString().slice(0, 10)
-      supabase.rpc('track_daily_metric', {
+      void (async () => { try { await supabase.rpc('track_daily_metric', {
         p_seller_uuid: sellerUuid,
         p_date: today,
         p_field: 'inquiries'
-      }).catch(() => {})
+      }); } catch {} })()
     }
   }, [inquiry, sellerPhone, shopName, sellerUuid])
 
