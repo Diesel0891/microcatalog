@@ -1,28 +1,169 @@
-import { useState, useEffect } from 'react'
-import { cn } from '../lib/cn.js'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabase.js'
 import { logger } from '../lib/logger.js'
-import EmptyState from '../components/EmptyState.jsx'
-import ItemDetailSheet from '../components/ItemDetailSheet.jsx'
-import SkeletonLoader from '../components/SkeletonLoader.jsx'
-import FadeImage from '../components/FadeImage.jsx'
-import { motion } from 'framer-motion'
-import { MessageCircle, Store, Edit3, X } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 
-function Catalog() {
+import CatalogFeedCard from '../components/CatalogFeedCard.jsx'
+import CatalogDetailSheet from '../components/CatalogDetailSheet.jsx'
+import CatalogDiscoveryPortal from '../components/CatalogDiscoveryPortal.jsx'
+import CatalogViralBanner from '../components/CatalogViralBanner.jsx'
+import CatalogInquiryTray from '../components/CatalogInquiryTray.jsx'
+import CatalogIdentityStrip from '../components/CatalogIdentityStrip.jsx'
+import { ScrollPositionIndicator, Toast, CatalogEmptyState } from '../components/CatalogUI.jsx'
+import CatalogSkeleton from '../components/CatalogSkeleton.jsx'
+import EmptyState from '../components/EmptyState.jsx'
+
+/* ----------------------------------------------------------------------------
+ * Constants
+ * ----------------------------------------------------------------------------*/
+const VIRAL_BANNER_INTERVAL = 6
+const DISCOVERY_PORTAL_OVERSCROLL_THRESHOLD = 60
+const ADDED_CONFIRMATION_DURATION_MS = 1600
+
+const COLOR = {
+  void: '#000000',
+}
+
+const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
+
+/* ----------------------------------------------------------------------------
+ * Data mapping: Supabase catalog_items → v0 Product shape
+ * ----------------------------------------------------------------------------*/
+function mapItemToProduct(item) {
+  const specs = []
+  if (item.size_specs) {
+    specs.push({ label: 'Size / Specs', value: item.size_specs })
+  }
+  if (item.extra_notes) {
+    specs.push({ label: 'Notes', value: item.extra_notes })
+  }
+
+  return {
+    id: item.id,
+    name: item.title || 'Untitled',
+    category: null, // No category column in schema
+    price: item.price || '0',
+    description: item.description || '',
+    stockStatus: item.stock_status || 'available',
+    images: item.image_url
+      ? [{ url: item.image_url, quality: 'high', aspectRatio: 0.8, alt: item.title || 'Product image' }]
+      : [],
+    attributes: [], // No attributes in schema yet
+    specs,
+    sku: item.id.slice(0, 8).toUpperCase(),
+    createdAt: item.created_at || new Date().toISOString(),
+    // Preserve raw for WhatsApp
+    _raw: item,
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Inquiry helpers
+ * ----------------------------------------------------------------------------*/
+function inquiryKey(productId) {
+  return `${productId}`
+}
+
+function buildInquiryMessage(items, shopName) {
+  if (items.length === 0) return ''
+  const groups = { available: [], reserved: [], sold: [] }
+  for (const item of items) groups[item.stockStatus].push(item)
+
+  const lines = []
+  if (shopName) {
+    lines.push(`Inquiry from ${shopName}`)
+    lines.push('')
+  }
+  lines.push('Hello — I have a few items from your catalog:')
+  lines.push('')
+
+  if (groups.available.length) {
+    lines.push("I'd like to inquire about purchasing:")
+    for (const item of groups.available) {
+      lines.push(`• ${item.productName} × ${item.quantity} — ${item.price}`)
+    }
+    lines.push('')
+  }
+  if (groups.reserved.length) {
+    lines.push('Could you let me know the availability of:')
+    for (const item of groups.reserved) {
+      lines.push(`• ${item.productName} × ${item.quantity}`)
+    }
+    lines.push('')
+  }
+  if (groups.sold.length) {
+    lines.push('These are marked sold — do you have similar pieces to:')
+    for (const item of groups.sold) {
+      lines.push(`• ${item.productName}`)
+    }
+    lines.push('')
+  }
+
+  return lines.join('\n').trim()
+}
+
+/* ----------------------------------------------------------------------------
+ * Main Catalog Page
+ * ----------------------------------------------------------------------------*/
+export default function Catalog() {
   const { sellerUuid } = useParams()
+
+  // Data state
   const [items, setItems] = useState([])
   const [sellerPhone, setSellerPhone] = useState('')
   const [shopName, setShopName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [isOwner, setIsOwner] = useState(false)
-  const [selectedItem, setSelectedItem] = useState(null)
   const [sellerNotFound, setSellerNotFound] = useState(false)
-  const [scrollY, setScrollY] = useState(0)
+  const [isOwner, setIsOwner] = useState(false)
 
+  // Feed state
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [imageIndices, setImageIndices] = useState({})
+  const [dismissedBanners, setDismissedBanners] = useState(new Set())
+
+  // Inquiry cart state (A1)
+  const [inquiry, setInquiry] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(`infini_inquiry_${sellerUuid}`)
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+  const [addedFlash, setAddedFlash] = useState({})
+  const [toastVisible, setToastVisible] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [trayExpanded, setTrayExpanded] = useState(false)
+
+  // Overlay state
+  const [portalOpen, setPortalOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [detailProductId, setDetailProductId] = useState(null)
+
+  // Refs
+  const feedRef = useRef(null)
+  const touchStartY = useRef(null)
+
+  // Derived
+  const products = useMemo(() => items.map(mapItemToProduct), [items])
+  const maxPrice = useMemo(() => {
+    return Math.max(...products.map((p) => parseFloat(p.price) || 0), 1)
+  }, [products])
+  const detailProduct = products.find((p) => p.id === detailProductId) || null
+
+  // Persist inquiry cart
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(`infini_inquiry_${sellerUuid}`, JSON.stringify(inquiry))
+    } catch {
+      // ignore
+    }
+  }, [inquiry, sellerUuid])
+
+  // Fetch data
   useEffect(() => {
     async function fetchData() {
       try {
@@ -34,12 +175,11 @@ function Catalog() {
           .single()
 
         if (sellerData) {
-          const storedPhone = localStorage.getItem(`microcatalog_phone_${sellerUuid}`) || ''
-          setSellerPhone(sellerData.phone || storedPhone)
+          setSellerPhone(sellerData.phone || '')
           setShopName(sellerData.shop_name || '')
           setLogoUrl(sellerData.logo_url || '')
 
-          // Fire-and-forget daily view tracking (deduplicated per browser, 24h TTL)
+          // Fire-and-forget daily view tracking
           const viewKey = `microcatalog_viewed_${sellerUuid}`
           const lastViewed = localStorage.getItem(viewKey)
           const now = Date.now()
@@ -50,11 +190,7 @@ function Catalog() {
               p_seller_uuid: sellerUuid,
               p_date: today,
               p_field: 'views'
-            }).then(({ error }) => {
-              if (error) console.warn('View tracking error:', error.message)
-            }).catch((err) => {
-              console.warn('View tracking exception:', err.message)
-            })
+            }).catch(() => {})
           }
         } else {
           setSellerNotFound(true)
@@ -63,14 +199,14 @@ function Catalog() {
         }
 
         // Fetch catalog items
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from('catalog_items')
           .select('*')
           .eq('seller_uuid', sellerUuid)
           .eq('published', true)
           .order('created_at', { ascending: false })
 
-        if (error) throw error
+        if (fetchError) throw fetchError
         setItems(data || [])
       } catch (err) {
         logger.error('Catalog', 'Fetch failed', { message: err.message })
@@ -81,188 +217,277 @@ function Catalog() {
     }
     fetchData()
 
-    // Check if viewer is the seller (owner)
+    // Owner check
     const storedUuid = localStorage.getItem('microcatalog_seller_uuid')
     setIsOwner(storedUuid === sellerUuid)
   }, [sellerUuid])
 
+  // Feed scroll tracking
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+    const el = feedRef.current
+    if (!el) return
+    const handle = () => {
+      const index = Math.round(el.scrollTop / el.clientHeight)
+      setActiveIndex(Math.min(products.length - 1, Math.max(0, index)))
+    }
+    el.addEventListener('scroll', handle)
+    return () => el.removeEventListener('scroll', handle)
+  }, [products.length])
+
+  // Pull-down to discover gesture
+  const handleTouchStart = useCallback((e) => {
+    const touch = e.touches[0]
+    if (touch && feedRef.current && feedRef.current.scrollTop <= 0) {
+      touchStartY.current = touch.clientY
+    }
   }, [])
 
-    const openWhatsApp = (item) => {
-      let message
-      switch (item.stock_status) {
-        case 'reserved':
-          message = `Hi, I'm interested in *${item.title}* — ${item.price}. Is there any chance it becomes available?`
-          break
-        case 'sold':
-          message = `Hi, do you have anything similar to *${item.title}*?`
-          break
-        default:
-          message = `Hi, I'm interested in *${item.title}* — ${item.price}.`
-      }
-
-      const fullMessage = [
-        message,
-        ``,
-        `📷 Product photo:`,
-        `${item.image_url}`
-      ].join('\n')
-
-      const encodedMessage = encodeURIComponent(fullMessage)
-      const cleanPhone = sellerPhone ? sellerPhone.replace(/\D/g, '') : ''
-      const whatsappUrl = cleanPhone
-        ? `https://wa.me/${cleanPhone}?text=${encodedMessage}`
-        : `https://wa.me/?text=${encodedMessage}`
-
-      window.open(whatsappUrl, '_blank')
+  const handleTouchMove = useCallback((e) => {
+    if (touchStartY.current === null) return
+    const touch = e.touches[0]
+    if (!touch) return
+    const delta = touch.clientY - touchStartY.current
+    if (delta > DISCOVERY_PORTAL_OVERSCROLL_THRESHOLD) {
+      setPortalOpen(true)
+      touchStartY.current = null
     }
+  }, [])
 
-    if (loading) {
-    return <SkeletonLoader variant="catalog" count={4} />
-  }
+  const handleTouchEnd = useCallback(() => {
+    touchStartY.current = null
+  }, [])
 
-  if (error) {
-    return <EmptyState title="Something went wrong" description={error} support={error} />
-  }
+  // Inquiry actions
+  const isProductAdded = useCallback((product) => {
+    const key = inquiryKey(product.id, {})
+    return inquiry.some((item) => item.key === key)
+  }, [inquiry])
 
+  const handleAdd = useCallback((product) => {
+    const key = inquiryKey(product.id, {})
+    setInquiry((prev) => {
+      if (prev.some((item) => item.key === key)) return prev
+      return [
+        ...prev,
+        {
+          key,
+          productId: product.id,
+          productName: product.name,
+          price: product.price,
+          stockStatus: product.stockStatus,
+          quantity: 1,
+          selection: {},
+        },
+      ]
+    })
+    // Flash + toast (A1)
+    setAddedFlash((prev) => ({ ...prev, [product.id]: true }))
+    setToastMessage('Added to inquiry')
+    setToastVisible(true)
+    setTimeout(() => {
+      setAddedFlash((prev) => ({ ...prev, [product.id]: false }))
+    }, ADDED_CONFIRMATION_DURATION_MS)
+  }, [])
+
+  const handleRemoveInquiry = useCallback((key) => {
+    setInquiry((prev) => prev.filter((item) => item.key !== key))
+  }, [])
+
+  const handleQuantityChange = useCallback((key, quantity) => {
+    setInquiry((prev) => prev.map((item) => (item.key === key ? { ...item, quantity } : item)))
+  }, [])
+
+
+  const cycleImage = useCallback((product, direction) => {
+    setImageIndices((prev) => {
+      const current = prev[product.id] || 0
+      const next = (current + direction + product.images.length) % Math.max(product.images.length, 1)
+      return { ...prev, [product.id]: next }
+    })
+  }, [])
+
+  // WhatsApp send
+  const sendWhatsapp = useCallback((extraProduct) => {
+    let items = inquiry
+    if (extraProduct) {
+      const key = inquiryKey(extraProduct.id, {})
+      if (!items.some((item) => item.key === key)) {
+        const newItem = {
+          key,
+          productId: extraProduct.id,
+          productName: extraProduct.name,
+          price: extraProduct.price,
+          stockStatus: extraProduct.stockStatus,
+          quantity: 1,
+          selection: {},
+        }
+        items = [...items, newItem]
+        setInquiry(items)
+      }
+    }
+    const message = buildInquiryMessage(items, shopName) // B5: shop name prefix
+    if (!message) return
+    const cleanPhone = sellerPhone ? sellerPhone.replace(/\D/g, '') : ''
+    const url = cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
+
+    // Track inquiry metrics
+    if (sellerUuid) {
+      const today = new Date().toISOString().slice(0, 10)
+      supabase.rpc('track_daily_metric', {
+        p_seller_uuid: sellerUuid,
+        p_date: today,
+        p_field: 'inquiries'
+      }).catch(() => {})
+    }
+  }, [inquiry, sellerPhone, shopName, sellerUuid])
+
+  // Dwell recommendations
+
+  // Loading / error states
+  if (loading) return <CatalogSkeleton />
+  if (error) return <EmptyState title="Something went wrong" description={error} support={error} />
   if (sellerNotFound) {
     return <EmptyState title="Catalog not found" description="This catalog link doesn't exist or has been removed." />
   }
-
-  if (items.length === 0) {
-    return <EmptyState title="Catalog is empty" description="No items have been published yet." />
+  if (products.length === 0) {
+    return (
+      <div className="infini-catalog h-dvh w-full flex items-center justify-center" style={{ backgroundColor: COLOR.void }}>
+        <CatalogEmptyState title="Catalog is empty" description="No items have been published yet." />
+      </div>
+    )
   }
 
-  const displayName = shopName.trim() || 'Catalog' 
+  const isOverlayActive = portalOpen || detailProductId !== null
   const manageToken = localStorage.getItem('microcatalog_manage_token')
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] pb-8">
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-white/40">
+    <main className="infini-catalog relative mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden" style={{ backgroundColor: COLOR.void }}>
+      {/* B1: Persistent identity strip */}
+      <CatalogIdentityStrip
+        shopName={shopName || 'Catalog'}
+        logoUrl={logoUrl}
+        isVisible={true}
+      />
 
-        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-           {logoUrl ? (
-              <img src={logoUrl} alt={displayName} className="w-10 h-10 rounded-xl object-cover" />
-            ) : (
-              <div className="w-10 h-10 bg-charcoal-950 rounded-xl flex items-center justify-center">
-                <Store className="w-5 h-5 text-copper-400" strokeWidth={1.5} />
-              </div>
-            )}
+      {/* Pull-down handle */}
+      <button
+        onClick={() => setPortalOpen(true)}
+        aria-label="Open discovery portal"
+        aria-expanded={portalOpen}
+        className="absolute inset-x-0 top-14 z-20 flex flex-col items-center gap-0.5 pt-2"
+      >
+        <span
+          className="h-1 w-9 rounded-full border"
+          style={{ borderColor: '#3A301A', backgroundColor: 'rgba(197,160,89,0.25)' }}
+          aria-hidden="true"
+        />
+        <ChevronDown className="h-3 w-3" style={{ color: '#A0A5AD' }} aria-hidden="true" />
+      </button>
 
-            <div>
-              <h1 className="text-lg font-bold text-charcoal-950 leading-tight">{displayName}</h1>
-              <p className="text-xs text-charcoal-400">{items.length} item{items.length !== 1 ? 's' : ''} available</p>
-            </div>
-          </div>
-          {isOwner && (
-            <a
-              href={`/#/u/${manageToken || sellerUuid}`}
-              className="flex items-center gap-1.5 text-xs text-copper-600 font-medium hover:text-copper-700 transition"
-            >
-              <Edit3 className="w-3.5 h-3.5" strokeWidth={2} />
-              Edit catalog
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* Instruction Banner */}
-      <div className="max-w-lg mx-auto px-4 py-3">
-        <div className="bg-copper-50 border border-copper-200 rounded-lg px-4 py-3 flex items-center gap-2">
-          <MessageCircle className="w-4 h-4 text-copper-600 shrink-0" strokeWidth={2} />
-          <p className="text-copper-800 text-xs font-medium">
-            Tap any item to view details and message on WhatsApp
-          </p>
-        </div>
-      </div>
-        {/* Viral Banner */}
-        <div className="max-w-lg mx-auto px-4 py-2">
-          <a
-            href="/#/"
-            className="relative block bg-charcoal-950 text-white rounded-xl p-4 text-center hover:bg-charcoal-800 active:scale-[0.98] transition"
-          >
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); localStorage.setItem('microcatalog_dismiss_viral', '1'); e.target.closest('.max-w-lg').style.display = 'none' }}
-              className="absolute right-2 top-2 rounded-lg p-1 text-white/40 transition hover:text-white/80 hover:bg-white/10"
-              aria-label="Dismiss"
-            >
-              <X className="size-3.5" />
-            </button>
-            <p className="text-sm font-medium">
-              Sell on WhatsApp too? <span className="text-copper-400">Create your catalog →</span>
-            </p>
-          </a>
-        </div>
-
-
-              {/* Items Grid */}
-        <div className="max-w-lg mx-auto px-4 space-y-4 mt-2">
-          {items.map((item, index) => {
-            const isSold = item.stock_status === 'sold'
-
-            return (
-              <motion.button
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.4,
-                  delay: index * 0.08,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                onClick={() => setSelectedItem(item)}
-                className="w-full bg-white rounded-2xl border border-stone-200 overflow-hidden text-left transition-all duration-200 hover:shadow-lg hover:border-copper-300 active:scale-[0.98]">
-                                <div className="relative">
-                  <FadeImage
-                    src={item.image_url}
-                    alt={item.title}
-                    className={`w-full h-56 ${isSold ? 'grayscale' : ''}`}
-                  />
-                  {isSold && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className="text-white/80 font-bold text-2xl tracking-widest drop-shadow-lg">SOLD</span>
-                    </div>
-                  )}
-
-                </div>
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-bold text-charcoal-950 text-lg leading-tight flex-1">{item.title}</h3>
-                    <span className="text-lg font-bold text-copper-600 whitespace-nowrap">{item.price}</span>
-                  </div>
-                </div>
-              </motion.button>
-            )
-          })}
-        </div>
-
-      {/* Scroll indicator */}
-      {items.length >= 4 && (
-        <div className={cn(
-          "fixed bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none transition-opacity duration-300 z-20",
-          scrollY > 20 ? "opacity-0" : "opacity-100"
-        )} />
+      {/* Owner edit link (preserved from current) */}
+      {isOwner && (
+        <a
+          href={`/#/u/${manageToken || sellerUuid}`}
+          className="absolute right-3 top-[4.5rem] z-20 text-[10px] font-medium uppercase transition-opacity hover:opacity-70"
+          style={{ color: '#C5A059', letterSpacing: '0.15em' }}
+        >
+          Edit catalog →
+        </a>
       )}
 
-      {/* Footer */}
-      <div className="max-w-lg mx-auto px-4 mt-8 text-center">
-        <p className="text-charcoal-300 text-xs">Powered by Infini</p>
+      {/* Snap-scroll feed */}
+      <div
+        ref={feedRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="h-full w-full snap-y snap-mandatory overflow-y-auto pt-14"
+        style={{
+          scrollBehavior: 'smooth',
+          transform: isOverlayActive ? 'scale(0.96)' : 'scale(1)',
+          filter: isOverlayActive ? 'blur(25px) saturate(180%)' : 'none',
+          opacity: isOverlayActive ? 0.4 : 1,
+          pointerEvents: isOverlayActive ? 'none' : 'auto',
+          transition: `all 0.5s ${EASE}`,
+        }}
+      >
+        {products.map((product, index) => {
+          const activeImgIndex = imageIndices[product.id] || 0
+          const cards = [
+            <CatalogFeedCard
+              key={product.id}
+              product={product}
+              maxPrice={maxPrice}
+              activeImageIndex={activeImgIndex}
+              onCycleImage={(dir) => cycleImage(product, dir)}
+              isAdded={addedFlash[product.id] || isProductAdded(product)}
+              onAdd={() => handleAdd(product)}
+              onOpenDetail={() => setDetailProductId(product.id)}
+            />,
+          ]
+          // Viral banner every 6 products
+          const position = index + 1
+          if (position % VIRAL_BANNER_INTERVAL === 0 && !dismissedBanners.has(position)) {
+            cards.push(
+              <CatalogViralBanner
+                key={`banner-${position}`}
+                catalogHomeUrl="/#/"
+                onDismiss={() => setDismissedBanners((prev) => new Set(prev).add(position))}
+              />,
+            )
+          }
+          return cards
+        })}
       </div>
-      <ItemDetailSheet
-        item={selectedItem}
-        onWhatsApp={openWhatsApp}
-        onClose={() => setSelectedItem(null)}
-        sellerUuid={sellerUuid}
-        sellerPhone={sellerPhone}
+
+      {/* Scroll position indicator */}
+      <ScrollPositionIndicator count={products.length} activeIndex={activeIndex} />
+
+      {/* Discovery portal */}
+      <CatalogDiscoveryPortal
+        open={portalOpen}
+        onClose={() => setPortalOpen(false)}
+        products={products}
+        query={query}
+        onQueryChange={setQuery}
+        onOpenProduct={(id) => {
+          setPortalOpen(false)
+          setDetailProductId(id)
+        }}
       />
-    </div>
+
+      {/* Detail sheet */}
+      <CatalogDetailSheet
+        product={detailProduct}
+        open={detailProductId !== null}
+        onClose={() => setDetailProductId(null)}
+        activeImageIndex={detailProduct ? (imageIndices[detailProduct.id] || 0) : 0}
+        onCycleImage={(dir) => detailProduct && cycleImage(detailProduct, dir)}
+        isAdded={detailProduct ? (addedFlash[detailProduct.id] || isProductAdded(detailProduct)) : false}
+        onAdd={() => detailProduct && handleAdd(detailProduct)}
+        onSendWhatsapp={() => detailProduct && sendWhatsapp(detailProduct)}
+      />
+
+      {/* Inquiry tray + floating badge (A1) */}
+      <CatalogInquiryTray
+        items={inquiry}
+        expanded={trayExpanded}
+        onToggle={() => setTrayExpanded((v) => !v)}
+        onRemove={handleRemoveInquiry}
+        onQuantityChange={handleQuantityChange}
+        onSend={() => sendWhatsapp()}
+        shopName={shopName}
+      />
+
+      {/* Toast (A1) */}
+      <Toast
+        message={toastMessage}
+        visible={toastVisible}
+        onDismiss={() => setToastVisible(false)}
+      />
+    </main>
   )
 }
-
-export default Catalog

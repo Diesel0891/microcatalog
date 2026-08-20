@@ -80,9 +80,20 @@ export default {
         border: 'var(--border)',
         input: 'var(--input)',
         ring: 'var(--ring)',
+        /* Infini v0 Dark Theme */
+        'infini-void': '#000000',
+        'infini-plate': '#0B0B0B',
+        'infini-gold-primary': '#C5A059',
+        'infini-gold-secondary': '#EADBB6',
+        'infini-body': '#A0A5AD',
+        'infini-hairline-gold': '#3A301A',
+        'infini-hairline-obsidian': '#1A1A1A',
+        'infini-viral': '#0099FF',
       },
             fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['Fraunces', 'Georgia', 'ui-serif', 'serif'],
+        wordmark: ['Playfair Display', 'Georgia', 'ui-serif', 'serif'],
       },
       boxShadow: {
         'elevation-1': '0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.02)',

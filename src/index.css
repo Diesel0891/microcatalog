@@ -445,3 +445,46 @@
   .error-banner-enter { animation: none; opacity: 1; transform: none; }
   .product-enter { animation: none; opacity: 1; transform: none; }
 }
+
+
+/* ===== Infini v0 Dark Catalog Theme (scoped) ===== */
+.infini-catalog {
+  --infini-void: #000000;
+  --infini-plate: #0B0B0B;
+  --infini-gold-primary: #C5A059;
+  --infini-gold-secondary: #EADBB6;
+  --infini-body: #A0A5AD;
+  --infini-hairline-gold: #3A301A;
+  --infini-hairline-obsidian: #1A1A1A;
+  --infini-viral: #0099FF;
+  --infini-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --infini-card-radius: 0.5rem;
+}
+
+/* Infini scrollbar — thin gold track */
+.infini-catalog ::-webkit-scrollbar {
+  width: 3px;
+}
+.infini-catalog ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.infini-catalog ::-webkit-scrollbar-thumb {
+  background-color: var(--infini-hairline-gold);
+  border-radius: 20px;
+}
+
+/* Infini hairline divider */
+.infini-hairline {
+  height: 0.5px;
+  background-color: var(--infini-hairline-obsidian);
+}
+.infini-hairline-gold {
+  height: 0.5px;
+  background-color: var(--infini-hairline-gold);
+}
+
+/* Infini selection ring fix for A3 */
+.infini-ring-fix {
+  padding: 2px;
+  margin: -2px;
+}
