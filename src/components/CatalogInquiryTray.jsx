@@ -79,12 +79,13 @@ export default function CatalogInquiryTray({
   onSend,
   shopName,
 }) {
-  if (items.length === 0) return null
+  const safeItems = Array.isArray(items) ? items : []
+  if (safeItems.length === 0) return null
 
   return (
     <>
       {/* Floating badge when tray is collapsed */}
-      {!expanded && <CatalogFloatingBadge count={items.length} onClick={onToggle} />}
+      {!expanded && <CatalogFloatingBadge count={safeItems.length} onClick={onToggle} />}
 
       {/* Full tray overlay when expanded */}
       <div
@@ -116,7 +117,7 @@ export default function CatalogInquiryTray({
               </div>
             )}
             <div className="flex flex-col gap-3">
-              {items.map((item) => (
+              {safeItems.map((item) => (
                 <div key={item.key} className="flex items-center justify-between gap-3">
                   <div className="flex flex-col min-w-0">
                     <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
@@ -164,7 +165,7 @@ export default function CatalogInquiryTray({
           </button>
           <span aria-live="polite" className="text-xs" style={{ color: COLOR.body }}>
             <span className="font-medium" style={{ color: COLOR.goldPrimary }}>
-              {items.length}
+              {safeItems.length}
             </span>{' '}
             item{items.length === 1 ? '' : 's'} in your inquiry
           </span>

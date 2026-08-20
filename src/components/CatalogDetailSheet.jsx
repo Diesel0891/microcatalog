@@ -75,7 +75,7 @@ export default function CatalogDetailSheet({
   if (!product) return null
 
   const isNew = computeIsNew(product.createdAt)
-  const specs = product.specs || []
+  const specs = Array.isArray(product.specs) ? product.specs : []
   const visibleSpecs = specs.slice(0, MAX_VISIBLE_SPECS)
   const overflowSpecs = specs.slice(MAX_VISIBLE_SPECS)
 
@@ -149,7 +149,7 @@ export default function CatalogDetailSheet({
             {/* Scrollable content */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto">
               <CatalogProductImage
-                images={product.images || []}
+                images={Array.isArray(product.images) ? product.images : []}
                 activeIndex={activeImageIndex}
                 onCycle={onCycleImage}
                 isNew={isNew}

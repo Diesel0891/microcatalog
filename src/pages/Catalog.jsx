@@ -127,7 +127,8 @@ export default function Catalog() {
   const [inquiry, setInquiry] = useState(() => {
     try {
       const saved = sessionStorage.getItem(`infini_inquiry_${sellerUuid}`)
-      return saved ? JSON.parse(saved) : []
+      const parsed = saved ? JSON.parse(saved) : []
+      return Array.isArray(parsed) ? parsed : []
     } catch {
       return []
     }

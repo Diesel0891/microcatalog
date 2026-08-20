@@ -11,8 +11,8 @@ const COLOR = {
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 
 export default function CatalogProductImage({
-  images,
-  activeIndex,
+  images = [],
+  activeIndex = 0,
   onCycle,
   isNew = false,
   className = '',

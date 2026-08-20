@@ -65,7 +65,7 @@ export default function CatalogFeedCard({
     }
   }, [onDwell])
 
-  const images = product.images || []
+  const images = Array.isArray(product.images) ? product.images : []
 
   // A2: Entire card tappable, but AddToInquiry button stops propagation
   const handleCardClick = (e) => {
