@@ -12,7 +12,6 @@ import CatalogInquiryTray from '../components/CatalogInquiryTray.jsx'
 import CatalogIdentityStrip from '../components/CatalogIdentityStrip.jsx'
 import { ScrollPositionIndicator, Toast, CatalogEmptyState } from '../components/CatalogUI.jsx'
 import CatalogSkeleton from '../components/CatalogSkeleton.jsx'
-import EmptyState from '../components/EmptyState.jsx'
 
 /* ----------------------------------------------------------------------------
  * Constants
@@ -348,9 +347,17 @@ export default function Catalog() {
 
   // Loading / error states
   if (loading) return <CatalogSkeleton />
-  if (error) return <EmptyState title="Something went wrong" description={error} support={error} />
+  if (error) return (
+    <div className="infini-catalog h-dvh w-full flex items-center justify-center" style={{ backgroundColor: COLOR.void }}>
+      <CatalogEmptyState title="Something went wrong" description={error} />
+    </div>
+  )
   if (sellerNotFound) {
-    return <EmptyState title="Catalog not found" description="This catalog link doesn't exist or has been removed." />
+    return (
+      <div className="infini-catalog h-dvh w-full flex items-center justify-center" style={{ backgroundColor: COLOR.void }}>
+        <CatalogEmptyState title="Catalog not found" description="This catalog link doesn't exist or has been removed." />
+      </div>
+    )
   }
   if (products.length === 0) {
     return (
@@ -404,7 +411,7 @@ export default function Catalog() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="h-full w-full snap-y snap-mandatory overflow-y-auto pt-14"
+        className="h-full w-full snap-y snap-mandatory overflow-y-auto"
         style={{
           scrollBehavior: 'smooth',
           transform: isOverlayActive ? 'scale(0.96)' : 'scale(1)',
