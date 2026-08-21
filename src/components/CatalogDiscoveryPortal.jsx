@@ -70,13 +70,13 @@ export default function CatalogDiscoveryPortal({
       }}
     >
       <div
-        className="mx-auto flex h-full w-full max-w-md flex-col px-5 pb-8 pt-6"
+        className="mx-auto flex h-full w-full max-w-md flex-col px-5 pb-8"
+        style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top, 12px))' }}
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Drag handle + close tap target */}
         <button
           aria-label="Close discovery portal"
           onClick={onClose}
@@ -94,14 +94,13 @@ export default function CatalogDiscoveryPortal({
           <button
             aria-label="Close discovery portal"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full border"
+            className="flex h-11 w-11 items-center justify-center rounded-full border"
             style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Search input */}
         <div
           role="search"
           className="mt-5 flex items-center gap-2 border-b pb-3"
@@ -119,7 +118,6 @@ export default function CatalogDiscoveryPortal({
           />
         </div>
 
-        {/* Results */}
         <div className="mt-6 flex-1 overflow-y-auto no-scrollbar">
           {showZeroState ? (
             <div className="flex flex-col items-center gap-4 pt-8 text-center">

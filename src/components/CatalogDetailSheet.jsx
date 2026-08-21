@@ -41,7 +41,6 @@ export default function CatalogDetailSheet({
   const [showScrollCue, setShowScrollCue] = useState(true)
   const [scrolledOnce, setScrolledOnce] = useState(false)
 
-  // Scroll tracking + progress bar + scroll cue (A7)
   useEffect(() => {
     const el = scrollRef.current
     if (!el || !open) return
@@ -59,7 +58,6 @@ export default function CatalogDetailSheet({
     return () => el.removeEventListener('scroll', handle)
   }, [open, scrolledOnce])
 
-  // Auto-hide scroll cue after 3 seconds (A7)
   useEffect(() => {
     if (!open) {
       setShowScrollCue(true)
@@ -83,7 +81,6 @@ export default function CatalogDetailSheet({
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -94,7 +91,6 @@ export default function CatalogDetailSheet({
             onClick={onClose}
           />
 
-          {/* Sheet */}
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -107,12 +103,10 @@ export default function CatalogDetailSheet({
               contain: 'layout paint',
             }}
           >
-            {/* Dark header strip: progress line + close + scroll cue (item 6) */}
             <div
               className="absolute inset-x-0 top-0 z-30 flex h-14 items-center justify-center"
-              style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+              style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}
             >
-              {/* Progress line at bottom of header */}
               <div className="absolute inset-x-0 bottom-0 h-[1.5px] bg-[#1A1A1A]">
                 <div
                   className="h-full transition-all duration-150"
@@ -120,7 +114,6 @@ export default function CatalogDetailSheet({
                 />
               </div>
 
-              {/* Close button */}
               <button
                 aria-label="Close details"
                 onClick={onClose}
@@ -134,7 +127,6 @@ export default function CatalogDetailSheet({
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
 
-              {/* Scroll cue */}
               <AnimatePresence>
                 {showScrollCue && (
                   <motion.div
@@ -152,8 +144,7 @@ export default function CatalogDetailSheet({
               </AnimatePresence>
             </div>
 
-            {/* Scrollable content */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto pt-14">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto pt-14" style={{ position: 'relative', zIndex: 1 }}>
               <CatalogProductImage
                 images={Array.isArray(product.images) ? product.images : []}
                 activeIndex={activeImageIndex}
@@ -164,26 +155,28 @@ export default function CatalogDetailSheet({
 
               <div className="flex flex-col gap-5 p-5" style={{ paddingBottom: '7rem' }}>
                 <div className="flex flex-col gap-2">
-                  <span
-                    className="text-[10px] font-medium uppercase"
-                    style={{ color: COLOR.body, letterSpacing: '0.22em' }}
-                  >
-                    {product.category || 'Product'}
-                  </span>
-                  <h2
-                    className="font-serif text-3xl font-light leading-tight text-balance"
-                    style={{ color: '#F0EDE4' }}
-                  >
-                    {product.name}
-                  </h2>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between gap-3">
                     <span
-                      className="text-xl font-medium"
+                      className="text-[10px] font-medium uppercase"
+                      style={{ color: COLOR.body, letterSpacing: '0.22em' }}
+                    >
+                      {product.category || 'Product'}
+                    </span>
+                    <StatusBadge status={product.stockStatus} />
+                  </div>
+                  <div className="flex items-start justify-between gap-3 text-left">
+                    <h2
+                      className="font-serif text-3xl font-light leading-tight text-balance"
+                      style={{ color: '#F0EDE4' }}
+                    >
+                      {product.name}
+                    </h2>
+                    <span
+                      className="shrink-0 text-xl font-medium"
                       style={{ color: COLOR.goldPrimary, textShadow: '0 0 28px rgba(197,160,89,0.4)' }}
                     >
                       {product.price}
                     </span>
-                    <StatusBadge status={product.stockStatus} />
                   </div>
                 </div>
 
@@ -226,7 +219,6 @@ export default function CatalogDetailSheet({
               </div>
             </div>
 
-            {/* Fade gradient for more content */}
             {hasMoreBelow && (
               <div
                 className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] h-10"
@@ -235,7 +227,6 @@ export default function CatalogDetailSheet({
               />
             )}
 
-            {/* CTA bar — shared pill container with hairline gold border */}
             <div
               className="absolute inset-x-0 bottom-0 p-3"
               style={{ backgroundColor: COLOR.void }}
