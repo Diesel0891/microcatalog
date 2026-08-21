@@ -1,5 +1,5 @@
-import { MessageCircle } from 'lucide-react'
-import { SquircleButton } from './CatalogUI.jsx'
+import { useState } from 'react'
+import { MessageCircle, ChevronDown, X, Minus, Plus } from 'lucide-react'
 
 const COLOR = {
   void: '#000000',
@@ -12,12 +12,15 @@ const COLOR = {
 
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 
-/* Persistent bottom inquiry bar — v0 design */
 export default function CatalogInquiryTray({
   items,
+  onRemove,
+  onQuantityChange,
   onSend,
 }) {
   const safeItems = Array.isArray(items) ? items : []
+  const [expanded, setExpanded] = useState(false)
+
   if (safeItems.length === 0) return null
 
   // Calculate estimated total
@@ -27,37 +30,118 @@ export default function CatalogInquiryTray({
   }, 0)
 
   return (
-    <div
-      className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md"
-      style={{
-        backgroundColor: 'rgba(11,11,11,0.92)',
-        borderTop: `0.5px solid ${COLOR.hairlineGold}`,
-        backdropFilter: 'blur(20px)',
-        transitionTimingFunction: EASE,
-      }}
-    >
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
-        {/* Left: count + estimated total */}
-        <div className="flex flex-col">
-          <span className="text-xs font-medium" style={{ color: COLOR.goldSecondary }}>
-            {safeItems.length} piece{safeItems.length === 1 ? '' : 's'} selected
-          </span>
-          <span className="text-[10px]" style={{ color: COLOR.body }}>
-            ${estimatedTotal.toLocaleString()} est.
-          </span>
-        </div>
-
-        {/* Right: Send Inquiry button */}
-        <SquircleButton
-          variant="solid"
-          onClick={onSend}
-          ariaLabel="Send consolidated WhatsApp inquiry"
-          className="h-9 px-4 text-sm"
+    <>
+      {/* Expandable tray */}
+      {expanded && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md"
+          style={{
+            backgroundColor: COLOR.plate,
+            borderTop: `0.5px solid ${COLOR.hairlineGold}`,
+            transition: `transform 0.4s ${EASE}`,
+          }}
         >
-          <MessageCircle className="h-4 w-4" aria-hidden="true" />
-          Send Inquiry
-        </SquircleButton>
-      </div>
-    </div>
+          <div className="max-h-64 overflow-y-auto px-4 py-3">
+            <div className="flex flex-col gap-3">
+              {safeItems.map((item) => (
+                <div key={item.key} className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col min-w-0">
+                    <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
+                      {item.productName}
+                    </span>
+                    <span className="text-[10px]" style={{ color: COLOR.body }}>
+                      {item.stockStatus}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Quantity stepper */}
+                    <button
+                      onClick={() => onQuantityChange(item.key, Math.max(1, item.quantity - 1))}
+                      className="flex h-6 w-6 items-center justify-center rounded-full border"
+                      style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="w-4 text-center text-xs tabular-nums" style={{ color: COLOR.goldSecondary }}>
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => onQuantityChange(item.key, item.quantity + 1)}
+                      className="flex h-6 w-6 items-center justify-center rounded-full border"
+                      style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                    {/* Remove */}
+                    <button
+                      onClick={() => onRemove(item.key)}
+                      className="ml-1 flex h-6 w-6 items-center justify-center"
+                      style={{ color: COLOR.body }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Persistent bottom bar — tappable to expand tray */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
+        style={{
+          backgroundColor: 'rgba(11,11,11,0.95)',
+          borderColor: COLOR.hairlineGold,
+          backdropFilter: 'blur(20px)',
+          transitionTimingFunction: EASE,
+        }}
+      >
+        <div className="flex items-center justify-between gap-3">
+          {/* Left: filled circle count + text */}
+          <div className="flex items-center gap-3">
+            <span
+              className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+              style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
+            >
+              {safeItems.length}
+            </span>
+            <div className="flex flex-col text-left">
+              <span className="text-xs font-medium" style={{ color: COLOR.goldSecondary }}>
+                {safeItems.length} piece{safeItems.length === 1 ? '' : 's'} selected
+              </span>
+              <span className="text-[10px]" style={{ color: COLOR.body }}>
+                ${estimatedTotal.toLocaleString()} est.
+              </span>
+            </div>
+          </div>
+
+          {/* Right: ChevronDown + Send Inquiry */}
+          <div className="flex items-center gap-2">
+            <ChevronDown
+              className="h-4 w-4 transition-transform duration-300"
+              style={{
+                color: COLOR.body,
+                transform: expanded ? 'rotate(180deg)' : 'none',
+                transitionTimingFunction: EASE,
+              }}
+            />
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium"
+              style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
+              onClick={(e) => {
+                e.stopPropagation()
+                onSend()
+              }}
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Send Inquiry
+            </span>
+          </div>
+        </div>
+      </button>
+    </>
   )
 }

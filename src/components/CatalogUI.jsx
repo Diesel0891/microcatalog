@@ -110,13 +110,13 @@ export function ScrollPositionIndicator({ count, activeIndex, minProducts = 8 })
             key={i}
             className="transition-all duration-300"
             style={{
-              width: isActive ? '12px' : '4px',
-              height: '4px',
+              width: isActive ? '3px' : '3px',
+              height: isActive ? '16px' : '3px',
               borderRadius: '9999px',
               backgroundColor: isActive ? COLOR.goldPrimary : 'transparent',
               border: `0.5px solid ${COLOR.hairlineGold}`,
               transitionTimingFunction: EASE,
-              opacity: isActive ? 1 : 0.5,
+              opacity: isActive ? 1 : 0.4,
             }}
           />
         )

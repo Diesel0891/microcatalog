@@ -280,13 +280,21 @@ export default function Catalog() {
         },
       ]
     })
-    // Flash + toast (A1)
+    // Flash + toast
     setAddedFlash((prev) => ({ ...prev, [product.id]: true }))
     setToastMessage('Added to inquiry')
     setToastVisible(true)
     setTimeout(() => {
       setAddedFlash((prev) => ({ ...prev, [product.id]: false }))
     }, ADDED_CONFIRMATION_DURATION_MS)
+  }, [])
+
+  const handleRemoveInquiry = useCallback((key) => {
+    setInquiry((prev) => prev.filter((item) => item.key !== key))
+  }, [])
+
+  const handleQuantityChange = useCallback((key, quantity) => {
+    setInquiry((prev) => prev.map((item) => (item.key === key ? { ...item, quantity } : item)))
   }, [])
 
 
@@ -506,8 +514,9 @@ export default function Catalog() {
       {/* Persistent bottom inquiry bar */}
       <CatalogInquiryTray
         items={inquiry}
+        onRemove={handleRemoveInquiry}
+        onQuantityChange={handleQuantityChange}
         onSend={() => sendWhatsapp()}
-        shopName={shopName}
       />
 
       {/* Toast (A1) */}
