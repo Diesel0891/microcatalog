@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Check } from 'lucide-react'
 import { StatusBadge, SquircleButton } from './CatalogUI.jsx'
 import CatalogProductImage from './CatalogProductImage.jsx'
 
@@ -33,7 +34,7 @@ export default function CatalogFeedCard({
   activeImageIndex,
   onCycleImage,
   isAdded,
-  onAdd,
+  onToggle,
   onOpenDetail,
   onDwell,
 }) {
@@ -120,7 +121,7 @@ export default function CatalogFeedCard({
           <div className="flex items-start justify-between gap-3 text-left">
             <h2
               className={`font-serif ${isSignature ? 'text-2xl' : 'text-xl'} font-light leading-tight text-balance`}
-              style={{ color: isSignature ? '#F5F1E8' : COLOR.goldSecondary }}
+              style={{ color: '#F0EDE4' }}
             >
               {product.name}
             </h2>
@@ -141,12 +142,21 @@ export default function CatalogFeedCard({
             </span>
             <div data-inquiry-btn onClick={(e) => e.stopPropagation()}>
               <SquircleButton
-                variant="solid"
-                onClick={onAdd}
-                ariaLabel={isAdded ? 'Added to inquiry' : 'Add to inquiry'}
+                variant={isAdded ? 'ghost' : 'solid'}
+                onClick={onToggle}
+                ariaLabel={isAdded ? 'Remove from inquiry' : 'Add to inquiry'}
+                ariaPressed={isAdded}
                 className="h-8 px-3 text-xs"
+                style={isAdded ? { backgroundColor: 'rgba(240,237,228,0.10)', borderColor: 'rgba(240,237,228,0.28)', color: '#F0EDE4' } : undefined}
               >
-                {isAdded ? 'Added' : 'Add to Inquiry'}
+                {isAdded ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5" />
+                    In inquiry
+                  </span>
+                ) : (
+                  'Add to Inquiry'
+                )}
               </SquircleButton>
             </div>
           </div>

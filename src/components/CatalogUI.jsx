@@ -35,13 +35,12 @@ export function Hairline({ tone = 'obsidian', className = '' }) {
 /* 2. Status Badge — pill shape (A5 fix: all badges share identical pill) --*/
 export function StatusBadge({ status }) {
   const label = status === 'available' ? 'Available' : status === 'reserved' ? 'Reserved' : 'Sold'
-  const color = status === 'available' ? COLOR.goldSecondary : status === 'reserved' ? COLOR.goldPrimary : '#5A5D63'
   return (
     <span
       className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase"
       style={{
         borderColor: COLOR.hairlineGold,
-        color,
+        color: COLOR.body,
         letterSpacing: '0.18em',
       }}
     >
@@ -76,6 +75,8 @@ export function SquircleButton({
   ariaLabel,
   disabled,
   type = 'button',
+  ariaPressed,
+  style: externalStyle,
 }) {
   const base =
     variant === 'solid'
@@ -87,8 +88,9 @@ export function SquircleButton({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
       className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full transition-all duration-300 disabled:opacity-40 ${base} ${className}`}
-      style={{ transitionTimingFunction: EASE }}
+      style={{ transitionTimingFunction: EASE, ...externalStyle }}
     >
       {children}
     </button>

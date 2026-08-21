@@ -14,6 +14,7 @@ const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 
 export default function CatalogInquiryTray({
   items,
+  shopName,
   onRemove,
   onQuantityChange,
   onSend,
@@ -42,6 +43,13 @@ export default function CatalogInquiryTray({
           }}
         >
           <div className="max-h-64 overflow-y-auto px-4 py-3">
+            {shopName && (
+              <div className="pb-2">
+                <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
+                  {shopName}
+                </span>
+              </div>
+            )}
             <div className="flex flex-col gap-3">
               {safeItems.map((item) => (
                 <div key={item.key} className="flex items-center justify-between gap-3">

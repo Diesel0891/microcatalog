@@ -18,7 +18,6 @@ import CatalogSkeleton from '../components/CatalogSkeleton.jsx'
 const VIRAL_BANNER_INTERVAL = 6
 const DISCOVERY_PORTAL_OVERSCROLL_THRESHOLD = 60
 const DWELL_SAMPLE_SIZE_MS = 800
-const ADDED_CONFIRMATION_DURATION_MS = 1600
 
 const COLOR = {
   void: '#000000',
@@ -134,7 +133,6 @@ export default function Catalog() {
       return []
     }
   })
-  const [addedFlash, setAddedFlash] = useState({})
   const [toastVisible, setToastVisible] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
@@ -263,11 +261,14 @@ export default function Catalog() {
     return inquiry.some((item) => item.key === key)
   }, [inquiry])
 
-  const handleAdd = useCallback((product) => {
+  const handleToggle = useCallback((product) => {
     const key = inquiryKey(product.id, {})
-    setInquiry((prev) => {
-      if (prev.some((item) => item.key === key)) return prev
-      return [
+    const alreadyAdded = inquiry.some((item) => item.key === key)
+    if (alreadyAdded) {
+      setInquiry((prev) => prev.filter((item) => item.key !== key))
+      setToastMessage('Removed from inquiry')
+    } else {
+      setInquiry((prev) => [
         ...prev,
         {
           key,
@@ -278,16 +279,11 @@ export default function Catalog() {
           quantity: 1,
           selection: {},
         },
-      ]
-    })
-    // Flash + toast
-    setAddedFlash((prev) => ({ ...prev, [product.id]: true }))
-    setToastMessage('Added to inquiry')
+      ])
+      setToastMessage('Added to inquiry')
+    }
     setToastVisible(true)
-    setTimeout(() => {
-      setAddedFlash((prev) => ({ ...prev, [product.id]: false }))
-    }, ADDED_CONFIRMATION_DURATION_MS)
-  }, [])
+  }, [inquiry])
 
   const handleRemoveInquiry = useCallback((key) => {
     setInquiry((prev) => prev.filter((item) => item.key !== key))
@@ -461,8 +457,8 @@ export default function Catalog() {
               maxPrice={maxPrice}
               activeImageIndex={activeImgIndex}
               onCycleImage={(dir) => cycleImage(product, dir)}
-              isAdded={addedFlash[product.id] || isProductAdded(product)}
-              onAdd={() => handleAdd(product)}
+              isAdded={isProductAdded(product)}
+              onToggle={() => handleToggle(product)}
               onDwell={(ms) => handleDwell(product.id, ms)}
               onOpenDetail={() => setDetailProductId(product.id)}
             />,
@@ -506,8 +502,8 @@ export default function Catalog() {
         onClose={() => setDetailProductId(null)}
         activeImageIndex={detailProduct ? (imageIndices[detailProduct.id] || 0) : 0}
         onCycleImage={(dir) => detailProduct && cycleImage(detailProduct, dir)}
-        isAdded={detailProduct ? (addedFlash[detailProduct.id] || isProductAdded(detailProduct)) : false}
-        onAdd={() => detailProduct && handleAdd(detailProduct)}
+        isAdded={detailProduct ? isProductAdded(detailProduct) : false}
+        onToggle={() => detailProduct && handleToggle(detailProduct)}
         onSendWhatsapp={() => detailProduct && sendWhatsapp(detailProduct)}
       />
 

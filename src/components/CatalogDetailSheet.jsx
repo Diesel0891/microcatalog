@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, MessageCircle, ChevronDown } from 'lucide-react'
+import { X, MessageCircle, ChevronDown, Check } from 'lucide-react'
 import { Hairline, StatusBadge, SquircleButton } from './CatalogUI.jsx'
 import CatalogProductImage from './CatalogProductImage.jsx'
 
@@ -32,7 +32,7 @@ export default function CatalogDetailSheet({
   activeImageIndex,
   onCycleImage,
   isAdded,
-  onAdd,
+  onToggle,
   onSendWhatsapp,
 }) {
   const scrollRef = useRef(null)
@@ -96,14 +96,15 @@ export default function CatalogDetailSheet({
 
           {/* Sheet */}
           <motion.div
-            initial={{ y: '100%', scale: 0.98 }}
-            animate={{ y: 0, scale: 1 }}
-            exit={{ y: '100%', scale: 0.98 }}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
             transition={{ duration: 0.5, ease: EASE }}
             className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden border-t"
             style={{
               backgroundColor: COLOR.void,
               borderColor: COLOR.hairlineGold,
+              contain: 'layout paint',
             }}
           >
             {/* Scroll progress bar */}
@@ -166,7 +167,7 @@ export default function CatalogDetailSheet({
                   </span>
                   <h2
                     className="font-serif text-3xl font-light leading-tight text-balance"
-                    style={{ color: COLOR.goldSecondary }}
+                    style={{ color: '#F0EDE4' }}
                   >
                     {product.name}
                   </h2>
@@ -204,7 +205,7 @@ export default function CatalogDetailSheet({
                           <dt className="text-xs" style={{ color: COLOR.body }}>
                             {spec.label}
                           </dt>
-                          <dd className="text-right text-xs" style={{ color: COLOR.goldSecondary }}>
+                          <dd className="text-right text-xs" style={{ color: '#F0EDE4' }}>
                             {spec.value}
                           </dd>
                         </div>
@@ -229,28 +230,42 @@ export default function CatalogDetailSheet({
               />
             )}
 
-            {/* CTA bar (A4: shared container with hairline border, pill buttons at opposite ends) */}
+            {/* CTA bar — shared pill container with hairline gold border */}
             <div
-              className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 border-t p-3"
-              style={{ backgroundColor: COLOR.void, borderColor: COLOR.hairlineGold }}
+              className="absolute inset-x-0 bottom-0 p-3"
+              style={{ backgroundColor: COLOR.void }}
             >
-              <SquircleButton
-                variant="solid"
-                onClick={onAdd}
-                ariaLabel={isAdded ? 'Added to inquiry' : 'Add to inquiry'}
-                className="h-8 px-3 text-xs"
+              <div
+                className="flex items-center justify-between gap-2 rounded-full border p-1.5"
+                style={{ borderColor: 'rgba(197,160,89,0.55)' }}
               >
-                {isAdded ? 'Added' : 'Add to Inquiry'}
-              </SquircleButton>
-              <SquircleButton
-                variant="solid"
-                onClick={onSendWhatsapp}
-                ariaLabel="Send WhatsApp inquiry"
-                className="h-8 px-3 text-xs"
-              >
-                <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                WhatsApp
-              </SquircleButton>
+                <SquircleButton
+                  variant={isAdded ? 'ghost' : 'solid'}
+                  onClick={onToggle}
+                  ariaLabel={isAdded ? 'Remove from inquiry' : 'Add to inquiry'}
+                  ariaPressed={isAdded}
+                  className="h-8 px-3 text-xs"
+                  style={isAdded ? { backgroundColor: 'rgba(240,237,228,0.10)', borderColor: 'rgba(240,237,228,0.28)', color: '#F0EDE4' } : undefined}
+                >
+                  {isAdded ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Check className="h-3.5 w-3.5" />
+                      In inquiry
+                    </span>
+                  ) : (
+                    'Add to Inquiry'
+                  )}
+                </SquircleButton>
+                <SquircleButton
+                  variant="solid"
+                  onClick={onSendWhatsapp}
+                  ariaLabel="Send WhatsApp inquiry"
+                  className="h-8 px-3 text-xs"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                  WhatsApp
+                </SquircleButton>
+              </div>
             </div>
           </motion.div>
         </>

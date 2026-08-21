@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
 import CatalogProductImage from './CatalogProductImage.jsx'
 
@@ -22,6 +22,28 @@ export default function CatalogDiscoveryPortal({
   dwellRecommendations,
   onOpenProduct,
 }) {
+  const touchStartY = useRef(null)
+
+  const handleTouchStart = useCallback((e) => {
+    const touch = e.touches[0]
+    if (touch) touchStartY.current = touch.clientY
+  }, [])
+
+  const handleTouchMove = useCallback((e) => {
+    if (touchStartY.current === null) return
+    const touch = e.touches[0]
+    if (!touch) return
+    const delta = touch.clientY - touchStartY.current
+    if (delta > 60) {
+      onClose()
+      touchStartY.current = null
+    }
+  }, [onClose])
+
+  const handleTouchEnd = useCallback(() => {
+    touchStartY.current = null
+  }, [])
+
   const filtered = useMemo(() => {
     if (!query.trim()) return []
     const q = query.trim().toLowerCase()
@@ -37,6 +59,10 @@ export default function CatalogDiscoveryPortal({
       role="region"
       aria-label="Discovery portal"
       aria-expanded={open}
+      onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       className="fixed inset-0 z-40 flex flex-col transition-all duration-500"
       style={{
         backgroundColor: 'rgba(0,0,0,0.75)',
@@ -47,7 +73,10 @@ export default function CatalogDiscoveryPortal({
         transitionTimingFunction: EASE,
       }}
     >
-      <div className="mx-auto flex h-full w-full max-w-md flex-col px-5 pb-8 pt-6">
+      <div
+        className="mx-auto flex h-full w-full max-w-md flex-col px-5 pb-8 pt-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
           <span
             className="text-[10px] font-medium uppercase"

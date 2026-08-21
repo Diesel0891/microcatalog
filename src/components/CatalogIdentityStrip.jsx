@@ -57,7 +57,7 @@ export default function CatalogIdentityStrip({ shopName, logoUrl, isVisible = tr
             )}
             <span
               className="font-wordmark text-base font-medium leading-none"
-              style={{ color: COLOR.goldSecondary }}
+              style={{ color: '#F0EDE4' }}
             >
               {shopName}
             </span>
@@ -80,7 +80,7 @@ export default function CatalogIdentityStrip({ shopName, logoUrl, isVisible = tr
             )}
             <span
               className="font-wordmark text-base font-medium leading-none"
-              style={{ color: COLOR.goldSecondary }}
+              style={{ color: '#F0EDE4' }}
             >
               {shopName}
             </span>
