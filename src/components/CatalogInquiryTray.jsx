@@ -42,7 +42,7 @@ export default function CatalogInquiryTray({
             transition: `transform 0.4s ${EASE}`,
           }}
         >
-          <div className="max-h-64 overflow-y-auto px-4 py-3">
+          <div className="max-h-64 overflow-y-auto px-4 py-3 pb-32">
             {shopName && (
               <div className="pb-2">
                 <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
@@ -53,13 +53,24 @@ export default function CatalogInquiryTray({
             <div className="flex flex-col gap-3">
               {safeItems.map((item) => (
                 <div key={item.key} className="flex items-center justify-between gap-3">
-                  <div className="flex flex-col min-w-0">
-                    <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
-                      {item.productName}
-                    </span>
-                    <span className="text-[10px]" style={{ color: COLOR.body }}>
-                      {item.stockStatus}
-                    </span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {item.imageUrl && (
+                      <img
+                        src={item.imageUrl}
+                        alt=""
+                        className="h-8 w-8 rounded object-cover shrink-0"
+                        style={{ border: `0.5px solid ${COLOR.hairlineGold}` }}
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      />
+                    )}
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
+                        {item.productName}
+                      </span>
+                      <span className="text-[10px]" style={{ color: COLOR.body }}>
+                        {item.stockStatus}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {/* Quantity stepper */}

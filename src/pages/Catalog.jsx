@@ -59,7 +59,7 @@ function mapItemToProduct(item) {
 /* ----------------------------------------------------------------------------
  * Inquiry helpers
  * ----------------------------------------------------------------------------*/
-function inquiryKey(productId) {
+function inquiryKey(productId, _selection = {}) {
   return `${productId}`
 }
 
@@ -278,6 +278,7 @@ export default function Catalog() {
           stockStatus: product.stockStatus,
           quantity: 1,
           selection: {},
+          imageUrl: product.images[0]?.url || '',
         },
       ])
       setToastMessage('Added to inquiry')
@@ -510,6 +511,7 @@ export default function Catalog() {
       {/* Persistent bottom inquiry bar */}
       <CatalogInquiryTray
         items={inquiry}
+        shopName={shopName}
         onRemove={handleRemoveInquiry}
         onQuantityChange={handleQuantityChange}
         onSend={() => sendWhatsapp()}

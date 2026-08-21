@@ -54,10 +54,11 @@ export function NewBadge() {
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute left-3 top-3 z-10 rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase"
+      className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase"
       style={{
-        backgroundColor: COLOR.goldPrimary,
-        color: COLOR.void,
+        backgroundColor: 'transparent',
+        borderColor: COLOR.goldPrimary,
+        color: COLOR.goldPrimary,
         letterSpacing: '0.16em',
       }}
     >
@@ -115,10 +116,10 @@ export function ScrollPositionIndicator({ count, activeIndex, minProducts = 8 })
               width: isActive ? '3px' : '3px',
               height: isActive ? '16px' : '3px',
               borderRadius: '9999px',
-              backgroundColor: isActive ? COLOR.goldPrimary : 'transparent',
+              backgroundColor: isActive ? COLOR.goldPrimary : 'rgba(197,160,89,0.25)',
               border: `0.5px solid ${COLOR.hairlineGold}`,
               transitionTimingFunction: EASE,
-              opacity: isActive ? 1 : 0.4,
+              opacity: isActive ? 1 : 0.7,
             }}
           />
         )
