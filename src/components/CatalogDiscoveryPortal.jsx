@@ -60,13 +60,9 @@ export default function CatalogDiscoveryPortal({
       aria-label="Discovery portal"
       aria-expanded={open}
       onClick={onClose}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
       className="fixed inset-0 z-40 flex flex-col transition-all duration-500"
       style={{
-        backgroundColor: 'rgba(0,0,0,0.75)',
-        backdropFilter: 'blur(25px) saturate(180%)',
+        backgroundColor: 'rgba(0,0,0,0.85)',
         opacity: open ? 1 : 0,
         pointerEvents: open ? 'auto' : 'none',
         transform: open ? 'translateY(0)' : 'translateY(-16px)',
@@ -76,7 +72,18 @@ export default function CatalogDiscoveryPortal({
       <div
         className="mx-auto flex h-full w-full max-w-md flex-col px-5 pb-8 pt-6"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
+        {/* Drag handle + close tap target */}
+        <button
+          aria-label="Close discovery portal"
+          onClick={onClose}
+          className="flex w-full justify-center pb-4 pt-2"
+        >
+          <div className="h-1 w-10 rounded-full" style={{ backgroundColor: 'rgba(197,160,89,0.4)' }} />
+        </button>
         <div className="flex items-center justify-between">
           <span
             className="text-[10px] font-medium uppercase"

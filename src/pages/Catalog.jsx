@@ -393,6 +393,14 @@ export default function Catalog() {
 
   return (
     <main className="infini-catalog relative mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden" style={{ backgroundColor: COLOR.void }}>
+      {/* Dark gradient backing for all top chrome (item 5) */}
+      <div
+        className="fixed inset-x-0 top-0 z-10 h-24 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)',
+        }}
+      />
+
       {/* B1: Persistent identity strip */}
       <CatalogIdentityStrip
         shopName={shopName || 'Catalog'}
@@ -442,11 +450,9 @@ export default function Catalog() {
         className="h-full w-full snap-y snap-mandatory overflow-y-auto"
         style={{
           scrollBehavior: 'smooth',
-          transform: isOverlayActive ? 'scale(0.96)' : 'scale(1)',
-          filter: isOverlayActive ? 'blur(25px) saturate(180%)' : 'none',
-          opacity: isOverlayActive ? 0.4 : 1,
+          opacity: isOverlayActive ? 0 : 1,
           pointerEvents: isOverlayActive ? 'none' : 'auto',
-          transition: `all 0.5s ${EASE}`,
+          transition: `opacity 0.35s ${EASE}`,
         }}
       >
         {products.map((product, index) => {

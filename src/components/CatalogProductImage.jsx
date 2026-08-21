@@ -41,7 +41,7 @@ export default function CatalogProductImage({
 
   return (
     <div
-      className={`relative aspect-[4/5] overflow-hidden rounded-lg ${className}`}
+      className={`relative aspect-[4/5] overflow-hidden rounded-lg p-3 ${className}`}
       style={{
         backgroundColor: COLOR.plate,
         border: `0.5px solid ${COLOR.hairlineObsidian}`,

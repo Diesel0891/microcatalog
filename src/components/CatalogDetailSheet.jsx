@@ -88,9 +88,9 @@ export default function CatalogDetailSheet({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: EASE }}
+            transition={{ duration: 0.01 }}
             className="fixed inset-0 z-40"
-            style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}
+            style={{ backgroundColor: '#000000' }}
             onClick={onClose}
           />
 
@@ -107,48 +107,53 @@ export default function CatalogDetailSheet({
               contain: 'layout paint',
             }}
           >
-            {/* Scroll progress bar */}
-            <div className="absolute inset-x-0 top-0 z-10 h-[1.5px] bg-[#1A1A1A]">
-              <div
-                className="h-full transition-all duration-150"
-                style={{ width: `${scrollProgress * 100}%`, backgroundColor: COLOR.goldPrimary }}
-              />
+            {/* Dark header strip: progress line + close + scroll cue (item 6) */}
+            <div
+              className="absolute inset-x-0 top-0 z-30 flex h-14 items-center justify-center"
+              style={{ backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+            >
+              {/* Progress line at bottom of header */}
+              <div className="absolute inset-x-0 bottom-0 h-[1.5px] bg-[#1A1A1A]">
+                <div
+                  className="h-full transition-all duration-150"
+                  style={{ width: `${scrollProgress * 100}%`, backgroundColor: COLOR.goldPrimary }}
+                />
+              </div>
+
+              {/* Close button */}
+              <button
+                aria-label="Close details"
+                onClick={onClose}
+                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border"
+                style={{
+                  borderColor: COLOR.hairlineGold,
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  color: COLOR.goldSecondary,
+                }}
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+
+              {/* Scroll cue */}
+              <AnimatePresence>
+                {showScrollCue && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <ChevronDown
+                      className="h-4 w-4 animate-bounce"
+                      style={{ color: COLOR.goldPrimary }}
+                      aria-hidden="true"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Close button */}
-            <button
-              aria-label="Close details"
-              onClick={onClose}
-              className="absolute right-3 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md"
-              style={{
-                borderColor: COLOR.hairlineGold,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                color: COLOR.goldSecondary,
-              }}
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-
-            {/* Scroll cue (A7) */}
-            <AnimatePresence>
-              {showScrollCue && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute left-1/2 top-4 z-20 -translate-x-1/2"
-                >
-                  <ChevronDown
-                    className="h-4 w-4 animate-bounce"
-                    style={{ color: COLOR.goldPrimary }}
-                    aria-hidden="true"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Scrollable content */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto pt-14">
               <CatalogProductImage
                 images={Array.isArray(product.images) ? product.images : []}
                 activeIndex={activeImageIndex}
