@@ -103,6 +103,7 @@ export default function CatalogDetailSheet({
               contain: 'layout paint',
             }}
           >
+            {/* Header strip: progress line + close + scroll cue */}
             <div
               className="absolute inset-x-0 top-0 z-30 flex h-14 items-center justify-center"
               style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}
@@ -144,6 +145,7 @@ export default function CatalogDetailSheet({
               </AnimatePresence>
             </div>
 
+            {/* Scrollable content — z-index 1 so header (z-30) and CTA bar (z-20) stay above */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto pt-14" style={{ position: 'relative', zIndex: 1 }}>
               <CatalogProductImage
                 images={Array.isArray(product.images) ? product.images : []}
@@ -219,21 +221,23 @@ export default function CatalogDetailSheet({
               </div>
             </div>
 
+            {/* Fade gradient for more content */}
             {hasMoreBelow && (
               <div
                 className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] h-10"
-                style={{ background: 'linear-gradient(to top, #000000, transparent)' }}
+                style={{ background: 'linear-gradient(to top, #000000, transparent)', zIndex: 2 }}
                 aria-hidden="true"
               />
             )}
 
+            {/* CTA bar — solid background, z-index above scrollable content */}
             <div
-              className="absolute inset-x-0 bottom-0 p-3"
+              className="absolute inset-x-0 bottom-0 z-20 p-3"
               style={{ backgroundColor: COLOR.void }}
             >
               <div
                 className="flex items-center justify-between gap-2 rounded-full border p-1.5"
-                style={{ borderColor: 'rgba(197,160,89,0.55)' }}
+                style={{ borderColor: 'rgba(197,160,89,0.55)', backgroundColor: COLOR.void }}
               >
                 <SquircleButton
                   variant={isAdded ? 'ghost' : 'solid'}

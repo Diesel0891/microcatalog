@@ -178,17 +178,21 @@ export default function Catalog() {
           setLogoUrl(sellerData.logo_url || '')
 
           // Fire-and-forget daily view tracking
-          const viewKey = `microcatalog_viewed_${sellerUuid}`
-          const lastViewed = localStorage.getItem(viewKey)
-          const now = Date.now()
-          if (!lastViewed || now - parseInt(lastViewed, 10) >= 24 * 60 * 60 * 1000) {
-            localStorage.setItem(viewKey, String(now))
-            const today = new Date().toISOString().slice(0, 10)
-            void (async () => { try { await supabase.rpc('track_daily_metric', {
-              p_seller_uuid: sellerUuid,
-              p_date: today,
-              p_field: 'views'
-            }); } catch {} })()
+          try {
+            const viewKey = `microcatalog_viewed_${sellerUuid}`
+            const lastViewed = localStorage.getItem(viewKey)
+            const now = Date.now()
+            if (!lastViewed || now - parseInt(lastViewed, 10) >= 24 * 60 * 60 * 1000) {
+              localStorage.setItem(viewKey, String(now))
+              const today = new Date().toISOString().slice(0, 10)
+              void (async () => { try { await supabase.rpc('track_daily_metric', {
+                p_seller_uuid: sellerUuid,
+                p_date: today,
+                p_field: 'views'
+              }); } catch {} })()
+            }
+          } catch {
+            // localStorage unavailable
           }
         } else {
           setSellerNotFound(true)
@@ -216,8 +220,12 @@ export default function Catalog() {
     fetchData()
 
     // Owner check
-    const storedUuid = localStorage.getItem('microcatalog_seller_uuid')
-    setIsOwner(storedUuid === sellerUuid)
+    try {
+      const storedUuid = localStorage.getItem('microcatalog_seller_uuid')
+      setIsOwner(storedUuid === sellerUuid)
+    } catch {
+      setIsOwner(false)
+    }
   }, [sellerUuid])
 
   // Feed scroll tracking
@@ -294,17 +302,14 @@ export default function Catalog() {
     setInquiry((prev) => prev.map((item) => (item.key === key ? { ...item, quantity } : item)))
   }, [])
 
-
-
-    const handleClearInquiry = useCallback(() => {
-      setInquiry([])
-    }, [])
+  const handleClearInquiry = useCallback(() => {
+    setInquiry([])
+  }, [])
 
   const handleDwell = useCallback((productId, ms) => {
     if (ms < DWELL_SAMPLE_SIZE_MS) return
     setDwellTimes((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + ms }))
   }, [])
-
 
   const cycleImage = useCallback((product, direction) => {
     setImageIndices((prev) => {
@@ -348,7 +353,7 @@ export default function Catalog() {
         p_seller_uuid: sellerUuid,
         p_date: today,
         p_field: 'inquiries'
-      }); } catch {} })()
+      }); } catch (e) { logger.error('Catalog', 'Metric tracking failed', { message: e.message }) } })()
     }
   }, [inquiry, sellerPhone, shopName, sellerUuid])
 
@@ -384,7 +389,8 @@ export default function Catalog() {
   }
 
   const isOverlayActive = portalOpen || detailProductId !== null
-  const manageToken = localStorage.getItem('microcatalog_manage_token')
+  let manageToken = ''
+  try { manageToken = localStorage.getItem('microcatalog_manage_token') || '' } catch {}
 
   // Defensive: if products array is somehow invalid, show fallback
   if (!Array.isArray(products)) {
@@ -397,7 +403,7 @@ export default function Catalog() {
 
   return (
     <main className="infini-catalog relative mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden" style={{ backgroundColor: COLOR.void }}>
-      {/* Dark gradient backing for all top chrome (item 5) */}
+      {/* Dark gradient backing for all top chrome */}
       <div
         className="fixed inset-x-0 top-0 z-10 h-24 pointer-events-none"
         style={{
@@ -412,17 +418,20 @@ export default function Catalog() {
         isVisible={true}
       />
 
-      {/* Discover pill button */}
+      {/* Discover pill button — hides when overlay active */}
       <button
         onClick={() => setPortalOpen(true)}
         aria-label="Open discovery portal"
         aria-expanded={portalOpen}
-        className="absolute left-1/2 top-14 z-20 -translate-x-1/2 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors"
+        className="absolute left-1/2 top-14 z-20 -translate-x-1/2 rounded-full border px-4 py-1.5 text-xs font-medium transition-all"
         style={{
           borderColor: '#3A301A',
           color: '#A0A5AD',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(8px)',
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          opacity: isOverlayActive ? 0 : 1,
+          pointerEvents: isOverlayActive ? 'none' : 'auto',
+          transitionDuration: '0.35s',
+          transitionTimingFunction: EASE,
         }}
       >
         <span className="inline-flex items-center gap-1.5">
@@ -434,12 +443,19 @@ export default function Catalog() {
         </span>
       </button>
 
-      {/* Owner edit link (preserved from current) */}
+      {/* Owner edit link — hides when overlay active */}
       {isOwner && (
         <a
           href={`/#/u/${manageToken || sellerUuid}`}
-          className="absolute right-3 top-[4.5rem] z-20 text-[10px] font-medium uppercase transition-opacity hover:opacity-70"
-          style={{ color: '#C5A059', letterSpacing: '0.15em' }}
+          className="absolute right-3 top-[4.5rem] z-20 text-[10px] font-medium uppercase transition-all hover:opacity-70"
+          style={{
+            color: '#C5A059',
+            letterSpacing: '0.15em',
+            opacity: isOverlayActive ? 0 : 1,
+            pointerEvents: isOverlayActive ? 'none' : 'auto',
+            transitionDuration: '0.35s',
+            transitionTimingFunction: EASE,
+          }}
         >
           Edit catalog →
         </a>
