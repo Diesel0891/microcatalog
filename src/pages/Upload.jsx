@@ -660,7 +660,7 @@ export default function Upload() {
         .update({ phone: fullPhone })
         .eq('uuid', sellerUuid)
       if (error) {
-        console.warn('Phone save error:', error.message, error.code, error.details)
+        logger.warn('Upload', 'Phone save error', { message: error.message, code: error.code, details: error.details })
         throw error
       }
       setSellerPhone(fullPhone)

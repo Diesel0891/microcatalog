@@ -111,7 +111,7 @@ export default function CatalogInquiryTray({
         style={{
           backgroundColor: 'rgba(11,11,11,0.95)',
           borderColor: COLOR.hairlineGold,
-          backdropFilter: 'blur(20px)',
+          // backdrop-filter removed per motion budget — solid bg only
           transitionTimingFunction: EASE,
         }}
       >
