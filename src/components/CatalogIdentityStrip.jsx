@@ -12,15 +12,25 @@ const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 export default function CatalogIdentityStrip({ shopName, logoUrl, isVisible = true }) {
   const [hasAnimated, setHasAnimated] = useState(false)
   const [showEntrance, setShowEntrance] = useState(false)
+  const [logoError, setLogoError] = useState(false)
 
   // B3: One-time cinematic entrance per session
   useEffect(() => {
     if (!isVisible) return
     const sessionKey = 'infini_identity_animated'
-    const alreadyAnimated = sessionStorage.getItem(sessionKey)
+    let alreadyAnimated = false
+    try {
+      alreadyAnimated = sessionStorage.getItem(sessionKey)
+    } catch {
+      // sessionStorage unavailable
+    }
     if (!alreadyAnimated) {
       setShowEntrance(true)
-      sessionStorage.setItem(sessionKey, '1')
+      try {
+        sessionStorage.setItem(sessionKey, '1')
+      } catch {
+        // ignore
+      }
       const t = setTimeout(() => setHasAnimated(true), 1200)
       return () => clearTimeout(t)
     } else {
@@ -32,9 +42,9 @@ export default function CatalogIdentityStrip({ shopName, logoUrl, isVisible = tr
 
   return (
     <div
-      className="fixed inset-x-0 top-0 z-50 flex h-14 items-center border-b px-4 backdrop-blur-md"
+      className="fixed inset-x-0 top-0 z-50 flex h-14 items-center border-b px-4"
       style={{
-        backgroundColor: 'rgba(0,0,0,0.65)',
+        backgroundColor: 'rgba(0,0,0,0.85)',
         borderColor: COLOR.hairlineGold,
       }}
     >
@@ -47,12 +57,13 @@ export default function CatalogIdentityStrip({ shopName, logoUrl, isVisible = tr
             transition={{ duration: 0.8, ease: EASE }}
             className="flex items-center gap-3"
           >
-            {logoUrl && (
+            {logoUrl && !logoError && (
               <img
                 src={logoUrl}
                 alt=""
                 className="h-6 w-auto object-contain"
                 style={{ maxHeight: '28px' }}
+                onError={() => setLogoError(true)}
               />
             )}
             <span
@@ -70,12 +81,13 @@ export default function CatalogIdentityStrip({ shopName, logoUrl, isVisible = tr
             transition={{ duration: 0.3 }}
             className="flex items-center gap-3"
           >
-            {logoUrl && (
+            {logoUrl && !logoError && (
               <img
                 src={logoUrl}
                 alt=""
                 className="h-6 w-auto object-contain"
                 style={{ maxHeight: '28px' }}
+                onError={() => setLogoError(true)}
               />
             )}
             <span

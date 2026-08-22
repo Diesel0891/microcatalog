@@ -934,7 +934,7 @@ const handleRemoveLogo = useCallback(async () => {
           >
             <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-secondary">
               {logoUrl ? (
-                <img src={logoUrl} alt="Shop logo" className="size-full object-cover" />
+                <img src={logoUrl} alt="Shop logo" className="size-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
               ) : (
                 <Store className="size-5 text-muted-foreground" />
               )}
