@@ -88,7 +88,6 @@ export default function CatalogInquiryTray({
           }}
         >
           <div className="flex flex-col" style={{ maxHeight: '50vh' }}>
-            {/* Progress line */}
             {hasScrollableContent && (
               <div className="shrink-0 h-[1.5px] bg-[#1A1A1A]">
                 <div
@@ -98,7 +97,6 @@ export default function CatalogInquiryTray({
               </div>
             )}
 
-            {/* Header */}
             <div className="shrink-0 relative flex items-center justify-between px-4 pt-3 pb-2">
               <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
                 {shopName}
@@ -126,8 +124,7 @@ export default function CatalogInquiryTray({
               </div>
             </div>
 
-            {/* Scrollable body — position relative so absolute dots position correctly */}
-            <div className="shrink-0 relative" style={{ maxHeight: 'calc(50vh - 48px)' }}>
+            <div className="shrink-0 relative overflow-hidden" style={{ maxHeight: 'calc(50vh - 48px)' }}>
               <div
                 ref={scrollRef}
                 className="h-full overflow-y-auto px-4"
@@ -186,7 +183,6 @@ export default function CatalogInquiryTray({
                 </div>
               </div>
 
-              {/* Right-edge dot indicator — absolute within the relative scroll container */}
               {hasScrollableContent && (
                 <div
                   className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
@@ -218,7 +214,6 @@ export default function CatalogInquiryTray({
         </div>
       )}
 
-      {/* Persistent bottom bar */}
       <button
         onClick={() => setExpanded((v) => !v)}
         className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
