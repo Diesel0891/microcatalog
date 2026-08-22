@@ -28,12 +28,10 @@ export default function CatalogInquiryTray({
   const [showScrollCue, setShowScrollCue] = useState(true)
   const [scrolledOnce, setScrolledOnce] = useState(false)
 
-  // Auto-close tray when overlay (sheet/portal) opens
   useEffect(() => {
     if (isOverlayActive) setExpanded(false)
   }, [isOverlayActive])
 
-  // Scroll tracking + progress bar
   useEffect(() => {
     const el = scrollRef.current
     if (!el || !expanded) return
@@ -50,7 +48,6 @@ export default function CatalogInquiryTray({
     return () => el.removeEventListener('scroll', handle)
   }, [expanded, scrolledOnce])
 
-  // Auto-hide scroll cue after 3 seconds
   useEffect(() => {
     if (!expanded) {
       setShowScrollCue(true)
@@ -74,7 +71,6 @@ export default function CatalogInquiryTray({
 
   return (
     <>
-      {/* Backdrop: tap outside to close — z-[55] between bar (z-50) and tray (z-[60]) */}
       {expanded && (
         <div
           className="fixed inset-0 z-[55]"
@@ -83,18 +79,17 @@ export default function CatalogInquiryTray({
         />
       )}
 
-      {/* Expandable tray — z-[60] ABOVE the persistent bottom bar (z-50) */}
       {expanded && (
         <div
           className="fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-md"
           style={{
             backgroundColor: COLOR.plate,
             borderTop: `0.5px solid ${COLOR.hairlineGold}`,
-            transition: `transform 0.4s ${EASE}`,
           }}
         >
-          <div className="max-h-[50vh] flex flex-col">
-            {/* Progress line at top of tray */}
+          {/* Simple flex column: header + scrollable body */}
+          <div className="flex flex-col" style={{ maxHeight: '50vh' }}>
+            {/* Progress line */}
             {hasScrollableContent && (
               <div className="shrink-0 h-[1.5px] bg-[#1A1A1A]">
                 <div
@@ -104,29 +99,19 @@ export default function CatalogInquiryTray({
               </div>
             )}
 
-            {/* Header: shop name left, clear all + close X right. Chevron cue centered. */}
+            {/* Header */}
             <div className="shrink-0 relative flex items-center justify-between px-4 pt-3 pb-2">
               <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
                 {shopName}
               </span>
-
-              {/* Centered scroll cue */}
               {hasScrollableContent && showScrollCue && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <ChevronDown
-                    className="h-4 w-4 animate-bounce"
-                    style={{ color: COLOR.goldPrimary }}
-                  />
+                  <ChevronDown className="h-4 w-4 animate-bounce" style={{ color: COLOR.goldPrimary }} />
                 </div>
               )}
-
               <div className="flex items-center gap-3">
                 {safeItems.length > 1 && (
-                  <button
-                    onClick={onClear}
-                    className="flex items-center gap-1 text-xs"
-                    style={{ color: COLOR.body }}
-                  >
+                  <button onClick={onClear} className="flex items-center gap-1 text-xs" style={{ color: COLOR.body }}>
                     <Trash2 className="h-3 w-3" />
                     Clear all
                   </button>
@@ -142,98 +127,69 @@ export default function CatalogInquiryTray({
               </div>
             </div>
 
-            {/* Scrollable body — flex-1 min-h-0 is the key flexbox fix */}
-            <div className="relative flex-1 min-h-0">
-              <div
-                ref={scrollRef}
-                className="absolute inset-0 overflow-y-auto px-4 pb-20"
-              >
-                <div className="flex flex-col gap-3">
-                  {safeItems.map((item) => (
-                    <div key={item.key} className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {item.imageUrl && (
-                          <img
-                            src={item.imageUrl}
-                            alt=""
-                            className="h-8 w-8 rounded object-cover shrink-0"
-                            style={{ border: `0.5px solid ${COLOR.hairlineGold}` }}
-                            onError={(e) => { e.currentTarget.style.display = 'none' }}
-                          />
-                        )}
-                        <div className="flex flex-col min-w-0">
-                          <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
-                            {item.productName}
-                          </span>
-                          <span className="text-[10px]" style={{ color: COLOR.body }}>
-                            {item.stockStatus}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => onQuantityChange(item.key, Math.max(1, item.quantity - 1))}
-                          className="flex h-6 w-6 items-center justify-center rounded-full border"
-                          style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="w-4 text-center text-xs tabular-nums" style={{ color: COLOR.goldSecondary }}>
-                          {item.quantity}
+            {/* Scrollable body — simple flex-1, no absolute positioning */}
+            <div
+              ref={scrollRef}
+              className="shrink-0 overflow-y-auto px-4"
+              style={{ maxHeight: 'calc(50vh - 48px)', paddingBottom: '80px' }}
+            >
+              <div className="flex flex-col gap-3">
+                {safeItems.map((item) => (
+                  <div key={item.key} className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          className="h-8 w-8 rounded object-cover shrink-0"
+                          style={{ border: `0.5px solid ${COLOR.hairlineGold}` }}
+                          onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        />
+                      )}
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
+                          {item.productName}
                         </span>
-                        <button
-                          onClick={() => onQuantityChange(item.key, item.quantity + 1)}
-                          className="flex h-6 w-6 items-center justify-center rounded-full border"
-                          style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={() => onRemove(item.key)}
-                          className="ml-1 flex h-6 w-6 items-center justify-center"
-                          style={{ color: COLOR.body }}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
+                        <span className="text-[10px]" style={{ color: COLOR.body }}>
+                          {item.stockStatus}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => onQuantityChange(item.key, Math.max(1, item.quantity - 1))}
+                        className="flex h-6 w-6 items-center justify-center rounded-full border"
+                        style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="w-4 text-center text-xs tabular-nums" style={{ color: COLOR.goldSecondary }}>
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => onQuantityChange(item.key, item.quantity + 1)}
+                        className="flex h-6 w-6 items-center justify-center rounded-full border"
+                        style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => onRemove(item.key)}
+                        className="ml-1 flex h-6 w-6 items-center justify-center"
+                        style={{ color: COLOR.body }}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              {/* Right-edge dot indicator — matches feed ScrollPositionIndicator */}
-              {hasScrollableContent && (
-                <div
-                  className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
-                  aria-hidden="true"
-                >
-                  {safeItems.map((_, i) => {
-                    const itemProgress = i / Math.max(safeItems.length - 1, 1)
-                    const isActive = Math.abs(scrollProgress - itemProgress) < (0.5 / safeItems.length)
-                    return (
-                      <span
-                        key={i}
-                        className="transition-all duration-300"
-                        style={{
-                          width: '3px',
-                          height: isActive ? '16px' : '3px',
-                          borderRadius: '9999px',
-                          backgroundColor: isActive ? COLOR.goldPrimary : 'rgba(197,160,89,0.25)',
-                          border: `0.5px solid ${COLOR.hairlineGold}`,
-                          transitionTimingFunction: EASE,
-                          opacity: isActive ? 1 : 0.7,
-                        }}
-                      />
-                    )
-                  })}
-                </div>
-              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Persistent bottom bar — z-50, BELOW tray (z-[60]) */}
+      {/* Persistent bottom bar */}
       <button
         onClick={() => setExpanded((v) => !v)}
         className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
