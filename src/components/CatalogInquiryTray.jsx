@@ -74,19 +74,19 @@ export default function CatalogInquiryTray({
 
   return (
     <>
-      {/* Backdrop: tap outside to close */}
+      {/* Backdrop: tap outside to close — z-[55] between bar (z-50) and tray (z-[60]) */}
       {expanded && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-[55]"
           style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
           onClick={() => setExpanded(false)}
         />
       )}
 
-      {/* Expandable tray */}
+      {/* Expandable tray — z-[60] ABOVE the persistent bottom bar (z-50) */}
       {expanded && (
         <div
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md"
+          className="fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-md"
           style={{
             backgroundColor: COLOR.plate,
             borderTop: `0.5px solid ${COLOR.hairlineGold}`,
@@ -233,7 +233,7 @@ export default function CatalogInquiryTray({
         </div>
       )}
 
-      {/* Persistent bottom bar — hides when overlay is active */}
+      {/* Persistent bottom bar — z-50, BELOW tray (z-[60]) */}
       <button
         onClick={() => setExpanded((v) => !v)}
         className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
