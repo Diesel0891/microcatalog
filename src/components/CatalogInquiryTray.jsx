@@ -142,11 +142,11 @@ export default function CatalogInquiryTray({
               </div>
             </div>
 
-            {/* Scrollable item list with dot indicator */}
-            <div className="relative flex-1 overflow-hidden">
+            {/* Scrollable body — flex-1 min-h-0 is the key flexbox fix */}
+            <div className="relative flex-1 min-h-0">
               <div
                 ref={scrollRef}
-                className="h-full overflow-y-auto px-4 pb-20"
+                className="absolute inset-0 overflow-y-auto px-4 pb-20"
               >
                 <div className="flex flex-col gap-3">
                   {safeItems.map((item) => (
@@ -208,8 +208,7 @@ export default function CatalogInquiryTray({
                   aria-hidden="true"
                 >
                   {safeItems.map((_, i) => {
-                    // Map scroll progress to active dot
-                    const itemProgress = i / (safeItems.length - 1)
+                    const itemProgress = i / Math.max(safeItems.length - 1, 1)
                     const isActive = Math.abs(scrollProgress - itemProgress) < (0.5 / safeItems.length)
                     return (
                       <span
