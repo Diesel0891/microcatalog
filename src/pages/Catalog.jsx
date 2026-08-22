@@ -296,6 +296,10 @@ export default function Catalog() {
 
 
 
+    const handleClearInquiry = useCallback(() => {
+      setInquiry([])
+    }, [])
+
   const handleDwell = useCallback((productId, ms) => {
     if (ms < DWELL_SAMPLE_SIZE_MS) return
     setDwellTimes((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + ms }))
@@ -521,6 +525,8 @@ export default function Catalog() {
         onRemove={handleRemoveInquiry}
         onQuantityChange={handleQuantityChange}
         onSend={() => sendWhatsapp()}
+        onClear={handleClearInquiry}
+        isOverlayActive={isOverlayActive}
       />
 
       {/* Toast (A1) */}
