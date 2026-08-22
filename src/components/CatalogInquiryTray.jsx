@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { MessageCircle, ChevronDown, X, Minus, Plus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { MessageCircle, ChevronDown, X, Minus, Plus, Trash2 } from 'lucide-react'
 
 const COLOR = {
   void: '#000000',
@@ -18,9 +18,16 @@ export default function CatalogInquiryTray({
   onRemove,
   onQuantityChange,
   onSend,
+  onClear,
+  isOverlayActive,
 }) {
   const safeItems = Array.isArray(items) ? items : []
   const [expanded, setExpanded] = useState(false)
+
+  // Auto-close tray when overlay (sheet/portal) opens
+  useEffect(() => {
+    if (isOverlayActive) setExpanded(false)
+  }, [isOverlayActive])
 
   if (safeItems.length === 0) return null
 
@@ -31,6 +38,16 @@ export default function CatalogInquiryTray({
 
   return (
     <>
+      {/* Backdrop: tap outside to close */}
+      {expanded && (
+        <div
+          className="fixed inset-0 z-40"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setExpanded(false)}
+        />
+      )}
+
+      {/* Expandable tray */}
       {expanded && (
         <div
           className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md"
@@ -41,14 +58,35 @@ export default function CatalogInquiryTray({
           }}
         >
           <div className="max-h-[50vh] flex flex-col">
-            {shopName && (
-              <div className="shrink-0 px-4 pt-3 pb-2">
-                <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
-                  {shopName}
-                </span>
+            {/* Header: shop name + clear all + close X */}
+            <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-2">
+              <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
+                {shopName}
+              </span>
+              <div className="flex items-center gap-3">
+                {safeItems.length > 1 && (
+                  <button
+                    onClick={onClear}
+                    className="flex items-center gap-1 text-xs"
+                    style={{ color: COLOR.body }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Clear all
+                  </button>
+                )}
+                <button
+                  aria-label="Close inquiry tray"
+                  onClick={() => setExpanded(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border"
+                  style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            )}
-            <div className="flex-1 overflow-y-auto px-4 pb-32">
+            </div>
+
+            {/* Scrollable item list — pb-20 clears the ~64px persistent bar */}
+            <div className="flex-1 overflow-y-auto px-4 pb-20">
               <div className="flex flex-col gap-3">
                 {safeItems.map((item) => (
                   <div key={item.key} className="flex items-center justify-between gap-3">
@@ -105,14 +143,17 @@ export default function CatalogInquiryTray({
         </div>
       )}
 
+      {/* Persistent bottom bar — hides when overlay is active */}
       <button
         onClick={() => setExpanded((v) => !v)}
         className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
         style={{
           backgroundColor: 'rgba(11,11,11,0.95)',
           borderColor: COLOR.hairlineGold,
-          // backdrop-filter removed per motion budget — solid bg only
           transitionTimingFunction: EASE,
+          opacity: isOverlayActive ? 0 : 1,
+          pointerEvents: isOverlayActive ? 'none' : 'auto',
+          transform: isOverlayActive ? 'translateY(20px)' : 'translateY(0)',
         }}
       >
         <div className="flex items-center justify-between gap-3">
