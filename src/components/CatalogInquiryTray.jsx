@@ -104,19 +104,22 @@ export default function CatalogInquiryTray({
               </div>
             )}
 
-            {/* Header: shop name + scroll cue + clear all + close X */}
-            <div className="shrink-0 flex items-center justify-between px-4 pt-3 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
-                  {shopName}
-                </span>
-                {hasScrollableContent && showScrollCue && (
+            {/* Header: shop name left, clear all + close X right. Chevron cue centered. */}
+            <div className="shrink-0 relative flex items-center justify-between px-4 pt-3 pb-2">
+              <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
+                {shopName}
+              </span>
+
+              {/* Centered scroll cue */}
+              {hasScrollableContent && showScrollCue && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <ChevronDown
-                    className="h-3.5 w-3.5 animate-bounce"
+                    className="h-4 w-4 animate-bounce"
                     style={{ color: COLOR.goldPrimary }}
                   />
-                )}
-              </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-3">
                 {safeItems.length > 1 && (
                   <button
@@ -139,8 +142,8 @@ export default function CatalogInquiryTray({
               </div>
             </div>
 
-            {/* Scrollable item list with rail indicator */}
-            <div className="relative flex-1">
+            {/* Scrollable item list with dot indicator */}
+            <div className="relative flex-1 overflow-hidden">
               <div
                 ref={scrollRef}
                 className="h-full overflow-y-auto px-4 pb-20"
@@ -198,20 +201,32 @@ export default function CatalogInquiryTray({
                 </div>
               </div>
 
-              {/* Right-edge scroll rail indicator */}
+              {/* Right-edge dot indicator — matches feed ScrollPositionIndicator */}
               {hasScrollableContent && (
                 <div
-                  className="absolute right-1 top-2 bottom-2 w-[2px] rounded-full"
-                  style={{ backgroundColor: 'rgba(58,48,26,0.5)' }}
+                  className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
+                  aria-hidden="true"
                 >
-                  <div
-                    className="w-full rounded-full transition-all duration-150"
-                    style={{
-                      height: `${Math.max(12, (1 / safeItems.length) * 100)}%`,
-                      marginTop: `${scrollProgress * (100 - Math.max(12, (1 / safeItems.length) * 100))}%`,
-                      backgroundColor: COLOR.goldPrimary,
-                    }}
-                  />
+                  {safeItems.map((_, i) => {
+                    // Map scroll progress to active dot
+                    const itemProgress = i / (safeItems.length - 1)
+                    const isActive = Math.abs(scrollProgress - itemProgress) < (0.5 / safeItems.length)
+                    return (
+                      <span
+                        key={i}
+                        className="transition-all duration-300"
+                        style={{
+                          width: '3px',
+                          height: isActive ? '16px' : '3px',
+                          borderRadius: '9999px',
+                          backgroundColor: isActive ? COLOR.goldPrimary : 'rgba(197,160,89,0.25)',
+                          border: `0.5px solid ${COLOR.hairlineGold}`,
+                          transitionTimingFunction: EASE,
+                          opacity: isActive ? 1 : 0.7,
+                        }}
+                      />
+                    )
+                  })}
                 </div>
               )}
             </div>
