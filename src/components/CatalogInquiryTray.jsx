@@ -127,7 +127,7 @@ export default function CatalogInquiryTray({
             <div className="shrink-0 relative overflow-hidden" style={{ maxHeight: 'calc(50vh - 48px)' }}>
               <div
                 ref={scrollRef}
-                className="h-full overflow-y-auto px-4"
+                className="overflow-y-auto px-4" style={{ height: 'calc(50vh - 48px)' }}
                 style={{ paddingBottom: '80px' }}
               >
                 <div className="flex flex-col gap-3">
