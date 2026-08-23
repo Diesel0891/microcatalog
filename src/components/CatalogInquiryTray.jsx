@@ -87,7 +87,9 @@ export default function CatalogInquiryTray({
             borderTop: `0.5px solid ${COLOR.hairlineGold}`,
           }}
         >
+          {/* Flex column: header (shrink-0) + body (flex-1 min-h-0) */}
           <div className="flex flex-col" style={{ maxHeight: '50vh' }}>
+            {/* Progress line */}
             {hasScrollableContent && (
               <div className="shrink-0 h-[1.5px] bg-[#1A1A1A]">
                 <div
@@ -97,6 +99,7 @@ export default function CatalogInquiryTray({
               </div>
             )}
 
+            {/* Header */}
             <div className="shrink-0 relative flex items-center justify-between px-4 pt-3 pb-2">
               <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
                 {shopName}
@@ -124,65 +127,65 @@ export default function CatalogInquiryTray({
               </div>
             </div>
 
-            <div className="shrink-0 relative overflow-hidden" style={{ maxHeight: 'calc(50vh - 48px)' }}>
-              <div
-                ref={scrollRef}
-                className="overflow-y-auto px-4" style={{ height: 'calc(50vh - 48px)' }}
-                style={{ paddingBottom: '80px' }}
-              >
-                <div className="flex flex-col gap-3">
-                  {safeItems.map((item) => (
-                    <div key={item.key} className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {item.imageUrl && (
-                          <img
-                            src={item.imageUrl}
-                            alt=""
-                            className="h-8 w-8 rounded object-cover shrink-0"
-                            style={{ border: `0.5px solid ${COLOR.hairlineGold}` }}
-                            onError={(e) => { e.currentTarget.style.display = 'none' }}
-                          />
-                        )}
-                        <div className="flex flex-col min-w-0">
-                          <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
-                            {item.productName}
-                          </span>
-                          <span className="text-[10px]" style={{ color: COLOR.body }}>
-                            {item.stockStatus}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => onQuantityChange(item.key, Math.max(1, item.quantity - 1))}
-                          className="flex h-6 w-6 items-center justify-center rounded-full border"
-                          style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="w-4 text-center text-xs tabular-nums" style={{ color: COLOR.goldSecondary }}>
-                          {item.quantity}
+            {/* Scrollable body — flex-1 min-h-0 is the ONLY correct flexbox pattern */}
+            <div
+              ref={scrollRef}
+              className="flex-1 min-h-0 overflow-y-auto px-4 relative"
+              style={{ paddingBottom: '80px' }}
+            >
+              <div className="flex flex-col gap-3">
+                {safeItems.map((item) => (
+                  <div key={item.key} className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          className="h-8 w-8 rounded object-cover shrink-0"
+                          style={{ border: `0.5px solid ${COLOR.hairlineGold}` }}
+                          onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        />
+                      )}
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
+                          {item.productName}
                         </span>
-                        <button
-                          onClick={() => onQuantityChange(item.key, item.quantity + 1)}
-                          className="flex h-6 w-6 items-center justify-center rounded-full border"
-                          style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={() => onRemove(item.key)}
-                          className="ml-1 flex h-6 w-6 items-center justify-center"
-                          style={{ color: COLOR.body }}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
+                        <span className="text-[10px]" style={{ color: COLOR.body }}>
+                          {item.stockStatus}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => onQuantityChange(item.key, Math.max(1, item.quantity - 1))}
+                        className="flex h-6 w-6 items-center justify-center rounded-full border"
+                        style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="w-4 text-center text-xs tabular-nums" style={{ color: COLOR.goldSecondary }}>
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => onQuantityChange(item.key, item.quantity + 1)}
+                        className="flex h-6 w-6 items-center justify-center rounded-full border"
+                        style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => onRemove(item.key)}
+                        className="ml-1 flex h-6 w-6 items-center justify-center"
+                        style={{ color: COLOR.body }}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
 
+              {/* Right-edge dot indicator — absolute within the scroll container */}
               {hasScrollableContent && (
                 <div
                   className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
@@ -214,6 +217,7 @@ export default function CatalogInquiryTray({
         </div>
       )}
 
+      {/* Persistent bottom bar */}
       <button
         onClick={() => setExpanded((v) => !v)}
         className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
