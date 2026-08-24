@@ -151,13 +151,12 @@ export default function CatalogInquiryTray({
                   <X className="h-4 w-4" />
                 </button>
               </div>
-
             </div>
 
-            <div className="relative flex-1 min-h-0 overflow-hidden">
+            <div className="relative flex flex-col flex-1 min-h-0 overflow-hidden">
               <div
                 ref={scrollRef}
-                className="absolute inset-0 overflow-y-auto px-4"
+                className="flex-1 min-h-0 overflow-y-auto px-4"
                 style={{ paddingBottom: '8px' }}
               >
                 <div className="flex flex-col gap-3">
@@ -214,8 +213,8 @@ export default function CatalogInquiryTray({
                     </div>
                   ))}
                 </div>
-
               </div>
+
               {hasScrollableContent && (
                 <div
                   className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
@@ -243,6 +242,7 @@ export default function CatalogInquiryTray({
                 </div>
               )}
             </div>
+
             <div className="shrink-0 px-4 pb-3 pt-2">
               <button
                 onClick={onSend}
@@ -257,59 +257,61 @@ export default function CatalogInquiryTray({
         </div>
       )}
 
-      <div
-        className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
-        style={{
-          backgroundColor: 'rgba(11,11,11,0.95)',
-          borderColor: COLOR.hairlineGold,
-          transitionTimingFunction: EASE,
-          opacity: expanded || isOverlayActive ? 0 : 1,
-          pointerEvents: expanded || isOverlayActive ? 'none' : 'auto',
-          transform: expanded || isOverlayActive ? 'translateY(20px)' : 'translateY(0)',
-        }}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <button
-            onClick={handleToggleExpanded}
-            aria-expanded={expanded}
-            aria-controls="inquiry-tray-content"
-            className="flex flex-1 items-center gap-3 text-left"
-          >
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+      {!expanded && (
+        <div
+          className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
+          style={{
+            backgroundColor: 'rgba(11,11,11,0.95)',
+            borderColor: COLOR.hairlineGold,
+            transitionTimingFunction: EASE,
+            opacity: isOverlayActive ? 0 : 1,
+            pointerEvents: isOverlayActive ? 'none' : 'auto',
+            transform: isOverlayActive ? 'translateY(20px)' : 'translateY(0)',
+          }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={handleToggleExpanded}
+              aria-expanded={expanded}
+              aria-controls="inquiry-tray-content"
+              className="flex flex-1 items-center gap-3 text-left"
+            >
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+                style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
+              >
+                {safeItems.length}
+              </span>
+              <div className="flex flex-col">
+                <span className="text-xs font-medium" style={{ color: COLOR.goldSecondary }}>
+                  {safeItems.length} piece{safeItems.length === 1 ? '' : 's'} selected
+                </span>
+                <span className="text-[10px]" style={{ color: COLOR.body }}>
+                  ${estimatedTotal.toLocaleString()} est.
+                </span>
+              </div>
+              <ChevronDown
+                className="h-4 w-4 transition-transform duration-300"
+                style={{
+                  color: COLOR.body,
+                  transform: expanded ? 'rotate(180deg)' : 'none',
+                  transitionTimingFunction: EASE,
+                }}
+                aria-hidden="true"
+              />
+            </button>
+
+            <button
+              onClick={handleSend}
+              className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium"
               style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
             >
-              {safeItems.length}
-            </span>
-            <div className="flex flex-col">
-              <span className="text-xs font-medium" style={{ color: COLOR.goldSecondary }}>
-                {safeItems.length} piece{safeItems.length === 1 ? '' : 's'} selected
-              </span>
-              <span className="text-[10px]" style={{ color: COLOR.body }}>
-                ${estimatedTotal.toLocaleString()} est.
-              </span>
-            </div>
-            <ChevronDown
-              className="h-4 w-4 transition-transform duration-300"
-              style={{
-                color: COLOR.body,
-                transform: expanded ? 'rotate(180deg)' : 'none',
-                transitionTimingFunction: EASE,
-              }}
-              aria-hidden="true"
-            />
-          </button>
-
-          <button
-            onClick={handleSend}
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium"
-            style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
-          >
-            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
-            Send Inquiry
-          </button>
+              <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+              Send Inquiry
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </>
   )
 }
