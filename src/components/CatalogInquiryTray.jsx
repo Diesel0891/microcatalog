@@ -157,7 +157,7 @@ export default function CatalogInquiryTray({
             <div className="relative flex-1 min-h-0 overflow-hidden">
               <div
                 ref={scrollRef}
-                className="h-full overflow-y-auto px-4"
+                className="absolute inset-0 overflow-y-auto px-4"
                 style={{ paddingBottom: '8px' }}
               >
                 <div className="flex flex-col gap-3">
@@ -216,32 +216,32 @@ export default function CatalogInquiryTray({
                 </div>
 
               </div>
-                {hasScrollableContent && (
-                  <div
-                    className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
-                    aria-hidden="true"
-                  >
-                    {safeItems.map((_, i) => {
-                      const itemProgress = i / Math.max(safeItems.length - 1, 1)
-                      const isActive = Math.abs(scrollProgress - itemProgress) < (0.5 / safeItems.length)
-                      return (
-                        <span
-                          key={i}
-                          className="transition-all duration-300"
-                          style={{
-                            width: '3px',
-                            height: isActive ? '16px' : '3px',
-                            borderRadius: '9999px',
-                            backgroundColor: isActive ? COLOR.goldPrimary : 'rgba(197,160,89,0.25)',
-                            border: `0.5px solid ${COLOR.hairlineGold}`,
-                            transitionTimingFunction: EASE,
-                            opacity: isActive ? 1 : 0.7,
-                          }}
-                        />
-                      )
-                    })}
-                  </div>
-                )}
+              {hasScrollableContent && (
+                <div
+                  className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
+                  aria-hidden="true"
+                >
+                  {safeItems.map((_, i) => {
+                    const itemProgress = i / Math.max(safeItems.length - 1, 1)
+                    const isActive = Math.abs(scrollProgress - itemProgress) < (0.5 / safeItems.length)
+                    return (
+                      <span
+                        key={i}
+                        className="transition-all duration-300"
+                        style={{
+                          width: '3px',
+                          height: isActive ? '16px' : '3px',
+                          borderRadius: '9999px',
+                          backgroundColor: isActive ? COLOR.goldPrimary : 'rgba(197,160,89,0.25)',
+                          border: `0.5px solid ${COLOR.hairlineGold}`,
+                          transitionTimingFunction: EASE,
+                          opacity: isActive ? 1 : 0.7,
+                        }}
+                      />
+                    )
+                  })}
+                </div>
+              )}
             </div>
             <div className="shrink-0 px-4 pb-3 pt-2">
               <button
