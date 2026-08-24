@@ -15,7 +15,8 @@ import CatalogSkeleton from '../components/CatalogSkeleton.jsx'
 /* ----------------------------------------------------------------------------
  * Constants
  * ----------------------------------------------------------------------------*/
-const VIRAL_BANNER_INTERVAL = 6
+const VIRAL_BANNER_POSITIONS = [6, 18]
+const VIRAL_BANNER_MAX_IMPRESSIONS = 2
 const DISCOVERY_PORTAL_OVERSCROLL_THRESHOLD = 60
 const DWELL_SAMPLE_SIZE_MS = 800
 
@@ -108,7 +109,15 @@ export default function Catalog() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [imageIndices, setImageIndices] = useState({})
   const [dwellTimes, setDwellTimes] = useState({})
-  const [dismissedBanners, setDismissedBanners] = useState(new Set())
+  const [viralImpressions, setViralImpressions] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('infini_viral_impressions')
+      const parsed = saved ? parseInt(saved, 10) : 0
+      return Number.isNaN(parsed) ? 0 : parsed
+    } catch {
+      return 0
+    }
+  })
 
   // Inquiry cart state (A1)
   const [inquiry, setInquiry] = useState(() => {
@@ -497,14 +506,20 @@ const sendSingleProductWhatsapp = useCallback((product) => {
               onOpenDetail={() => setDetailProductId(product.id)}
             />,
           ]
-          // Viral banner every 6 products
+          // Viral CTA interstitial
           const position = index + 1
-          if (position % VIRAL_BANNER_INTERVAL === 0 && !dismissedBanners.has(position)) {
+          const shouldShowViral = VIRAL_BANNER_POSITIONS.includes(position) && viralImpressions < VIRAL_BANNER_MAX_IMPRESSIONS
+          if (shouldShowViral) {
             cards.push(
               <CatalogViralBanner
-                key={`banner-${position}`}
-                catalogHomeUrl="/#/"
-                onDismiss={() => setDismissedBanners((prev) => new Set(prev).add(position))}
+                key={`viral-${position}`}
+                onImpression={() => {
+                  setViralImpressions((prev) => {
+                    const next = prev + 1
+                    try { sessionStorage.setItem('infini_viral_impressions', String(next)) } catch {}
+                    return next
+                  })
+                }}
               />,
             )
           }
