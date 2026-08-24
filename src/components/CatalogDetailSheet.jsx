@@ -14,7 +14,14 @@ const COLOR = {
   hairlineObsidian: '#1A1A1A',
 }
 
-const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
+const SPRING = {
+  sheet: { type: 'spring', stiffness: 400, damping: 35, mass: 0.8 },
+  sheetClose: { type: 'spring', stiffness: 500, damping: 40, mass: 0.7 },
+  backdrop: { type: 'spring', stiffness: 300, damping: 30 },
+  content: { type: 'spring', stiffness: 350, damping: 32 },
+  button: { type: 'spring', stiffness: 500, damping: 30 },
+}
+
 const NEW_PRODUCT_WINDOW_DAYS = 14
 const MAX_VISIBLE_SPECS = 3
 
@@ -23,6 +30,43 @@ function computeIsNew(createdAt) {
   if (Number.isNaN(created)) return false
   const ageMs = Date.now() - created
   return ageMs >= 0 && ageMs <= NEW_PRODUCT_WINDOW_DAYS * 24 * 60 * 60 * 1000
+}
+
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: SPRING.backdrop },
+  exit: { opacity: 0, transition: { duration: 0.2 } },
+}
+
+const sheetVariants = {
+  hidden: { y: '100%' },
+  visible: { y: 0, transition: SPRING.sheet },
+  exit: { y: '100%', transition: SPRING.sheetClose },
+}
+
+const imageVariants = {
+  hidden: { scale: 1.03 },
+  visible: { scale: 1, transition: { ...SPRING.content, delay: 0.1 } },
+}
+
+const headerVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { ...SPRING.content, delay: 0.14 } },
+}
+
+const contentContainerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.04, delayChildren: 0.18 } },
+}
+
+const contentItemVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: SPRING.content },
+}
+
+const ctaVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { ...SPRING.content, delay: 0.28 } },
 }
 
 export default function CatalogDetailSheet({
@@ -36,9 +80,42 @@ export default function CatalogDetailSheet({
   onSendWhatsapp,
 }) {
   const scrollRef = useRef(null)
+  const closeButtonRef = useRef(null)
+  const lastFocusedRef = useRef(null)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [showScrollCue, setShowScrollCue] = useState(true)
   const [scrolledOnce, setScrolledOnce] = useState(false)
+
+  // Escape to close
+  useEffect(() => {
+    if (!open) return
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [open, onClose])
+
+  // Focus management: trap focus on open, restore on close
+  useEffect(() => {
+    if (open) {
+      lastFocusedRef.current = document.activeElement
+      const timer = setTimeout(() => closeButtonRef.current?.focus(), 50)
+      return () => clearTimeout(timer)
+    } else if (lastFocusedRef.current) {
+      lastFocusedRef.current.focus()
+      lastFocusedRef.current = null
+    }
+  }, [open])
+
+  // Lock body scroll while open
+  useEffect(() => {
+    if (open) {
+      const original = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = original }
+    }
+  }, [open])
 
   useEffect(() => {
     const el = scrollRef.current
@@ -80,20 +157,24 @@ export default function CatalogDetailSheet({
       {open && (
         <>
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.01 }}
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className="fixed inset-0 z-40"
             style={{ backgroundColor: '#000000' }}
             onClick={onClose}
+            aria-hidden="true"
           />
 
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ duration: 0.5, ease: EASE }}
+            variants={sheetVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${product.name} — details`}
             className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden border-t"
             style={{
               backgroundColor: COLOR.void,
@@ -101,8 +182,10 @@ export default function CatalogDetailSheet({
               contain: 'layout paint',
             }}
           >
-            {/* Header strip: progress line + close + scroll cue */}
-            <div
+            <motion.div
+              variants={headerVariants}
+              initial="hidden"
+              animate="visible"
               className="absolute inset-x-0 top-0 z-30 flex h-14 items-center justify-center"
               style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}
             >
@@ -113,7 +196,10 @@ export default function CatalogDetailSheet({
                 />
               </div>
 
-              <button
+              <motion.button
+                ref={closeButtonRef}
+                whileTap={{ scale: 0.88 }}
+                transition={SPRING.button}
                 aria-label="Close details"
                 onClick={onClose}
                 className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border"
@@ -124,37 +210,48 @@ export default function CatalogDetailSheet({
                 }}
               >
                 <X className="h-4 w-4" aria-hidden="true" />
-              </button>
+              </motion.button>
 
               <AnimatePresence>
                 {showScrollCue && (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0, y: -2 }}
+                    animate={{ opacity: 1, y: [0, 4, 0] }}
                     exit={{ opacity: 0 }}
+                    transition={{
+                      opacity: { duration: 0.3 },
+                      y: { duration: 0.6, repeat: 1, repeatType: 'reverse', ease: 'easeInOut' },
+                    }}
                   >
                     <ChevronDown
-                      className="h-4 w-4 animate-bounce"
+                      className="h-4 w-4"
                       style={{ color: COLOR.goldPrimary }}
                       aria-hidden="true"
                     />
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </motion.div>
 
-            {/* Scrollable content — z-index 1 so header (z-30) and CTA bar (z-20) stay above */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto pt-14" style={{ position: 'relative', zIndex: 1 }}>
-              <CatalogProductImage
-                images={Array.isArray(product.images) ? product.images : []}
-                activeIndex={activeImageIndex}
-                onCycle={onCycleImage}
-                isNew={isNew}
-                className="rounded-none border-0"
-              />
+              <motion.div variants={imageVariants} initial="hidden" animate="visible">
+                <CatalogProductImage
+                  images={Array.isArray(product.images) ? product.images : []}
+                  activeIndex={activeImageIndex}
+                  onCycle={onCycleImage}
+                  isNew={isNew}
+                  className="rounded-none border-0"
+                />
+              </motion.div>
 
-              <div className="flex flex-col gap-5 p-5" style={{ paddingBottom: '7rem' }}>
-                <div className="flex flex-col gap-2">
+              <motion.div
+                variants={contentContainerVariants}
+                initial="hidden"
+                animate="visible"
+                className="flex flex-col gap-5 p-5"
+                style={{ paddingBottom: '7rem' }}
+              >
+                <motion.div variants={contentItemVariants} className="flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-3">
                     <span
                       className="text-[10px] font-medium uppercase"
@@ -178,18 +275,20 @@ export default function CatalogDetailSheet({
                       {product.price}
                     </span>
                   </div>
-                </div>
+                </motion.div>
 
-                <Hairline tone="obsidian" />
+                <motion.div variants={contentItemVariants}>
+                  <Hairline tone="obsidian" />
+                </motion.div>
 
                 {product.description && (
-                  <p className="text-sm leading-relaxed" style={{ color: COLOR.body }}>
+                  <motion.p variants={contentItemVariants} className="text-sm leading-relaxed" style={{ color: COLOR.body }}>
                     {product.description}
-                  </p>
+                  </motion.p>
                 )}
 
                 {visibleSpecs.length > 0 && (
-                  <div className="flex flex-col gap-3">
+                  <motion.div variants={contentItemVariants} className="flex flex-col gap-3">
                     <Hairline tone="obsidian" />
                     <span
                       className="text-[10px] font-medium uppercase"
@@ -214,23 +313,24 @@ export default function CatalogDetailSheet({
                         +{overflowSpecs.length} more
                       </span>
                     )}
-                  </div>
+                  </motion.div>
                 )}
-              </div>
+              </motion.div>
             </div>
 
-              {/* Bottom fade — subtle scroll hint, disappears at bottom */}
-              <div
-                className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-16"
-                style={{
-                  background: `linear-gradient(to bottom, rgba(0,0,0,0) 0%, ${COLOR.void} 100%)`,
-                  opacity: scrollProgress < 1 ? 0.55 : 0,
-                  transition: 'opacity 150ms ease',
-                }}
-              />
-
-            {/* CTA bar — solid background, z-index above scrollable content */}
             <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-16"
+              style={{
+                background: `linear-gradient(to bottom, rgba(0,0,0,0) 0%, ${COLOR.void} 100%)`,
+                opacity: scrollProgress < 1 ? 0.55 : 0,
+                transition: 'opacity 150ms ease',
+              }}
+            />
+
+            <motion.div
+              variants={ctaVariants}
+              initial="hidden"
+              animate="visible"
               className="absolute inset-x-0 bottom-0 z-20 p-3"
               style={{ backgroundColor: COLOR.void }}
             >
@@ -238,34 +338,38 @@ export default function CatalogDetailSheet({
                 className="flex items-center justify-between gap-2 rounded-full border p-1.5"
                 style={{ borderColor: 'rgba(197,160,89,0.55)', backgroundColor: COLOR.void }}
               >
-                <SquircleButton
-                  variant={isAdded ? 'ghost' : 'solid'}
-                  onClick={onToggle}
-                  ariaLabel={isAdded ? 'Remove from inquiry' : 'Add to inquiry'}
-                  ariaPressed={isAdded}
-                  className="h-8 px-3 text-xs"
-                  style={isAdded ? { backgroundColor: 'rgba(240,237,228,0.10)', borderColor: 'rgba(240,237,228,0.28)', color: '#F0EDE4' } : undefined}
-                >
-                  {isAdded ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Check className="h-3.5 w-3.5" />
-                      In inquiry
-                    </span>
-                  ) : (
-                    'Add to Inquiry'
-                  )}
-                </SquircleButton>
-                <SquircleButton
-                  variant="solid"
-                  onClick={onSendWhatsapp}
-                  ariaLabel="Send WhatsApp inquiry"
-                  className="h-8 px-3 text-xs"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
-                  WhatsApp
-                </SquircleButton>
+                <motion.div whileTap={{ scale: 0.93 }} transition={SPRING.button}>
+                  <SquircleButton
+                    variant={isAdded ? 'ghost' : 'solid'}
+                    onClick={onToggle}
+                    ariaLabel={isAdded ? 'Remove from inquiry' : 'Add to inquiry'}
+                    ariaPressed={isAdded}
+                    className="h-8 px-3 text-xs"
+                    style={isAdded ? { backgroundColor: 'rgba(240,237,228,0.10)', borderColor: 'rgba(240,237,228,0.28)', color: '#F0EDE4' } : undefined}
+                  >
+                    {isAdded ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Check className="h-3.5 w-3.5" />
+                        In inquiry
+                      </span>
+                    ) : (
+                      'Add to Inquiry'
+                    )}
+                  </SquircleButton>
+                </motion.div>
+                <motion.div whileTap={{ scale: 0.93 }} transition={SPRING.button}>
+                  <SquircleButton
+                    variant="solid"
+                    onClick={onSendWhatsapp}
+                    ariaLabel="Send WhatsApp inquiry"
+                    className="h-8 px-3 text-xs"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                    WhatsApp
+                  </SquircleButton>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </>
       )}
