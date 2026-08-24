@@ -9,7 +9,7 @@ function SkeletonBlock({ className }) {
     <div
       className={`rounded ${className}`}
       style={{
-        backgroundImage: 'linear-gradient(90deg, #0B0B0B 0%, #0E0E0E 50%, #0B0B0B 100%)',
+        backgroundImage: 'linear-gradient(90deg, #0B0B0B 0%, #161616 50%, #0B0B0B 100%)',
         backgroundSize: '200% 100%',
         animation: 'infini-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite',
       }}
@@ -41,7 +41,7 @@ export default function CatalogSkeleton() {
           <div
             className="aspect-[4/5] w-full"
             style={{
-              backgroundImage: 'linear-gradient(90deg, #0A0A0A 0%, #0D0D0D 50%, #0A0A0A 100%)',
+              backgroundImage: 'linear-gradient(90deg, #080808 0%, #121212 50%, #080808 100%)',
               backgroundSize: '200% 100%',
               animation: 'infini-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite',
             }}

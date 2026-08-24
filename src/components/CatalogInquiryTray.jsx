@@ -12,11 +12,11 @@ const COLOR = {
 }
 
 const SPRING = {
-  tray: { type: 'spring', stiffness: 450, damping: 35, mass: 0.8 },
-  trayClose: { type: 'spring', stiffness: 500, damping: 40, mass: 0.7 },
-  backdrop: { type: 'spring', stiffness: 300, damping: 30 },
-  item: { type: 'spring', stiffness: 400, damping: 32 },
-  button: { type: 'spring', stiffness: 500, damping: 30 },
+  tray: { type: 'spring', stiffness: 220, damping: 24, mass: 1.0 },
+  trayClose: { type: 'spring', stiffness: 280, damping: 30, mass: 1.0 },
+  backdrop: { type: 'spring', stiffness: 250, damping: 28, mass: 1.0 },
+  item: { type: 'spring', stiffness: 320, damping: 30, mass: 1.0 },
+  button: { type: 'spring', stiffness: 450, damping: 32, mass: 0.9 },
 }
 
 const backdropVariants = {

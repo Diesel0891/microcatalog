@@ -15,11 +15,11 @@ const COLOR = {
 }
 
 const SPRING = {
-  sheet: { type: 'spring', stiffness: 400, damping: 35, mass: 0.8 },
-  sheetClose: { type: 'spring', stiffness: 500, damping: 40, mass: 0.7 },
-  backdrop: { type: 'spring', stiffness: 300, damping: 30 },
-  content: { type: 'spring', stiffness: 350, damping: 32 },
-  button: { type: 'spring', stiffness: 500, damping: 30 },
+  sheet: { type: 'spring', stiffness: 180, damping: 22, mass: 1.0 },
+  sheetClose: { type: 'spring', stiffness: 250, damping: 28, mass: 1.0 },
+  backdrop: { type: 'spring', stiffness: 250, damping: 28, mass: 1.0 },
+  content: { type: 'spring', stiffness: 280, damping: 28, mass: 1.0 },
+  button: { type: 'spring', stiffness: 450, damping: 32, mass: 0.9 },
 }
 
 const NEW_PRODUCT_WINDOW_DAYS = 14
@@ -56,7 +56,7 @@ const headerVariants = {
 
 const contentContainerVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.04, delayChildren: 0.18 } },
+  visible: { transition: { staggerChildren: 0.04, delayChildren: 0.22 } },
 }
 
 const contentItemVariants = {
