@@ -37,7 +37,6 @@ export default function CatalogDetailSheet({
 }) {
   const scrollRef = useRef(null)
   const [scrollProgress, setScrollProgress] = useState(0)
-  const [_hasMoreBelow, _setHasMoreBelow] = useState(false)
   const [showScrollCue, setShowScrollCue] = useState(true)
   const [scrolledOnce, setScrolledOnce] = useState(false)
 

@@ -151,6 +151,18 @@ export default function CatalogInquiryTray({
                   <X className="h-4 w-4" />
                 </button>
               </div>
+
+            {/* Footer CTA */}
+            <div className="shrink-0 px-4 pb-3 pt-2">
+              <button
+                onClick={onSend}
+                className="flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-xs font-medium"
+                style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Send Inquiry
+              </button>
+            </div>
             </div>
 
             <div
