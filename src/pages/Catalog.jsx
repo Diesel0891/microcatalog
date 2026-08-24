@@ -63,59 +63,34 @@ function inquiryKey(productId, _selection = {}) {
   return `${productId}`
 }
 
-function buildInquiryMessage(items, shopName) {
+function buildInquiryMessage(items, _shopName) {
   if (items.length === 0) return ''
-  const groups = { available: [], reserved: [], sold: [] }
-  for (const item of items) groups[item.stockStatus].push(item)
-
-  const lines = []
-  if (shopName) {
-    lines.push(`Inquiry from ${shopName}`)
-    lines.push('')
-  }
-  lines.push('Hello — I have a few items from your catalog:')
+  const lines = ['Hello, I\'d like to inquire about:']
   lines.push('')
-
-  if (groups.available.length) {
-    lines.push("I'd like to inquire about purchasing:")
-    for (const item of groups.available) {
-      lines.push(`• ${item.productName} × ${item.quantity} — ${item.price}`)
-    }
-    lines.push('')
+  for (const item of items) {
+    const qty = item.quantity > 1 ? ` × ${item.quantity}` : ''
+    const price = item.price && item.price !== '0' && item.price !== 'MK 0'
+      ? ` — ${item.price}`
+      : item.stockStatus === 'sold' ? ' — sold'
+      : ''
+    lines.push(`• ${item.productName}${qty}${price}`)
   }
-  if (groups.reserved.length) {
-    lines.push('Could you let me know the availability of:')
-    for (const item of groups.reserved) {
-      lines.push(`• ${item.productName} × ${item.quantity}`)
-    }
-    lines.push('')
-  }
-  if (groups.sold.length) {
-    lines.push('These are marked sold — do you have similar pieces to:')
-    for (const item of groups.sold) {
-      lines.push(`• ${item.productName}`)
-    }
-    lines.push('')
-  }
-
   return lines.join('\n').trim()
 }
 
-function buildSingleProductMessage(product, shopName) {
+function buildSingleProductMessage(product, _shopName) {
   if (!product) return ''
-  const shopLine = shopName ? ` from ${shopName}` : ''
   if (product.stockStatus === 'sold') {
-    return `Hello — I see the ${product.name} is marked as sold${shopLine}. Do you have something similar available?`
+    return `Hello, I'm interested in the ${product.name}. Do you have anything similar available?`
   }
+  const price = product.price && product.price !== '0' && product.price !== 'MK 0'
+    ? ` — ${product.price}`
+    : ''
   if (product.stockStatus === 'reserved') {
-    return `Hello — I'm interested in the ${product.name} (${product.price}) which is marked as reserved${shopLine}. Is it still available?`
+    return `Hello, I'm interested in the ${product.name}${price}. Is it still available?`
   }
-  return `Hello — I'm interested in the ${product.name} (${product.price})${shopLine}. Is it still available?`
+  return `Hello, I'm interested in the ${product.name}${price}.`
 }
-
-/* ----------------------------------------------------------------------------
- * Main Catalog Page
- * ----------------------------------------------------------------------------*/
 export default function Catalog() {
   const { sellerUuid } = useParams()
 

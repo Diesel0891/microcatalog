@@ -219,6 +219,16 @@ export default function CatalogDetailSheet({
               </div>
             </div>
 
+              {/* Bottom fade — subtle scroll hint, disappears at bottom */}
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-16"
+                style={{
+                  background: `linear-gradient(to bottom, rgba(0,0,0,0) 0%, ${COLOR.void} 100%)`,
+                  opacity: scrollProgress < 1 ? 0.55 : 0,
+                  transition: 'opacity 150ms ease',
+                }}
+              />
+
             {/* CTA bar — solid background, z-index above scrollable content */}
             <div
               className="absolute inset-x-0 bottom-0 z-20 p-3"
