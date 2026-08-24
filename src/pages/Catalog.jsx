@@ -101,6 +101,18 @@ function buildInquiryMessage(items, shopName) {
   return lines.join('\n').trim()
 }
 
+function buildSingleProductMessage(product, shopName) {
+  if (!product) return ''
+  const shopLine = shopName ? ` from ${shopName}` : ''
+  if (product.stockStatus === 'sold') {
+    return `Hello — I see the ${product.name} is marked as sold${shopLine}. Do you have something similar available?`
+  }
+  if (product.stockStatus === 'reserved') {
+    return `Hello — I'm interested in the ${product.name} (${product.price}) which is marked as reserved${shopLine}. Is it still available?`
+  }
+  return `Hello — I'm interested in the ${product.name} (${product.price})${shopLine}. Is it still available?`
+}
+
 /* ----------------------------------------------------------------------------
  * Main Catalog Page
  * ----------------------------------------------------------------------------*/
@@ -357,6 +369,26 @@ export default function Catalog() {
     }
   }, [inquiry, sellerPhone, shopName, sellerUuid])
 
+const sendSingleProductWhatsapp = useCallback((product) => {
+  if (!product) return
+  const message = buildSingleProductMessage(product, shopName)
+  if (!message) return
+  const cleanPhone = sellerPhone ? sellerPhone.replace(/\D/g, '') : ''
+  const url = cleanPhone
+    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
+    : `https://wa.me/?text=${encodeURIComponent(message)}`
+  window.open(url, '_blank', 'noopener,noreferrer')
+
+  if (sellerUuid) {
+    const today = new Date().toISOString().slice(0, 10)
+    void (async () => { try { await supabase.rpc('track_daily_metric', {
+      p_seller_uuid: sellerUuid,
+      p_date: today,
+      p_field: 'inquiries'
+    }); } catch (e) { logger.error('Catalog', 'Metric tracking failed', { message: e.message }) } })()
+  }
+}, [sellerPhone, shopName, sellerUuid])
+
   // Dwell recommendations
   const dwellRecommendations = useMemo(() => {
     return Object.entries(dwellTimes)
@@ -531,7 +563,7 @@ export default function Catalog() {
         onCycleImage={(dir) => detailProduct && cycleImage(detailProduct, dir)}
         isAdded={detailProduct ? isProductAdded(detailProduct) : false}
         onToggle={() => detailProduct && handleToggle(detailProduct)}
-        onSendWhatsapp={() => detailProduct && sendWhatsapp(detailProduct)}
+        onSendWhatsapp={() => detailProduct && sendSingleProductWhatsapp(detailProduct)}
       />
 
       {/* Persistent bottom inquiry bar */}
