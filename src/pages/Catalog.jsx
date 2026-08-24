@@ -64,34 +64,45 @@ function inquiryKey(productId, _selection = {}) {
   return `${productId}`
 }
 
+function hasMeaningfulPrice(price) {
+  if (price == null) return false
+  const normalized = String(price).trim()
+  return normalized !== '' && !/^MK\s*0(?:\.0+)?$/i.test(normalized) && !/^0(?:\.0+)?$/.test(normalized)
+}
+
 function buildInquiryMessage(items, _shopName) {
   if (items.length === 0) return ''
-  const lines = ['Hello, I\'d like to inquire about:']
+  const lines = ['Hello — I\'d like to inquire about:']
   lines.push('')
   for (const item of items) {
-    const qty = item.quantity > 1 ? ` × ${item.quantity}` : ''
-    const price = item.price && item.price !== '0' && item.price !== 'MK 0'
-      ? ` — ${item.price}`
-      : item.stockStatus === 'sold' ? ' — sold'
+    const name = item.productName && item.productName !== 'Untitled'
+      ? item.productName
+      : 'Product inquiry'
+    const qty = item.quantity > 1 ? ` \u00d7 ${item.quantity}` : ''
+    const price = hasMeaningfulPrice(item.price)
+      ? ` \u2014 ${item.price}`
+      : item.stockStatus === 'sold' ? ' \u2014 sold'
       : ''
-    lines.push(`• ${item.productName}${qty}${price}`)
+    lines.push(`\u2022 ${name}${qty}${price}`)
   }
   return lines.join('\n').trim()
 }
 
 function buildSingleProductMessage(product, _shopName) {
   if (!product) return ''
+  const name = product.name && product.name !== 'Untitled' ? `the ${product.name}` : 'this item'
   if (product.stockStatus === 'sold') {
-    return `Hello, I'm interested in the ${product.name}. Do you have anything similar available?`
+    return `Hello \u2014 I'm interested in ${name}. Do you have anything similar available?`
   }
-  const price = product.price && product.price !== '0' && product.price !== 'MK 0'
-    ? ` — ${product.price}`
+  const price = hasMeaningfulPrice(product.price)
+    ? ` \u2014 ${product.price}`
     : ''
   if (product.stockStatus === 'reserved') {
-    return `Hello, I'm interested in the ${product.name}${price}. Is it still available?`
+    return `Hello \u2014 I'm interested in ${name}${price}. Is it still available?`
   }
-  return `Hello, I'm interested in the ${product.name}${price}.`
+  return `Hello \u2014 I'm interested in ${name}${price}.`
 }
+
 export default function Catalog() {
   const { sellerUuid } = useParams()
 

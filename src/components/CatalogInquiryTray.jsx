@@ -382,7 +382,7 @@ export default function CatalogInquiryTray({
       </AnimatePresence>
 
       <AnimatePresence>
-        {!expanded && (
+        {!expanded && !isOverlayActive && (
           <motion.div
             variants={persistentBarVariants}
             initial="hidden"
