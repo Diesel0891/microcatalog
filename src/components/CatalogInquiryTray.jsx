@@ -156,7 +156,7 @@ export default function CatalogInquiryTray({
             <div
               ref={scrollRef}
               className="flex-1 min-h-0 overflow-y-auto px-4 relative"
-              style={{ paddingBottom: '80px' }}
+              style={{ paddingBottom: '8px' }}
             >
               <div className="flex flex-col gap-3">
                 {safeItems.map((item) => (
@@ -239,6 +239,18 @@ export default function CatalogInquiryTray({
                   })}
                 </div>
               )}
+            </div>
+
+            {/* Footer CTA — Send Inquiry inside tray */}
+            <div className="shrink-0 px-4 pb-3 pt-2">
+              <button
+                onClick={onSend}
+                className="flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-xs font-medium"
+                style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                Send Inquiry — {safeItems.length} item{safeItems.length === 1 ? '' : 's'}
+              </button>
             </div>
           </div>
         </div>
