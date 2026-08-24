@@ -152,108 +152,97 @@ export default function CatalogInquiryTray({
                 </button>
               </div>
 
-            {/* Footer CTA */}
-            <div className="shrink-0 px-4 pb-3 pt-2">
-              <button
-                onClick={onSend}
-                className="flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-xs font-medium"
-                style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Send Inquiry
-              </button>
-            </div>
             </div>
 
-            <div
-              ref={scrollRef}
-              className="flex-1 min-h-0 overflow-y-auto px-4 relative"
-              style={{ paddingBottom: '8px' }}
-            >
-              <div className="flex flex-col gap-3">
-                {safeItems.map((item) => (
-                  <div key={item.key} className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {item.imageUrl && (
-                        <img
-                          src={item.imageUrl}
-                          alt=""
-                          className="h-8 w-8 rounded object-cover shrink-0"
-                          style={{ border: `0.5px solid ${COLOR.hairlineGold}` }}
-                          onError={(e) => { e.currentTarget.style.display = 'none' }}
-                        />
-                      )}
-                      <div className="flex flex-col min-w-0">
-                        <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
-                          {item.productName}
+            <div className="relative flex-1 min-h-0 overflow-hidden">
+              <div
+                ref={scrollRef}
+                className="h-full overflow-y-auto px-4"
+                style={{ paddingBottom: '8px' }}
+              >
+                <div className="flex flex-col gap-3">
+                  {safeItems.map((item) => (
+                    <div key={item.key} className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt=""
+                            className="h-8 w-8 rounded object-cover shrink-0"
+                            style={{ border: `0.5px solid ${COLOR.hairlineGold}` }}
+                            onError={(e) => { e.currentTarget.style.display = 'none' }}
+                          />
+                        )}
+                        <div className="flex flex-col min-w-0">
+                          <span className="truncate text-xs" style={{ color: COLOR.goldSecondary }}>
+                            {item.productName}
+                          </span>
+                          <span className="text-[10px]" style={{ color: COLOR.body }}>
+                            {item.stockStatus}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => onQuantityChange(item.key, Math.max(1, item.quantity - 1))}
+                          className="flex h-6 w-6 items-center justify-center rounded-full border"
+                          style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-4 text-center text-xs tabular-nums" style={{ color: COLOR.goldSecondary }}>
+                          {item.quantity}
                         </span>
-                        <span className="text-[10px]" style={{ color: COLOR.body }}>
-                          {item.stockStatus}
-                        </span>
+                        <button
+                          onClick={() => onQuantityChange(item.key, item.quantity + 1)}
+                          className="flex h-6 w-6 items-center justify-center rounded-full border"
+                          style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => onRemove(item.key)}
+                          className="ml-1 flex h-6 w-6 items-center justify-center"
+                          style={{ color: COLOR.body }}
+                          aria-label={`Remove ${item.productName}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => onQuantityChange(item.key, Math.max(1, item.quantity - 1))}
-                        className="flex h-6 w-6 items-center justify-center rounded-full border"
-                        style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-4 text-center text-xs tabular-nums" style={{ color: COLOR.goldSecondary }}>
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => onQuantityChange(item.key, item.quantity + 1)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full border"
-                        style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={() => onRemove(item.key)}
-                        className="ml-1 flex h-6 w-6 items-center justify-center"
-                        style={{ color: COLOR.body }}
-                        aria-label={`Remove ${item.productName}`}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {hasScrollableContent && (
-                <div
-                  className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
-                  aria-hidden="true"
-                >
-                  {safeItems.map((_, i) => {
-                    const itemProgress = i / Math.max(safeItems.length - 1, 1)
-                    const isActive = Math.abs(scrollProgress - itemProgress) < (0.5 / safeItems.length)
-                    return (
-                      <span
-                        key={i}
-                        className="transition-all duration-300"
-                        style={{
-                          width: '3px',
-                          height: isActive ? '16px' : '3px',
-                          borderRadius: '9999px',
-                          backgroundColor: isActive ? COLOR.goldPrimary : 'rgba(197,160,89,0.25)',
-                          border: `0.5px solid ${COLOR.hairlineGold}`,
-                          transitionTimingFunction: EASE,
-                          opacity: isActive ? 1 : 0.7,
-                        }}
-                      />
-                    )
-                  })}
+                  ))}
                 </div>
-              )}
-            </div>
 
-            {/* Footer CTA — Send Inquiry inside tray */}
+              </div>
+                {hasScrollableContent && (
+                  <div
+                    className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
+                    aria-hidden="true"
+                  >
+                    {safeItems.map((_, i) => {
+                      const itemProgress = i / Math.max(safeItems.length - 1, 1)
+                      const isActive = Math.abs(scrollProgress - itemProgress) < (0.5 / safeItems.length)
+                      return (
+                        <span
+                          key={i}
+                          className="transition-all duration-300"
+                          style={{
+                            width: '3px',
+                            height: isActive ? '16px' : '3px',
+                            borderRadius: '9999px',
+                            backgroundColor: isActive ? COLOR.goldPrimary : 'rgba(197,160,89,0.25)',
+                            border: `0.5px solid ${COLOR.hairlineGold}`,
+                            transitionTimingFunction: EASE,
+                            opacity: isActive ? 1 : 0.7,
+                          }}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
+            </div>
             <div className="shrink-0 px-4 pb-3 pt-2">
               <button
                 onClick={onSend}
@@ -274,9 +263,9 @@ export default function CatalogInquiryTray({
           backgroundColor: 'rgba(11,11,11,0.95)',
           borderColor: COLOR.hairlineGold,
           transitionTimingFunction: EASE,
-          opacity: isOverlayActive ? 0 : 1,
-          pointerEvents: isOverlayActive ? 'none' : 'auto',
-          transform: isOverlayActive ? 'translateY(20px)' : 'translateY(0)',
+          opacity: expanded || isOverlayActive ? 0 : 1,
+          pointerEvents: expanded || isOverlayActive ? 'none' : 'auto',
+          transform: expanded || isOverlayActive ? 'translateY(20px)' : 'translateY(0)',
         }}
       >
         <div className="flex items-center justify-between gap-3">

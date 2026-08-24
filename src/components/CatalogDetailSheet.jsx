@@ -46,7 +46,6 @@ export default function CatalogDetailSheet({
     const handle = () => {
       const max = el.scrollHeight - el.clientHeight
       setScrollProgress(max > 0 ? Math.min(1, el.scrollTop / max) : 0)
-      setHasMoreBelow(el.scrollTop < max - 8)
       if (el.scrollTop > 10 && !scrolledOnce) {
         setScrolledOnce(true)
         setShowScrollCue(false)
