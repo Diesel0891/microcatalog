@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { MessageCircle, ChevronDown, X, Minus, Plus, Trash2 } from 'lucide-react'
 
 const COLOR = {
@@ -27,6 +27,7 @@ export default function CatalogInquiryTray({
   const [scrollProgress, setScrollProgress] = useState(0)
   const [showScrollCue, setShowScrollCue] = useState(true)
   const [scrolledOnce, setScrolledOnce] = useState(false)
+  const closeButtonRef = useRef(null)
 
   useEffect(() => {
     if (isOverlayActive) setExpanded(false)
@@ -60,6 +61,24 @@ export default function CatalogInquiryTray({
     return () => clearTimeout(t)
   }, [expanded, scrolledOnce])
 
+  useEffect(() => {
+    if (expanded && closeButtonRef.current) {
+      closeButtonRef.current.focus()
+    }
+  }, [expanded])
+
+  const handleToggleExpanded = useCallback(() => {
+    setExpanded((v) => !v)
+  }, [])
+
+  const handleBackdropClick = useCallback(() => {
+    setExpanded(false)
+  }, [])
+
+  const handleSend = useCallback(() => {
+    onSend()
+  }, [onSend])
+
   if (safeItems.length === 0) return null
 
   const estimatedTotal = safeItems.reduce((sum, item) => {
@@ -75,21 +94,24 @@ export default function CatalogInquiryTray({
         <div
           className="fixed inset-0 z-[55]"
           style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-          onClick={() => setExpanded(false)}
+          onClick={handleBackdropClick}
+          aria-hidden="true"
         />
       )}
 
       {expanded && (
         <div
+          id="inquiry-tray-content"
           className="fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Inquiry tray"
           style={{
             backgroundColor: COLOR.plate,
             borderTop: `0.5px solid ${COLOR.hairlineGold}`,
           }}
         >
-          {/* Flex column: header (shrink-0) + body (flex-1 min-h-0) */}
           <div className="flex flex-col" style={{ maxHeight: '50vh' }}>
-            {/* Progress line */}
             {hasScrollableContent && (
               <div className="shrink-0 h-[1.5px] bg-[#1A1A1A]">
                 <div
@@ -99,7 +121,6 @@ export default function CatalogInquiryTray({
               </div>
             )}
 
-            {/* Header */}
             <div className="shrink-0 relative flex items-center justify-between px-4 pt-3 pb-2">
               <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
                 {shopName}
@@ -111,12 +132,17 @@ export default function CatalogInquiryTray({
               )}
               <div className="flex items-center gap-3">
                 {safeItems.length > 1 && (
-                  <button onClick={onClear} className="flex items-center gap-1 text-xs" style={{ color: COLOR.body }}>
+                  <button
+                    onClick={onClear}
+                    className="flex items-center gap-1 text-xs"
+                    style={{ color: COLOR.body }}
+                  >
                     <Trash2 className="h-3 w-3" />
                     Clear all
                   </button>
                 )}
                 <button
+                  ref={closeButtonRef}
                   aria-label="Close inquiry tray"
                   onClick={() => setExpanded(false)}
                   className="flex h-8 w-8 items-center justify-center rounded-full border"
@@ -127,7 +153,6 @@ export default function CatalogInquiryTray({
               </div>
             </div>
 
-            {/* Scrollable body — flex-1 min-h-0 is the ONLY correct flexbox pattern */}
             <div
               ref={scrollRef}
               className="flex-1 min-h-0 overflow-y-auto px-4 relative"
@@ -160,6 +185,7 @@ export default function CatalogInquiryTray({
                         onClick={() => onQuantityChange(item.key, Math.max(1, item.quantity - 1))}
                         className="flex h-6 w-6 items-center justify-center rounded-full border"
                         style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                        aria-label="Decrease quantity"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
@@ -170,6 +196,7 @@ export default function CatalogInquiryTray({
                         onClick={() => onQuantityChange(item.key, item.quantity + 1)}
                         className="flex h-6 w-6 items-center justify-center rounded-full border"
                         style={{ borderColor: COLOR.hairlineGold, color: COLOR.goldSecondary }}
+                        aria-label="Increase quantity"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
@@ -177,6 +204,7 @@ export default function CatalogInquiryTray({
                         onClick={() => onRemove(item.key)}
                         className="ml-1 flex h-6 w-6 items-center justify-center"
                         style={{ color: COLOR.body }}
+                        aria-label={`Remove ${item.productName}`}
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -185,7 +213,6 @@ export default function CatalogInquiryTray({
                 ))}
               </div>
 
-              {/* Right-edge dot indicator — absolute within the scroll container */}
               {hasScrollableContent && (
                 <div
                   className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
@@ -217,9 +244,7 @@ export default function CatalogInquiryTray({
         </div>
       )}
 
-      {/* Persistent bottom bar */}
-      <button
-        onClick={() => setExpanded((v) => !v)}
+      <div
         className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-md rounded-full border px-4 py-3 transition-all"
         style={{
           backgroundColor: 'rgba(11,11,11,0.95)',
@@ -231,14 +256,19 @@ export default function CatalogInquiryTray({
         }}
       >
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <button
+            onClick={handleToggleExpanded}
+            aria-expanded={expanded}
+            aria-controls="inquiry-tray-content"
+            className="flex flex-1 items-center gap-3 text-left"
+          >
             <span
               className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
               style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
             >
               {safeItems.length}
             </span>
-            <div className="flex flex-col text-left">
+            <div className="flex flex-col">
               <span className="text-xs font-medium" style={{ color: COLOR.goldSecondary }}>
                 {safeItems.length} piece{safeItems.length === 1 ? '' : 's'} selected
               </span>
@@ -246,8 +276,6 @@ export default function CatalogInquiryTray({
                 ${estimatedTotal.toLocaleString()} est.
               </span>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
             <ChevronDown
               className="h-4 w-4 transition-transform duration-300"
               style={{
@@ -255,21 +283,20 @@ export default function CatalogInquiryTray({
                 transform: expanded ? 'rotate(180deg)' : 'none',
                 transitionTimingFunction: EASE,
               }}
+              aria-hidden="true"
             />
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium"
-              style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
-              onClick={(e) => {
-                e.stopPropagation()
-                onSend()
-              }}
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              Send Inquiry
-            </span>
-          </div>
+          </button>
+
+          <button
+            onClick={handleSend}
+            className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium"
+            style={{ backgroundColor: COLOR.goldPrimary, color: COLOR.void }}
+          >
+            <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+            Send Inquiry
+          </button>
         </div>
-      </button>
+      </div>
     </>
   )
 }
