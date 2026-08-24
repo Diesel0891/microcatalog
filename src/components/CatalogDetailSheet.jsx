@@ -37,7 +37,6 @@ export default function CatalogDetailSheet({
 }) {
   const scrollRef = useRef(null)
   const [scrollProgress, setScrollProgress] = useState(0)
-  const [hasMoreBelow, setHasMoreBelow] = useState(false)
   const [showScrollCue, setShowScrollCue] = useState(true)
   const [scrolledOnce, setScrolledOnce] = useState(false)
 
@@ -220,15 +219,6 @@ export default function CatalogDetailSheet({
                 )}
               </div>
             </div>
-
-            {/* Fade gradient for more content */}
-            {hasMoreBelow && (
-              <div
-                className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] h-10"
-                style={{ background: 'linear-gradient(to top, #000000, transparent)', zIndex: 2 }}
-                aria-hidden="true"
-              />
-            )}
 
             {/* CTA bar — solid background, z-index above scrollable content */}
             <div
