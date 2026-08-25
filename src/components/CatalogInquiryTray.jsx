@@ -310,32 +310,6 @@ export default function CatalogInquiryTray({
                   </div>
                 </div>
 
-                {hasScrollableContent && safeItems.length <= 6 && (
-                  <div
-                    className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1.5"
-                    aria-hidden="true"
-                  >
-                    {safeItems.map((_, i) => {
-                      const itemProgress = i / Math.max(safeItems.length - 1, 1)
-                      const isActive = Math.abs(scrollProgress - itemProgress) < (0.5 / safeItems.length)
-                      return (
-                        <span
-                          key={i}
-                          className="transition-all duration-300"
-                          style={{
-                            width: '3px',
-                            height: isActive ? '16px' : '3px',
-                            borderRadius: '9999px',
-                            backgroundColor: isActive ? COLOR.goldPrimary : 'rgba(197,160,89,0.25)',
-                            border: `0.5px solid ${COLOR.hairlineGold}`,
-                            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-                            opacity: isActive ? 1 : 0.7,
-                          }}
-                        />
-                      )
-                    })}
-                  </div>
-                )}
 
                 {hasScrollableContent && safeItems.length > 6 && (
                   <div
