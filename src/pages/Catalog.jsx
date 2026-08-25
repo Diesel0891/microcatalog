@@ -41,13 +41,15 @@ function mapItemToProduct(item) {
   return {
     id: item.id,
     name: item.title || null,
-    category: null, // No category column in schema
+    category: item.category || null,
     price: item.price || null,
     description: item.description || '',
     stockStatus: item.stock_status || 'available',
-    images: item.image_url
-      ? [{ url: item.image_url, quality: 'high', aspectRatio: 0.8, alt: item.title || 'Product image' }]
-      : [],
+    images: (item.images && Array.isArray(item.images) && item.images.length > 0)
+      ? item.images
+      : item.image_url
+        ? [{ url: item.image_url, quality: 'high', aspectRatio: 0.8, alt: item.title || 'Product image' }]
+        : [],
     attributes: [], // No attributes in schema yet
     specs,
     sku: item.id.slice(0, 8).toUpperCase(),
