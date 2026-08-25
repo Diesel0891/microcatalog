@@ -123,7 +123,7 @@ export default function CatalogFeedCard({
               className={`font-serif ${isSignature ? 'text-2xl' : 'text-xl'} font-light leading-tight text-balance`}
               style={{ color: '#F0EDE4' }}
             >
-              {product.name}
+              {product.name || "Unnamed product"}
             </h2>
             <span
               className="shrink-0 text-base font-medium"
@@ -132,7 +132,7 @@ export default function CatalogFeedCard({
                 textShadow: isSignature ? '0 0 24px rgba(197,160,89,0.45)' : undefined,
               }}
             >
-              {product.price}
+              {product.price || "Price on request"}
             </span>
           </div>
 

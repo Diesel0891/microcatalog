@@ -40,9 +40,9 @@ function mapItemToProduct(item) {
 
   return {
     id: item.id,
-    name: item.title || 'Untitled',
+    name: item.title || null,
     category: null, // No category column in schema
-    price: item.price || '0',
+    price: item.price || null,
     description: item.description || '',
     stockStatus: item.stock_status || 'available',
     images: item.image_url

@@ -174,7 +174,7 @@ export default function CatalogDetailSheet({
             exit="exit"
             role="dialog"
             aria-modal="true"
-            aria-label={`${product.name} — details`}
+            aria-label={`${product.name || "Product"} — details`}
             className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden border-t"
             style={{
               backgroundColor: COLOR.void,
@@ -266,13 +266,13 @@ export default function CatalogDetailSheet({
                       className="font-serif text-3xl font-light leading-tight text-balance"
                       style={{ color: '#F0EDE4' }}
                     >
-                      {product.name}
+                      {product.name || "Unnamed product"}
                     </h2>
                     <span
                       className="shrink-0 text-xl font-medium"
                       style={{ color: COLOR.goldPrimary, textShadow: '0 0 28px rgba(197,160,89,0.4)' }}
                     >
-                      {product.price}
+                      {product.price || "Price on request"}
                     </span>
                   </div>
                 </motion.div>
