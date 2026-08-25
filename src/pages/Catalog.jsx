@@ -16,7 +16,7 @@ import CatalogSkeleton from '../components/CatalogSkeleton.jsx'
  * Constants
  * ----------------------------------------------------------------------------*/
 const VIRAL_BANNER_POSITIONS = [6, 18]
-const VIRAL_BANNER_MAX_IMPRESSIONS = 2
+const VIRAL_BANNER_MAX_IMPRESSIONS = 999
 const DISCOVERY_PORTAL_OVERSCROLL_THRESHOLD = 60
 const DWELL_SAMPLE_SIZE_MS = 800
 
