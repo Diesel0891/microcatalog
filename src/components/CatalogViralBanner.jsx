@@ -77,12 +77,6 @@ export default function CatalogViralBanner({ onImpression }) {
           Imagine this was<br />your shop.
         </h3>
 
-        <p
-          className="mt-4 text-sm leading-relaxed"
-          style={{ color: COLOR.body }}
-        >
-          Create a storefront with Infini.
-        </p>
 
         <a
           href="/#/"
