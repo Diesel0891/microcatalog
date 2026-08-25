@@ -89,9 +89,16 @@ function ProductCard({ item, open, isNew, onToggle, onChange, onDeleteRequest, o
               </button>
             </div>
           </div>
-          <span className={cn('mt-3 inline-flex rounded-lg px-2.5 py-1 text-xs font-medium', status.badge)}>
-            {status.label}
-          </span>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className={cn('inline-flex rounded-lg px-2.5 py-1 text-xs font-medium', status.badge)}>
+              {status.label}
+            </span>
+            {(!item.image_url || !item.title?.trim() || !item.price?.trim()) && (
+              <span className="inline-flex rounded-lg px-2.5 py-1 text-xs font-medium bg-destructive/10 text-destructive">
+                Needs details
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <AnimatePresence initial={false}>

@@ -1204,6 +1204,13 @@ const handleRemoveLogo = useCallback(async () => {
                 >
                   Add shop details to publish <span aria-hidden>→</span>
                 </button>
+              ) : items.length > 0 && publishableItems.length === 0 ? (
+                <button
+                  disabled
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-secondary/70 px-5 py-3.5 text-sm font-medium text-muted-foreground"
+                >
+                  <Check className="size-4" />Complete item details to publish
+                </button>
               ) : (
                 <button
                   onClick={publish}
