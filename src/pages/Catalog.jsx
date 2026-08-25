@@ -430,63 +430,17 @@ const sendSingleProductWhatsapp = useCallback((product) => {
 
   return (
     <main className="infini-catalog relative mx-auto flex h-dvh w-full max-w-md flex-col overflow-hidden" style={{ backgroundColor: COLOR.void }}>
-      {/* Dark gradient backing for all top chrome */}
-      <div
-        className="fixed inset-x-0 top-0 z-10 h-24 pointer-events-none"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)',
-        }}
-      />
-
-      {/* B1: Persistent identity strip */}
+      {/* Identity header */}
       <CatalogIdentityStrip
-        shopName={shopName || 'Catalog'}
+        shopName={shopName}
         logoUrl={logoUrl}
-        isVisible={true}
+        sellerPhone={sellerPhone}
+        isOwner={isOwner}
+        manageToken={manageToken}
+        sellerUuid={sellerUuid}
+        onOpenDiscover={() => setPortalOpen(true)}
+        isOverlayActive={isOverlayActive}
       />
-
-      {/* Discover pill button — hides when overlay active */}
-      <button
-        onClick={() => setPortalOpen(true)}
-        aria-label="Open discovery portal"
-        aria-expanded={portalOpen}
-        className="absolute left-1/2 top-14 z-20 -translate-x-1/2 rounded-full border px-4 py-1.5 text-xs font-medium transition-all"
-        style={{
-          borderColor: '#3A301A',
-          color: '#A0A5AD',
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          opacity: isOverlayActive ? 0 : 1,
-          pointerEvents: isOverlayActive ? 'none' : 'auto',
-          transitionDuration: '0.35s',
-          transitionTimingFunction: EASE,
-        }}
-      >
-        <span className="inline-flex items-center gap-1.5">
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-          Discover
-        </span>
-      </button>
-
-      {/* Owner edit link — hides when overlay active */}
-      {isOwner && (
-        <a
-          href={`/#/u/${manageToken || sellerUuid}`}
-          className="absolute right-3 top-[4.5rem] z-20 text-[10px] font-medium uppercase transition-all hover:opacity-70"
-          style={{
-            color: '#C5A059',
-            letterSpacing: '0.15em',
-            opacity: isOverlayActive ? 0 : 1,
-            pointerEvents: isOverlayActive ? 'none' : 'auto',
-            transitionDuration: '0.35s',
-            transitionTimingFunction: EASE,
-          }}
-        >
-          Edit catalog →
-        </a>
-      )}
 
       {/* Snap-scroll feed */}
       <div
@@ -494,7 +448,7 @@ const sendSingleProductWhatsapp = useCallback((product) => {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="h-full w-full snap-y snap-mandatory overflow-y-auto"
+        className="flex-1 w-full snap-y snap-mandatory overflow-y-auto"
         style={{
           scrollBehavior: 'smooth',
           opacity: isOverlayActive ? 0 : 1,

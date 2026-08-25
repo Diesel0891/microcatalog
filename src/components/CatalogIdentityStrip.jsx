@@ -1,104 +1,87 @@
-import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import { MessageCircle, Search } from 'lucide-react'
 
-const COLOR = {
-  void: '#000000',
-  goldSecondary: '#EADBB6',
-  hairlineGold: '#3A301A',
+export default function CatalogIdentityStrip({
+shopName,
+logoUrl,
+sellerPhone,
+isOwner,
+manageToken,
+sellerUuid,
+onOpenDiscover,
+isOverlayActive,
+}) {
+const [logoError, setLogoError] = useState(false)
+
+if (isOverlayActive) return null
+
+const handleMessageSeller = () => {
+  if (!sellerPhone) return
+  const cleanPhone = sellerPhone.replace(/\D/g, '')
+  const message = encodeURIComponent("Hello — I'd like to inquire about your catalog.")
+  const url = `https://wa.me/${cleanPhone}?text=${message}`
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
+const handleEditCatalog = () => {
+  const token = manageToken || sellerUuid
+  if (token) {
+    window.location.href = `/#/u/${token}`
+  }
+}
 
-export default function CatalogIdentityStrip({ shopName, logoUrl, isVisible = true }) {
-  const [hasAnimated, setHasAnimated] = useState(false)
-  const [showEntrance, setShowEntrance] = useState(false)
-  const [logoError, setLogoError] = useState(false)
-
-  // B3: One-time cinematic entrance per session
-  useEffect(() => {
-    if (!isVisible) return
-    const sessionKey = 'infini_identity_animated'
-    let alreadyAnimated = false
-    try {
-      alreadyAnimated = sessionStorage.getItem(sessionKey)
-    } catch {
-      // sessionStorage unavailable
-    }
-    if (!alreadyAnimated) {
-      setShowEntrance(true)
-      try {
-        sessionStorage.setItem(sessionKey, '1')
-      } catch {
-        // ignore
-      }
-      const t = setTimeout(() => setHasAnimated(true), 1200)
-      return () => clearTimeout(t)
-    } else {
-      setHasAnimated(true)
-    }
-  }, [isVisible])
-
-  if (!isVisible) return null
-
-  return (
-    <div
-      className="fixed inset-x-0 top-0 z-50 flex h-14 items-center border-b px-4"
-      style={{
-        backgroundColor: 'rgba(0,0,0,0.85)',
-        borderColor: COLOR.hairlineGold,
-      }}
-    >
-      <AnimatePresence>
-        {!hasAnimated && showEntrance ? (
-          <motion.div
-            key="entrance"
-            initial={{ opacity: 0, y: -20, scale: 1.1 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.8, ease: EASE }}
-            className="flex items-center gap-3"
-          >
-            {logoUrl && !logoError && (
-              <img
-                src={logoUrl}
-                alt=""
-                className="h-6 w-auto object-contain"
-                style={{ maxHeight: '28px' }}
-                onError={() => setLogoError(true)}
-              />
-            )}
-            <span
-              className="font-wordmark text-base font-medium leading-none"
-              style={{ color: '#F0EDE4' }}
-            >
-              {shopName}
-            </span>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="static"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center gap-3"
-          >
-            {logoUrl && !logoError && (
-              <img
-                src={logoUrl}
-                alt=""
-                className="h-6 w-auto object-contain"
-                style={{ maxHeight: '28px' }}
-                onError={() => setLogoError(true)}
-              />
-            )}
-            <span
-              className="font-wordmark text-base font-medium leading-none"
-              style={{ color: '#F0EDE4' }}
-            >
-              {shopName}
-            </span>
-          </motion.div>
+return (
+  <div className="w-full shrink-0 border-b px-4 pt-5 pb-3" style={{ borderColor: '#3A301A' }}>
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        {logoUrl && !logoError && (
+          <img
+            src={logoUrl}
+            alt={`${shopName || 'Shop'} logo`}
+            className="h-9 w-auto object-contain shrink-0"
+            style={{ maxHeight: '36px' }}
+            onError={() => setLogoError(true)}
+          />
         )}
-      </AnimatePresence>
+        <h1 className="font-wordmark text-xl font-semibold tracking-tight text-[#F0EDE4] truncate min-w-0">
+          {shopName || 'Catalog'}
+        </h1>
+      </div>
+
+      {onOpenDiscover && (
+        <button
+          onClick={onOpenDiscover}
+          aria-label="Open discovery portal"
+          className="flex h-10 w-10 items-center justify-center rounded-full transition-opacity hover:opacity-70"
+          style={{ color: '#A0A5AD' }}
+        >
+          <Search className="size-4" />
+        </button>
+      )}
     </div>
-  )
+
+    <div className="mt-3 flex items-center gap-3">
+      {sellerPhone && (
+        <button
+          onClick={handleMessageSeller}
+          className="inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm font-medium transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{ backgroundColor: '#25D366', color: '#ffffff' }}
+          aria-label="Message seller on WhatsApp"
+        >
+          <MessageCircle className="size-4" />
+          Message Seller
+        </button>
+      )}
+
+      {isOwner && (
+        <button
+          onClick={handleEditCatalog}
+          className="h-11 px-3 text-[10px] font-medium uppercase tracking-widest text-[#C5A059] hover:opacity-70 transition-opacity"
+        >
+          Edit catalog →
+        </button>
+      )}
+    </div>
+  </div>
+)
 }
