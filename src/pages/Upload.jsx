@@ -458,7 +458,8 @@ export default function Upload() {
     ? cleanedPhone.length >= selectedCountry.digits
     : cleanedPhone.length === selectedCountry.digits
 
-  const complete = [Boolean(shopName.trim()), validPhone, items.length > 0]
+  const publishableItems = items.filter((item) => item.image_url && item.title?.trim() && item.price?.trim())
+  const complete = [Boolean(shopName.trim()), validPhone, publishableItems.length > 0]
   const completeCount = complete.filter(Boolean).length
   const canPublish = completeCount === 3
   const shopIncomplete = !shopName.trim() || !validPhone
