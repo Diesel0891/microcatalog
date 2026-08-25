@@ -194,7 +194,7 @@ export default function CatalogInquiryTray({
                 <span className="font-wordmark text-sm" style={{ color: '#F0EDE4' }}>
                   {shopName}
                 </span>
-                {hasScrollableContent && showScrollCue && (
+                {hasScrollableContent && showScrollCue && safeItems.length > 6 && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <motion.div
                       initial={{ opacity: 0, y: -2 }}
@@ -238,7 +238,7 @@ export default function CatalogInquiryTray({
               <div className="relative flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div
                   ref={scrollRef}
-                  className="flex-1 min-h-0 overflow-y-auto px-4"
+                  className={`flex-1 min-h-0 px-4 ${safeItems.length > 6 ? 'overflow-y-auto' : 'overflow-y-auto no-scrollbar'}`}
                   style={{ paddingBottom: '8px' }}
                 >
                   <div className="flex flex-col gap-3">
