@@ -78,7 +78,7 @@ export default function CatalogFeedCard({
   return (
     <section
       ref={cardRef}
-      className="flex h-dvh w-full snap-start flex-col justify-center px-5 py-10"
+      className="flex h-dvh w-full snap-start flex-col justify-center px-5 py-5"
       style={{ backgroundColor: COLOR.void }}
       aria-label={product.name}
     >

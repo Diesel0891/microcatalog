@@ -17,7 +17,7 @@ export default function CatalogIdentityStrip({
 
   const handleMessageSeller = () => {
     if (!sellerPhone) return
-    const cleanPhone = sellerPhone.replace(/\D/g, '')
+    const cleanPhone = sellerPhone.replace(/\\D/g, '')
     const message = encodeURIComponent("Hello — I'd like to inquire about your catalog.")
     const url = `https://wa.me/${cleanPhone}?text=${message}`
     window.open(url, '_blank', 'noopener,noreferrer')
@@ -31,22 +31,20 @@ export default function CatalogIdentityStrip({
   }
 
   return (
-    <div className="w-full shrink-0 border-b px-4 pt-6 pb-4" style={{ borderColor: '#3A301A' }}>
-      {/* Identity row: Logo + Shop Name + Search */}
+    <div className="w-full shrink-0 border-b px-4 pt-5 pb-3" style={{ borderColor: '#3A301A' }}>
+      {/* Identity row */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           {logoUrl && !logoError && (
-            <div className="shrink-0 rounded-xl bg-white/5 p-1.5">
-              <img
-                src={logoUrl}
-                alt={`${shopName || 'Shop'} logo`}
-                className="h-10 w-auto object-contain"
-                style={{ maxHeight: '40px' }}
-                onError={() => setLogoError(true)}
-              />
-            </div>
+            <img
+              src={logoUrl}
+              alt={`${shopName || 'Shop'} logo`}
+              className="h-10 w-auto object-contain shrink-0"
+              style={{ maxHeight: '40px' }}
+              onError={() => setLogoError(true)}
+            />
           )}
-          <h1 className="font-wordmark text-[18px] font-bold tracking-tight text-[#F0EDE4] truncate min-w-0 leading-tight">
+          <h1 className="font-wordmark text-[18px] font-bold tracking-tight text-[#F0EDE4] truncate min-w-0 leading-none">
             {shopName || 'Catalog'}
           </h1>
         </div>
@@ -63,12 +61,12 @@ export default function CatalogIdentityStrip({
         )}
       </div>
 
-      {/* Action row: Message Seller + Edit Catalog */}
-      <div className="mt-4 flex items-center gap-3">
+      {/* Action row */}
+      <div className="mt-3 flex items-center justify-between">
         {sellerPhone && (
           <button
             onClick={handleMessageSeller}
-            className="inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm font-medium transition-all hover:opacity-90 active:scale-[0.98]"
+            className="inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium transition-all hover:opacity-90 active:scale-[0.98]"
             style={{ backgroundColor: '#25D366', color: '#ffffff' }}
             aria-label="Message seller on WhatsApp"
           >
@@ -80,7 +78,7 @@ export default function CatalogIdentityStrip({
         {isOwner && (
           <button
             onClick={handleEditCatalog}
-            className="h-11 px-3 text-[10px] font-medium uppercase tracking-widest text-[#C5A059] hover:opacity-70 transition-opacity"
+            className="h-10 text-[10px] font-medium uppercase tracking-widest text-[#C5A059] hover:opacity-70 transition-opacity"
           >
             Edit catalog →
           </button>
