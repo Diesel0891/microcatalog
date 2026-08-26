@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   AlertCircle, BarChart3, Camera, ChevronDown, ChevronRight, ChevronUp, Copy, ImagePlus,
   Link as LinkIcon, Lightbulb, Loader2, PartyPopper, Plus, ExternalLink,
-  Store, Trash2, UploadCloud, X, Check
+  Store, UploadCloud, X, Check
 } from 'lucide-react'
 import { cn } from '../lib/cn.js'
 import { supabase } from '../lib/supabase'
@@ -13,7 +13,8 @@ import { uploadToCloudinary } from '../lib/cloudinary'
 import { compressImage } from '../lib/compressImage.js'
 import { suggestProductDetails } from '../lib/ai'
 import { logger } from '../lib/logger.js'
-import { ProductCard } from "../components/ProductCard"
+import UploadProductCard from "../components/UploadProductCard.jsx"
+import DeleteUndoToast from "../components/DeleteUndoToast.jsx"
 
 const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card"
 
@@ -195,54 +196,7 @@ function UploadSheet({ open, onClose, onFiles }) {
 
 
 
-function DeleteConfirmSheet({ open, onCancel, onConfirm }) {
-  return createPortal(
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          key="delete-confirm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/25 p-4 backdrop-blur-sm sm:items-center"
-        >
-          <button aria-label="Cancel" className="absolute inset-0 cursor-default" onClick={onCancel} />
-          <motion.div
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={spring}
-            className="relative w-full max-w-md rounded-t-[28px] border border-border bg-card p-6 text-center shadow-[var(--shadow-lift)] sm:rounded-[28px]"
-          >
-            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-              <Trash2 className="size-6" />
-            </div>
-            <p className="text-lg font-semibold text-foreground">Remove this product?</p>
-            <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground text-pretty">
-              This will permanently remove it from your catalog.
-            </p>
-            <div className="mt-5 flex gap-3">
-              <button
-                onClick={onCancel}
-                className="flex-1 rounded-2xl bg-secondary/70 px-5 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={onConfirm}
-                className="flex-1 rounded-2xl bg-destructive px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-              >
-                Remove
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>,
-    document.body
-  )
-}
+
 
 function Sparkline({ data, width = 280, height = 48, barWidth = 6, gap = 3 }) {
   const max = Math.max(...data.map((d) => d.views || 0), 1)
@@ -434,7 +388,8 @@ export default function Upload() {
   const [inlineError, setInlineError] = useState(null)
   const [suggestingId, setSuggestingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
-  const [deleteTargetId, setDeleteTargetId] = useState(null)
+  const [deletedItem, setDeletedItem] = useState(null)
+  const [showUndoToast, setShowUndoToast] = useState(false)
   const [newItemIds, setNewItemIds] = useState(new Set())
   const [saveStatus, setSaveStatus] = useState(null)
   const [isOnline, setIsOnline] = useState(true)
@@ -726,7 +681,9 @@ const handleRemoveLogo = useCallback(async () => {
       return
     }
     try {
-      const { error } = await supabase.from('catalog_items').update(patch).eq('id', id)
+      const cleanPatch = { ...patch }
+      delete cleanPatch.attributes
+      const { error } = await supabase.from('catalog_items').update(cleanPatch).eq('id', id)
       if (error) throw error
     } catch (err) {
       logger.error('Upload', 'Autosave failed', { itemId: id, patch, message: err.message })
@@ -757,11 +714,13 @@ const handleRemoveLogo = useCallback(async () => {
           .insert({
             seller_uuid: sellerUuid,
             image_url: imageUrl,
+            images: [{ url: imageUrl }],
             title: '',
             price: '',
             description: '',
             size_specs: '',
             extra_notes: '',
+            category: null,
             published: false,
             seller_phone: sellerPhone || null,
             stock_status: 'available',
@@ -773,11 +732,14 @@ const handleRemoveLogo = useCallback(async () => {
         setItems((current) => [...current, {
           id: dbItem.id,
           image_url: imageUrl,
+          images: [{ url: imageUrl }],
           title: '',
           price: '',
           description: '',
           size_specs: '',
           extra_notes: '',
+          category: null,
+          attributes: [],
           stock_status: 'available',
           published: false,
           seller_phone: sellerPhone || null,
@@ -818,24 +780,14 @@ const handleRemoveLogo = useCallback(async () => {
   }, [updateItem])
 
   const handleDeleteRequest = useCallback((id) => {
-    setDeleteTargetId(id)
-  }, [])
+    const item = items.find((i) => i.id === id)
+    if (!item) return
+    setDeletedItem(item)
+    setItems((current) => current.filter((i) => i.id !== id))
+    setShowUndoToast(true)
+  }, [items])
 
-  const handleDeleteConfirm = useCallback(async () => {
-    if (!deleteTargetId) return
-    const id = deleteTargetId
-    setDeleteTargetId(null)
-    setItems((current) => current.filter((item) => item.id !== id))
-    try {
-      const { error } = await supabase.from('catalog_items').delete().eq('id', id)
-      if (error) throw error
-    } catch (err) {
-      logger.error('Upload', 'Delete failed', { itemId: id, message: err.message })
-      setInlineError('Failed to delete product. Please try again.')
-    }
-  }, [deleteTargetId])
-
-  const publish = useCallback(async () => {
+    const publish = useCallback(async () => {
     if (!canPublish) {
       if (shopIncomplete) {
         setNeedsPhone(true)
@@ -1148,7 +1100,7 @@ const handleRemoveLogo = useCallback(async () => {
             <motion.div layout className="flex flex-col gap-3">
               <AnimatePresence initial={false}>
                 {items.map((item) => (
-                  <ProductCard
+                  <UploadProductCard
                     key={item.id}
                     item={item}
                     open={expandedId === item.id}
@@ -1170,10 +1122,25 @@ const handleRemoveLogo = useCallback(async () => {
         {sheetOpen && <UploadSheet open={sheetOpen} onClose={() => setSheetOpen(false)} onFiles={handleFiles} />}
       </AnimatePresence>
 
-      <DeleteConfirmSheet
-        open={Boolean(deleteTargetId)}
-        onCancel={() => setDeleteTargetId(null)}
-        onConfirm={handleDeleteConfirm}
+      <DeleteUndoToast
+        message={deletedItem ? '"' + (deletedItem.title || 'Product') + '" deleted' : ''}
+        visible={showUndoToast}
+        onUndo={() => {
+          if (deletedItem) {
+            setItems((current) => [...current, deletedItem])
+            setDeletedItem(null)
+          }
+          setShowUndoToast(false)
+        }}
+        onDismiss={() => {
+          setDeletedItem(null)
+          setShowUndoToast(false)
+          if (deletedItem) {
+            supabase.from('catalog_items').delete().eq('id', deletedItem.id).then(({ error }) => {
+              if (error) logger.error('Upload', 'Delete failed', { itemId: deletedItem.id, message: error.message })
+            })
+          }
+        }}
       />
 
       <InsightsSheet
