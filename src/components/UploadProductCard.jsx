@@ -29,9 +29,7 @@ export default function UploadProductCard({
   onSuggest,
   suggesting,
 }) {
-  const [showMoreDetails, setShowMoreDetails] = useState(
-    Boolean(item.size_specs || item.description || item.extra_notes),
-  )
+  const [showMoreDetails, setShowMoreDetails] = useState(false)
 
   const coverImage = item.images[0]?.url || item.image_url
   const needsDetails = !coverImage || !item.title || !item.price
