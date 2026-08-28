@@ -31,8 +31,23 @@ const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
  * ----------------------------------------------------------------------------*/
 function mapItemToProduct(item) {
   const specs = []
+  let attributes = []
   if (item.size_specs) {
-    specs.push({ label: 'Size / Specs', value: item.size_specs })
+    try {
+      const parsed = JSON.parse(item.size_specs)
+      if (Array.isArray(parsed)) {
+        attributes = parsed
+        parsed.forEach((attr) => {
+          if (attr.key && attr.value) {
+            specs.push({ label: attr.key, value: attr.value })
+          }
+        })
+      } else {
+        specs.push({ label: 'Size / Specs', value: item.size_specs })
+      }
+    } catch {
+      specs.push({ label: 'Size / Specs', value: item.size_specs })
+    }
   }
   if (item.extra_notes) {
     specs.push({ label: 'Notes', value: item.extra_notes })
@@ -50,7 +65,7 @@ function mapItemToProduct(item) {
       : item.image_url
         ? [{ url: item.image_url, quality: 'high', aspectRatio: 0.8, alt: item.title || 'Product image' }]
         : [],
-    attributes: [], // No attributes in schema yet
+    attributes,
     specs,
     sku: item.id.slice(0, 8).toUpperCase(),
     createdAt: item.created_at || new Date().toISOString(),

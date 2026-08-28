@@ -578,7 +578,19 @@ export default function Upload() {
           .eq('seller_uuid', sellerUuid)
           .order('created_at', { ascending: false })
         if (error) throw error
-        setItems(data || [])
+        const itemsWithAttributes = (data || []).map((item) => {
+          let attributes = []
+          if (item.size_specs) {
+            try {
+              const parsed = JSON.parse(item.size_specs)
+              if (Array.isArray(parsed)) attributes = parsed
+            } catch {
+              // Legacy plain text — leave attributes empty
+            }
+          }
+          return { ...item, attributes }
+        })
+        setItems(itemsWithAttributes)
       } catch (err) {
         logger.error('Upload', 'Load items error', { message: err.message })
       }
@@ -682,7 +694,12 @@ const handleRemoveLogo = useCallback(async () => {
     }
     try {
       const cleanPatch = { ...patch }
-      delete cleanPatch.attributes
+      if ('attributes' in cleanPatch) {
+        cleanPatch.size_specs = cleanPatch.attributes.length > 0
+          ? JSON.stringify(cleanPatch.attributes)
+          : ''
+        delete cleanPatch.attributes
+      }
       const { error } = await supabase.from('catalog_items').update(cleanPatch).eq('id', id)
       if (error) throw error
     } catch (err) {
