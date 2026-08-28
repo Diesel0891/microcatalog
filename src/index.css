@@ -488,3 +488,47 @@
   padding: 2px;
   margin: -2px;
 }
+
+/* ===== Upload Page Dark Theme (scoped) ===== */
+.upload-page-dark {
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: #0B0B0B;
+  --card-foreground: #FFFFFF;
+  --popover: #0B0B0B;
+  --popover-foreground: #FFFFFF;
+  --primary: #C5A059;
+  --primary-foreground: #000000;
+  --secondary: #111111;
+  --secondary-foreground: #A0A5AD;
+  --muted: #111111;
+  --muted-foreground: #A0A5AD;
+  --accent: #1A1A1A;
+  --accent-foreground: #FFFFFF;
+  --destructive: #FF4444;
+  --border: #1A1A1A;
+  --input: #1A1A1A;
+  --ring: #C5A059;
+  --color-bg: #000000;
+  --color-surface: #0B0B0B;
+  --color-surface-elevated: #0B0B0B;
+  --color-border: #1A1A1A;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A0A5AD;
+  --color-text-muted: #6B7280;
+  --color-accent: #C5A059;
+  --color-accent-hover: #EADBB6;
+  --color-success: #C5A059;
+  --color-success-bg: #1A1A1A;
+  --color-error: #FF4444;
+  --color-error-bg: #1A1A1A;
+  --color-brand-blue: #2563eb;
+}
+
+.upload-page-dark ::-webkit-scrollbar-thumb {
+  background-color: #3A301A;
+  border-radius: 20px;
+}
+.upload-page-dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #C5A059;
+}

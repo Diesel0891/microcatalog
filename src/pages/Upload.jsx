@@ -62,28 +62,6 @@ function ErrorBanner({ message, onDismiss }) {
   )
 }
 
-function CircularProgress({ value, size = 44, strokeWidth = 3.5 }) {
-  const r = (size - strokeWidth) / 2
-  const c = 2 * Math.PI * r
-  const pct = Math.round(value)
-  return (
-    <svg width={size} height={size} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} className="shrink-0">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={strokeWidth} />
-      <motion.circle
-        cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--primary)"
-        strokeWidth={strokeWidth} strokeLinecap="round" strokeDasharray={c}
-        initial={{ strokeDashoffset: c }}
-        animate={{ strokeDashoffset: c - (value / 100) * c }}
-        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-      <text x="50%" y="50%" textAnchor="middle" dy=".35em" className="text-[9px] font-bold" style={{ fill: 'var(--primary)' }}>
-        {pct}%
-      </text>
-    </svg>
-  )
-}
-
 function CountrySelect({ value, onChange }) {
   const [open, setOpen] = useState(false)
   const buttonRef = useRef(null)
@@ -872,14 +850,14 @@ const handleRemoveLogo = useCallback(async () => {
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 pb-28 text-foreground sm:px-6">
+    <main className="upload-page-dark min-h-screen bg-background px-4 pb-28 text-foreground sm:px-6">
       {!isOnline && (
         <div className="sticky top-0 z-40 mb-4 flex items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-medium text-warning">
           <AlertCircle className="size-4 shrink-0" />
           <span>You are offline. Changes will sync when you are back online.</span>
         </div>
       )}
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-[640px]">
         <header className="flex items-center justify-between py-5">
           <div className="flex items-center gap-3">
             <div className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-black/5">
@@ -899,23 +877,18 @@ const handleRemoveLogo = useCallback(async () => {
               <p className="text-sm font-semibold">
                 {shopName.trim() || 'Your catalog'}
               </p>
-              {completeCount < 3 && (
-                <p className="text-xs text-muted-foreground">Step {completeCount + 1} of 3</p>
-              )}
+
             </div>
           </div>
-          <AnimatePresence>
-            {completeCount < 3 && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <CircularProgress value={(completeCount / 3) * 100} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <button
+            onClick={() => {
+              setProfileOpen(true)
+              requestAnimationFrame(() => shopSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+            }}
+            className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+          >
+            Edit details
+          </button>
         </header>
 
         <ErrorBanner message={inlineError} onDismiss={() => setInlineError(null)} />
@@ -1204,9 +1177,9 @@ const handleRemoveLogo = useCallback(async () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={spring}
-            className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/60 px-4 py-3.5 backdrop-blur-xl sm:px-6"
+            className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/60 px-4 py-3.5 backdrop-blur-xl sm:px-6"
           >
-            <div className="mx-auto max-w-3xl relative">
+            <div className="mx-auto max-w-[640px] relative">
               {shopIncomplete ? (
                 <button
                   onClick={() => {
