@@ -850,7 +850,7 @@ const handleRemoveLogo = useCallback(async () => {
   }
 
   return (
-    <main className="upload-page-dark min-h-screen bg-background px-4 pb-28 text-foreground sm:px-6">
+    <main className="upload-page-dark min-h-screen bg-background px-4 pb-28 text-foreground sm:px-6 safe-bottom">
       {!isOnline && (
         <div className="sticky top-0 z-40 mb-4 flex items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-medium text-warning">
           <AlertCircle className="size-4 shrink-0" />
@@ -893,7 +893,6 @@ const handleRemoveLogo = useCallback(async () => {
 
         <ErrorBanner message={inlineError} onDismiss={() => setInlineError(null)} />
 
-        <div className="mb-2 flex items-center justify-between">
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Products</h2>
@@ -972,6 +971,7 @@ const handleRemoveLogo = useCallback(async () => {
             </motion.div>
           )}
         </section>
+        <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shop details</p>
         </div>
         <section ref={shopSectionRef} className="mb-8 scroll-mt-4">
