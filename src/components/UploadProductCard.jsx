@@ -4,6 +4,8 @@ import { Store, ChevronUp, Pencil, Trash2, Sparkles, ChevronDown } from 'lucide-
 import { cn } from '../lib/cn.js'
 import FloatingLabelInput from './FloatingLabelInput.jsx'
 import StructuredAttributes from './StructuredAttributes.jsx'
+import CategoryPillInput from './CategoryPillInput.jsx'
+import ImageUploadGrid from './ImageUploadGrid.jsx'
 
 const spring = { type: 'spring', stiffness: 300, damping: 30 }
 
@@ -143,6 +145,35 @@ export default function UploadProductCard({
                 onChange={(v) => onChange({ price: v })}
                 placeholder="Name your price"
                 id={`price-${item.id}`}
+              />
+              <CategoryPillInput
+                value={item.category}
+                presets={Object.keys(CATEGORY_TEMPLATES)}
+                onChange={(category) => onChange({ category })}
+                onAddPreset={() => {}}
+              />
+
+              <ImageUploadGrid
+                images={item.images ?? []}
+                onRemove={(index) => {
+                  const next = (item.images ?? []).filter((_, i) => i !== index)
+                  onChange({ images: next.length > 0 ? next : [{ url: item.image_url }] })
+                }}
+                onAdd={() => document.getElementById(`img-upload-${item.id}`).click()}
+              />
+              <input
+                id={`img-upload-${item.id}`}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  e.target.value = ''
+                  if (!file) return
+                  const url = URL.createObjectURL(file)
+                  const next = [...(item.images ?? []), { url, uploading: true }]
+                  onChange({ images: next })
+                }}
               />
 
               <button
