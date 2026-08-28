@@ -31,7 +31,7 @@ export default function UploadProductCard({
 }) {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
 
-  const coverImage = item.images[0]?.url || item.image_url
+  const coverImage = item.images?.[0]?.url || item.image_url
   const needsDetails = !coverImage || !item.title || !item.price
 
   return (
