@@ -894,6 +894,84 @@ const handleRemoveLogo = useCallback(async () => {
         <ErrorBanner message={inlineError} onDismiss={() => setInlineError(null)} />
 
         <div className="mb-2 flex items-center justify-between">
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Products</h2>
+            {items.length > 0 && (
+              <button
+                onClick={() => setSheetOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+              >
+                <Plus className="size-4" />Add
+              </button>
+            )}
+          </div>
+
+          {uploading && (
+            <div className="relative z-20 mb-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-lift)]">
+              <div className="mb-2.5 flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 font-medium text-foreground">
+                  <UploadCloud className="size-4 text-primary" />
+                  {uploading.count} {uploading.count === 1 ? 'photo' : 'photos'} uploading
+                </span>
+                <span className="font-semibold tabular-nums text-primary">{uploading.progress}%</span>
+              </div>
+              <div className="h-3 w-full overflow-hidden rounded-full bg-secondary shadow-[inset_0_1px_2px_oklch(0.3_0.03_60_/_.12)]">
+                <motion.div
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${Math.max(uploading.progress, 6)}%` }}
+                  transition={spring}
+                  className="relative h-full min-w-[0.75rem] rounded-full bg-primary"
+                >
+                  <span className="shimmer-v0 absolute inset-0 rounded-full" />
+                </motion.div>
+              </div>
+            </div>
+          )}
+
+          {items.length === 0 && !uploading ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={spring}
+              className="flex flex-col items-center gap-5 rounded-[24px] border border-border bg-card/50 px-6 py-14 text-center shadow-[var(--shadow-lift)] backdrop-blur-xl"
+            >
+              <div>
+                <p className="text-lg font-semibold text-foreground text-balance">
+                  Start with your best product photo
+                </p>
+                <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground text-pretty">
+                  Your catalog is waiting for its first item.
+                </p>
+              </div>
+              <button
+                onClick={() => setSheetOpen(true)}
+                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90"
+              >
+                <Plus className="size-4" />Add product
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div layout className="flex flex-col gap-3">
+              <AnimatePresence initial={false}>
+                {items.map((item) => (
+                  <UploadProductCard
+                    key={item.id}
+                    item={item}
+                    open={expandedId === item.id}
+                    isNew={newItemIds.has(item.id)}
+                    onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                    onChange={(patch) => updateItem(item.id, patch)}
+                    onDeleteRequest={() => handleDeleteRequest(item.id)}
+                    onSuggest={() => suggest(item)}
+                    suggesting={suggestingId === item.id}
+                    onAddImage={handleAddImage}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </section>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shop details</p>
         </div>
         <section ref={shopSectionRef} className="mb-8 scroll-mt-4">
@@ -1056,85 +1134,6 @@ const handleRemoveLogo = useCallback(async () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </section>
-
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Products</h2>
-            {items.length > 0 && (
-              <button
-                onClick={() => setSheetOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
-              >
-                <Plus className="size-4" />Add
-              </button>
-            )}
-          </div>
-
-          {uploading && (
-            <div className="relative z-20 mb-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-lift)]">
-              <div className="mb-2.5 flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 font-medium text-foreground">
-                  <UploadCloud className="size-4 text-primary" />
-                  {uploading.count} {uploading.count === 1 ? 'photo' : 'photos'} uploading
-                </span>
-                <span className="font-semibold tabular-nums text-primary">{uploading.progress}%</span>
-              </div>
-              <div className="h-3 w-full overflow-hidden rounded-full bg-secondary shadow-[inset_0_1px_2px_oklch(0.3_0.03_60_/_.12)]">
-                <motion.div
-                  initial={{ width: '0%' }}
-                  animate={{ width: `${Math.max(uploading.progress, 6)}%` }}
-                  transition={spring}
-                  className="relative h-full min-w-[0.75rem] rounded-full bg-primary"
-                >
-                  <span className="shimmer-v0 absolute inset-0 rounded-full" />
-                </motion.div>
-              </div>
-            </div>
-          )}
-
-          {items.length === 0 && !uploading ? (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={spring}
-              className="flex flex-col items-center gap-5 rounded-[24px] border border-border bg-card/50 px-6 py-14 text-center shadow-[var(--shadow-lift)] backdrop-blur-xl"
-            >
-              <div>
-                <p className="text-lg font-semibold text-foreground text-balance">
-                  Start with your best product photo
-                </p>
-                <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground text-pretty">
-                  Your catalog is waiting for its first item.
-                </p>
-              </div>
-              <button
-                onClick={() => setSheetOpen(true)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90"
-              >
-                <Plus className="size-4" />Add product
-              </button>
-            </motion.div>
-          ) : (
-            <motion.div layout className="flex flex-col gap-3">
-              <AnimatePresence initial={false}>
-                {items.map((item) => (
-                  <UploadProductCard
-                    key={item.id}
-                    item={item}
-                    open={expandedId === item.id}
-                    isNew={newItemIds.has(item.id)}
-                    onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                    onChange={(patch) => updateItem(item.id, patch)}
-                    onDeleteRequest={() => handleDeleteRequest(item.id)}
-                    onSuggest={() => suggest(item)}
-                    suggesting={suggestingId === item.id}
-                    onAddImage={handleAddImage}
-                  />
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          )}
         </section>
       </div>
 

@@ -42,12 +42,12 @@ export default function UploadProductCard({
       layout
       transition={spring}
       className={cn(
-        'overflow-hidden rounded-[20px] border border-[#1A1A1A] bg-[#0B0B0B]',
+        'overflow-hidden rounded-[20px] border border-border bg-card',
         isNew && 'animate-pop',
       )}
     >
       <div className="flex gap-4 p-3">
-        <div className="shrink-0 size-24 rounded-2xl overflow-hidden bg-[#1A1A1A] flex items-center justify-center">
+        <div className="shrink-0 size-24 rounded-2xl overflow-hidden bg-secondary flex items-center justify-center">
           {coverImage ? (
             <img
               src={coverImage || '/placeholder.svg'}
@@ -56,33 +56,33 @@ export default function UploadProductCard({
               style={{ width: 96, height: 96 }}
             />
           ) : (
-            <Store size={28} className="text-[#A0A5AD]" />
+            <Store size={28} className="text-muted-foreground" />
           )}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-          <h3 className="truncate font-serif text-xl font-light text-[#F0EDE4]">
+          <h3 className="truncate font-serif text-xl font-light text-foreground">
             {item.title || 'What are you selling?'}
           </h3>
           <p
             className={cn(
               'text-base font-medium font-sans',
-              item.price ? 'text-[#C5A059]' : 'text-[#A0A5AD]',
+              item.price ? 'text-primary' : 'text-muted-foreground',
             )}
           >
             {item.price || 'Name your price'}
           </p>
           <div className="flex flex-wrap items-center gap-1.5">
             {item.category ? (
-              <span className="rounded-full border border-[#3A301A] px-2.5 py-0.5 text-[10px] uppercase tracking-[0.22em] text-[#A0A5AD] font-sans">
+              <span className="rounded-full border border-primary/20 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.22em] text-muted-foreground font-sans">
                 {item.category}
               </span>
             ) : null}
-            <span className="rounded-full border border-[#3A301A] px-2.5 py-0.5 text-[10px] uppercase tracking-[0.22em] text-[#A0A5AD] font-sans">
+            <span className="rounded-full border border-primary/20 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.22em] text-muted-foreground font-sans">
               {STATUS_OPTIONS.find((s) => s.value === item.stock_status)?.label ?? 'Available'}
             </span>
             {needsDetails ? (
-              <span className="rounded-lg bg-[#b91c1c]/10 px-2.5 py-1 text-xs text-[#b91c1c] font-sans">
+              <span className="rounded-lg bg-destructive/10 px-2.5 py-1 text-xs text-destructive font-sans">
                 Needs details
               </span>
             ) : null}
@@ -94,7 +94,7 @@ export default function UploadProductCard({
             type="button"
             onClick={onToggle}
             aria-label={open ? 'Collapse product' : 'Edit product'}
-            className="rounded-xl p-2 text-[#A0A5AD] hover:bg-[#1A1A1A] transition-colors active:scale-[0.97]"
+            className="rounded-xl p-2 text-muted-foreground hover:bg-secondary transition-colors active:scale-[0.97]"
           >
             {open ? <ChevronUp size={18} /> : <Pencil size={18} />}
           </button>
@@ -102,7 +102,7 @@ export default function UploadProductCard({
             type="button"
             onClick={onDeleteRequest}
             aria-label="Delete product"
-            className="rounded-xl p-2 text-[#A0A5AD] hover:bg-[#b91c1c]/10 hover:text-[#b91c1c] transition-colors active:scale-[0.97]"
+            className="rounded-xl p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors active:scale-[0.97]"
           >
             <Trash2 size={18} />
           </button>
@@ -119,17 +119,17 @@ export default function UploadProductCard({
             transition={spring}
             className="overflow-hidden"
           >
-            <div className="border-t border-[#1A1A1A] p-4 flex flex-col gap-3">
+            <div className="border-t border-border p-4 flex flex-col gap-3">
               <button
                 type="button"
                 onClick={onSuggest}
                 disabled={suggesting}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#C5A059]/20 bg-[#C5A059]/5 text-[#C5A059] py-3 text-sm font-medium font-sans transition-opacity active:scale-[0.97] disabled:opacity-60"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 text-primary py-3 text-sm font-medium font-sans transition-opacity active:scale-[0.97] disabled:opacity-60"
               >
                 <Sparkles size={16} className={suggesting ? 'animate-pulse' : ''} />
                 {suggesting ? 'Thinking…' : 'Suggest details'}
               </button>
-              <p className="text-[11px] text-center text-[#A0A5AD]/60 font-sans">
+              <p className="text-[11px] text-center text-muted-foreground/60 font-sans">
                 AI suggestions are a starting point — review before publishing.
               </p>
 
@@ -181,7 +181,7 @@ export default function UploadProductCard({
               <button
                 type="button"
                 onClick={() => setShowMoreDetails((v) => !v)}
-                className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#1A1A1A]/60 bg-[#1A1A1A]/30 text-[#A0A5AD] py-3 text-sm font-sans transition-colors hover:bg-[#1A1A1A]/50 active:scale-[0.97]"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-secondary/30 text-muted-foreground py-3 text-sm font-sans transition-colors hover:bg-secondary/50 active:scale-[0.97]"
               >
                 <ChevronDown
                   size={16}
@@ -239,8 +239,8 @@ export default function UploadProductCard({
                       className={cn(
                         'flex-1 rounded-xl border py-2 text-sm font-sans transition-colors active:scale-[0.97]',
                         selected
-                          ? 'bg-[#3A301A]/30 text-[#C5A059] border-transparent'
-                          : 'border-[#1A1A1A] bg-transparent text-[#A0A5AD] hover:bg-[#1A1A1A]/60',
+                          ? 'bg-primary/10 text-primary border-transparent'
+                          : 'border-border bg-transparent text-muted-foreground hover:bg-secondary/60',
                       )}
                     >
                       {option.label}
