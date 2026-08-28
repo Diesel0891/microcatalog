@@ -30,6 +30,7 @@ export default function UploadProductCard({
   onDeleteRequest,
   onSuggest,
   suggesting,
+  onAddImage,
 }) {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
 
@@ -173,6 +174,7 @@ export default function UploadProductCard({
                   const url = URL.createObjectURL(file)
                   const next = [...(item.images ?? []), { url, uploading: true }]
                   onChange({ images: next })
+                  onAddImage(item.id, file, url)
                 }}
               />
 

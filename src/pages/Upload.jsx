@@ -710,6 +710,35 @@ const handleRemoveLogo = useCallback(async () => {
     }
   }, [isOnline])
 
+
+  const handleAddImage = useCallback(async (itemId, file, blobUrl) => {
+    try {
+      const compressed = await compressImage(file)
+      const imageUrl = await uploadToCloudinary(compressed)
+
+      const item = items.find((it) => it.id === itemId)
+      if (!item) return
+
+      const nextImages = (item.images ?? []).map((img) =>
+        img.url === blobUrl ? { url: imageUrl } : img
+      )
+
+      updateItem(itemId, {
+        images: nextImages,
+        image_url: nextImages[0]?.url || item.image_url,
+      })
+    } catch (err) {
+      logger.error('Upload', 'Image add failed', { itemId, message: err.message })
+      setInlineError('Image upload failed')
+
+      const item = items.find((it) => it.id === itemId)
+      if (item) {
+        updateItem(itemId, {
+          images: (item.images ?? []).filter((img) => img.url !== blobUrl),
+        })
+      }
+    }
+  }, [items, updateItem, setInlineError])
   const handleFiles = useCallback(async (files) => {
     if (!files.length || !sellerUuid) return
     setInlineError(null)
@@ -1127,6 +1156,7 @@ const handleRemoveLogo = useCallback(async () => {
                     onDeleteRequest={() => handleDeleteRequest(item.id)}
                     onSuggest={() => suggest(item)}
                     suggesting={suggestingId === item.id}
+                    onAddImage={handleAddImage}
                   />
                 ))}
               </AnimatePresence>
