@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Store, ChevronUp, Pencil, Trash2, Sparkles, ChevronDown } from 'lucide-react'
 import { cn } from '../lib/cn.js'
@@ -28,6 +28,40 @@ export default function UploadProductCard({
   onAddImage,
 }) {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
+  const cardRef = useRef(null)
+  const detailsRef = useRef(null)
+  useEffect(() => {
+    if (!open || !cardRef.current) return
+    const timer = setTimeout(() => {
+      const rect = cardRef.current.getBoundingClientRect()
+      const stickyBarHeight = 80
+      const padding = 16
+      if (rect.bottom > window.innerHeight - stickyBarHeight) {
+        window.scrollTo({
+          top: window.scrollY + rect.top - padding,
+          behavior: 'smooth',
+        })
+      }
+    }, 420)
+    return () => clearTimeout(timer)
+  }, [open])
+  useEffect(() => {
+    if (!showMoreDetails || !detailsRef.current) return
+    const timer = setTimeout(() => {
+      const rect = detailsRef.current.getBoundingClientRect()
+      const stickyBarHeight = 80
+      const padding = 16
+      if (rect.bottom > window.innerHeight - stickyBarHeight) {
+        window.scrollTo({
+          top: window.scrollY + rect.top - padding,
+          behavior: 'smooth',
+        })
+      }
+    }, 420)
+    return () => clearTimeout(timer)
+  }, [showMoreDetails])
+
+
   const [categorySheetOpen, setCategorySheetOpen] = useState(false)
 
   const coverImage = item.images?.[0]?.url || item.image_url
@@ -35,6 +69,7 @@ export default function UploadProductCard({
 
   return (
     <motion.article
+      ref={cardRef}
       layout
       transition={spring}
       className={cn(
@@ -57,7 +92,12 @@ export default function UploadProductCard({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-          <h3 className="truncate font-serif text-xl font-light text-foreground">
+          <h3 className={cn(
+              'font-serif font-light',
+              item.title
+                ? 'truncate text-xl text-foreground'
+                : 'text-sm text-muted-foreground leading-relaxed'
+            )}>
             {item.title || 'What are you selling?'}
           </h3>
           <p
@@ -185,6 +225,7 @@ export default function UploadProductCard({
                 }}
               />
 
+              <div ref={detailsRef} />
               <button
                 type="button"
                 onClick={() => setShowMoreDetails((v) => !v)}
