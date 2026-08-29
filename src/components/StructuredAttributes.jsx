@@ -90,7 +90,7 @@ export default function StructuredAttributes({
               type="button"
               onClick={() => removeCustom(attr.key)}
               aria-label={`Remove ${attr.key} attribute`}
-              className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full border border-[#3A301A] bg-[#0B0B0B] text-[#A0A5AD] hover:text-[#F0EDE4] transition-colors active:scale-[0.97]"
+              className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full border border-primary/20 bg-card text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97]"
             >
               <X size={12} />
             </button>
@@ -121,7 +121,7 @@ export default function StructuredAttributes({
               <button
                 type="button"
                 onClick={commitCustom}
-                className="shrink-0 rounded-xl border border-[#C5A059]/40 bg-[#3A301A]/30 px-4 py-3.5 text-sm text-[#C5A059] font-sans transition-colors active:scale-[0.97] hover:bg-[#3A301A]/50"
+                className="shrink-0 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3.5 text-sm text-primary font-sans transition-colors active:scale-[0.97] hover:bg-primary/20"
               >
                 Add
               </button>
@@ -139,7 +139,7 @@ export default function StructuredAttributes({
             <button
               type="button"
               onClick={() => setAddingCustom(true)}
-              className="w-full rounded-xl border border-dashed border-[#1A1A1A] py-2.5 text-sm text-[#A0A5AD] font-sans transition-colors hover:bg-[#1A1A1A]/30 active:scale-[0.97]"
+              className="w-full rounded-xl border border-dashed border-border py-2.5 text-sm text-muted-foreground font-sans transition-colors hover:bg-secondary/30 active:scale-[0.97]"
             >
               + Add custom attribute
             </button>

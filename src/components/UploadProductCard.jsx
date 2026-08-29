@@ -4,16 +4,11 @@ import { Store, ChevronUp, Pencil, Trash2, Sparkles, ChevronDown } from 'lucide-
 import { cn } from '../lib/cn.js'
 import FloatingLabelInput from './FloatingLabelInput.jsx'
 import StructuredAttributes from './StructuredAttributes.jsx'
-import CategoryPillInput from './CategoryPillInput.jsx'
+import CategorySelectorSheet from './CategorySelectorSheet.jsx'
+import { getCategorySpecs } from '../lib/categories.js'
 import ImageUploadGrid from './ImageUploadGrid.jsx'
 
 const spring = { type: 'spring', stiffness: 300, damping: 30 }
-
-const CATEGORY_TEMPLATES = {
-  Apparel: ['Size', 'Color', 'Material', 'Fit'],
-  Shoes: ['Size', 'Color', 'Material', 'Width'],
-  Electronics: ['Screen Size', 'Storage', 'Battery', 'Condition'],
-}
 
 const STATUS_OPTIONS = [
   { value: 'available', label: 'Available' },
@@ -33,6 +28,7 @@ export default function UploadProductCard({
   onAddImage,
 }) {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
+  const [categorySheetOpen, setCategorySheetOpen] = useState(false)
 
   const coverImage = item.images?.[0]?.url || item.image_url
   const needsDetails = !coverImage || !item.title || !item.price
@@ -147,11 +143,22 @@ export default function UploadProductCard({
                 placeholder="Name your price"
                 id={`price-${item.id}`}
               />
-              <CategoryPillInput
-                value={item.category}
-                presets={Object.keys(CATEGORY_TEMPLATES)}
-                onChange={(category) => onChange({ category })}
-                onAddPreset={() => {}}
+              <button
+                type="button"
+                onClick={() => setCategorySheetOpen(true)}
+                className={cn(
+                  'w-full flex items-center justify-between rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-left text-sm transition-colors active:scale-[0.97]',
+                  item.category ? 'text-foreground' : 'text-muted-foreground',
+                )}
+              >
+                <span>{item.category || 'Select category'}</span>
+                <ChevronDown className="size-4 text-muted-foreground" />
+              </button>
+              <CategorySelectorSheet
+                open={categorySheetOpen}
+                selectedId={item.category}
+                onSelect={(category) => onChange({ category })}
+                onClose={() => setCategorySheetOpen(false)}
               />
 
               <ImageUploadGrid
@@ -204,7 +211,7 @@ export default function UploadProductCard({
                       <StructuredAttributes
                         category={item.category}
                         attributes={item.attributes ?? []}
-                        categoryTemplates={CATEGORY_TEMPLATES}
+                        categoryTemplates={{ [item.category]: getCategorySpecs(item.category) }}
                         onChange={(attributes) => onChange({ attributes })}
                       />
                       <FloatingLabelInput
