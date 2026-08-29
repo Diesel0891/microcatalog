@@ -96,14 +96,16 @@ export default function UploadProductCard({
               'font-serif font-light',
               item.title
                 ? 'truncate text-xl text-foreground'
-                : 'text-sm text-muted-foreground leading-relaxed'
+                : 'text-base text-muted-foreground leading-relaxed'
             )}>
             {item.title || 'What are you selling?'}
           </h3>
           <p
             className={cn(
-              'text-base font-medium font-sans',
-              item.price ? 'text-primary' : 'text-muted-foreground',
+              'font-sans',
+              item.price
+                ? 'text-base font-medium text-primary'
+                : 'text-sm text-muted-foreground',
             )}
           >
             {item.price || 'Name your price'}
