@@ -227,7 +227,6 @@ export default function UploadProductCard({
                 }}
               />
 
-              <div ref={detailsRef} />
               <button
                 type="button"
                 onClick={() => setShowMoreDetails((v) => !v)}
@@ -250,7 +249,7 @@ export default function UploadProductCard({
                     transition={spring}
                     className="overflow-hidden"
                   >
-                    <div className="flex flex-col gap-3 pt-1">
+                    <div ref={detailsRef} className="flex flex-col gap-3 pt-1">
                       <StructuredAttributes
                         category={item.category}
                         attributes={item.attributes ?? []}
