@@ -16,7 +16,7 @@ import { logger } from '../lib/logger.js'
 import UploadProductCard from "../components/UploadProductCard.jsx"
 import DeleteUndoToast from "../components/DeleteUndoToast.jsx"
 
-const inputBase = "w-full rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40 focus:bg-card"
+const inputBase = "w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40"
 
 
 const COUNTRIES = [
@@ -255,7 +255,7 @@ function InsightsSheet({ open, onClose, analytics, items }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/25 p-4 backdrop-blur-sm sm:items-center"
+          className="upload-page-dark fixed inset-0 z-[60] flex items-end justify-center bg-foreground/25 p-4 backdrop-blur-sm sm:items-center"
         >
           <button aria-label="Close" className="absolute inset-0 cursor-default" onClick={onClose} />
           <motion.div
@@ -1229,7 +1229,7 @@ const handleRemoveLogo = useCallback(async () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[60] flex items-end justify-center bg-foreground/25 p-4 backdrop-blur-sm sm:items-center"
+              className="upload-page-dark fixed inset-0 z-[60] flex items-end justify-center bg-foreground/25 p-4 backdrop-blur-sm sm:items-center"
             >
               <button aria-label="Close" className="absolute inset-0 cursor-default" onClick={() => setPublished(false)} />
               <motion.div
