@@ -860,25 +860,17 @@ const handleRemoveLogo = useCallback(async () => {
       <div className="mx-auto max-w-[640px]">
         <header className="flex items-center justify-between py-5">
           <div className="flex items-center gap-3">
-            <div className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-black/5">
+            {logoUrl ? (
               <img
-                src="https://res.cloudinary.com/a3udr8l4/image/upload/w_128,h_128,c_fill,q_auto,f_webp/v1786228862/infini-logo-v2_edqhj9.png"
-                alt="Infini"
-                width={32}
-                height={32}
-                className="size-full object-cover"
-                onError={(e) => { e.currentTarget.style.display = 'none'; const fallback = e.currentTarget.parentElement.querySelector('.fallback-icon'); if (fallback) fallback.style.display = 'flex' }}
+                src={logoUrl}
+                alt={shopName.trim() || 'Shop logo'}
+                className="h-12 max-w-[160px] shrink-0 object-contain"
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
               />
-              <div className="fallback-icon absolute inset-0 hidden items-center justify-center bg-primary text-primary-foreground">
-                <Store className="size-4" />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-semibold">
-                {shopName.trim() || 'Your catalog'}
-              </p>
-
-            </div>
+            ) : null}
+            <p className="text-sm font-semibold">
+              {shopName.trim() || 'Your catalog'}
+            </p>
           </div>
           <button
             onClick={() => {
