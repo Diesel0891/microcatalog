@@ -362,6 +362,8 @@ export default function Upload() {
   const [phoneError, setPhoneError] = useState('')
 
   const [items, setItems] = useState([])
+  const itemsRef = useRef(items)
+  itemsRef.current = items
   const [uploading, setUploading] = useState(null)
   const [inlineError, setInlineError] = useState(null)
   const [suggestingId, setSuggestingId] = useState(null)
@@ -694,7 +696,7 @@ const handleRemoveLogo = useCallback(async () => {
       const compressed = await compressImage(file)
       const imageUrl = await uploadToCloudinary(compressed)
 
-      const item = items.find((it) => it.id === itemId)
+      const item = itemsRef.current.find((it) => it.id === itemId)
       if (!item) return
 
       const nextImages = (item.images ?? []).map((img) =>
@@ -709,14 +711,14 @@ const handleRemoveLogo = useCallback(async () => {
       logger.error('Upload', 'Image add failed', { itemId, message: err.message })
       setInlineError('Image upload failed')
 
-      const item = items.find((it) => it.id === itemId)
+      const item = itemsRef.current.find((it) => it.id === itemId)
       if (item) {
         updateItem(itemId, {
           images: (item.images ?? []).filter((img) => img.url !== blobUrl),
         })
       }
     }
-  }, [items, updateItem, setInlineError])
+  }, [updateItem, setInlineError])
   const handleFiles = useCallback(async (files) => {
     if (!files.length || !sellerUuid) return
     setInlineError(null)
