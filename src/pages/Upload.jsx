@@ -1133,7 +1133,7 @@ const handleRemoveLogo = useCallback(async () => {
 
           {/* Per-item processing status rendered inside UploadProductCard */}
 
-          {items.length === 0 && !uploading ? (
+          {items.length === 0 && !anyProcessing ? (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
