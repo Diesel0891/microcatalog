@@ -7,6 +7,7 @@ import StructuredAttributes from './StructuredAttributes.jsx'
 import CategorySelectorSheet from './CategorySelectorSheet.jsx'
 import { getCategorySpecs } from '../lib/categories.js'
 import ImageUploadGrid from './ImageUploadGrid.jsx'
+import ProcessingIndicator from './ProcessingIndicator.jsx'
 
 const spring = { type: 'spring', stiffness: 300, damping: 30 }
 
@@ -26,6 +27,8 @@ export default function UploadProductCard({
   onSuggest,
   suggesting,
   onAddImage,
+  processing,
+  onRetry,
 }) {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
   const cardRef = useRef(null)
@@ -63,6 +66,10 @@ export default function UploadProductCard({
 
 
   const [categorySheetOpen, setCategorySheetOpen] = useState(false)
+
+  const isProcessingItem = processing && processing.state !== 'ready'
+  const _isError = processing?.state === 'error'
+  const _isOptimistic = item.id === null
 
   const coverImage = item.images?.[0]?.url || item.image_url
   const needsDetails = !coverImage || !item.title || !item.price
@@ -131,21 +138,33 @@ export default function UploadProductCard({
           <button
             type="button"
             onClick={onToggle}
+            disabled={isProcessingItem}
             aria-label={open ? 'Collapse product' : 'Edit product'}
-            className="rounded-xl p-2 text-muted-foreground hover:bg-secondary transition-colors active:scale-[0.97]"
+            className="rounded-xl p-2 text-muted-foreground hover:bg-secondary transition-colors active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
           >
             {open ? <ChevronUp size={18} /> : <Pencil size={18} />}
           </button>
           <button
             type="button"
             onClick={onDeleteRequest}
+            disabled={isProcessingItem}
             aria-label="Delete product"
-            className="rounded-xl p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors active:scale-[0.97]"
+            className="rounded-xl p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
           >
             <Trash2 size={18} />
           </button>
         </div>
       </div>
+
+      {isProcessingItem && (
+        <div className="border-t border-border p-4">
+          <ProcessingIndicator
+            state={processing.state}
+            error={processing.error}
+            onRetry={onRetry}
+          />
+        </div>
+      )}
 
       <AnimatePresence initial={false}>
         {open ? (
@@ -161,7 +180,7 @@ export default function UploadProductCard({
               <button
                 type="button"
                 onClick={onSuggest}
-                disabled={suggesting}
+                disabled={isProcessingItem || suggesting}
                 className="w-full flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 text-primary py-3 text-sm font-medium font-sans transition-opacity active:scale-[0.97] disabled:opacity-60"
               >
                 <Sparkles size={16} className={suggesting ? 'animate-pulse' : ''} />
@@ -174,22 +193,23 @@ export default function UploadProductCard({
               <FloatingLabelInput
                 label="Product name"
                 value={item.title}
-                onChange={(v) => onChange({ title: v })}
+                onChange={(v) => { if (!isProcessingItem) onChange({ title: v }) }}
                 placeholder="What are you selling?"
-                id={`title-${item.id}`}
+                id={`title-${item.localKey || item.id}`}
               />
               <FloatingLabelInput
                 label="Price"
                 value={item.price}
-                onChange={(v) => onChange({ price: v })}
+                onChange={(v) => { if (!isProcessingItem) onChange({ price: v }) }}
                 placeholder="Name your price"
-                id={`price-${item.id}`}
+                id={`price-${item.localKey || item.id}`}
               />
               <button
                 type="button"
-                onClick={() => setCategorySheetOpen(true)}
+                onClick={() => { if (!isProcessingItem) setCategorySheetOpen(true) }}
+                disabled={isProcessingItem}
                 className={cn(
-                  'w-full flex items-center justify-between rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-left text-sm transition-colors active:scale-[0.97]',
+                  'w-full flex items-center justify-between rounded-2xl border border-border bg-secondary/50 px-4 py-3.5 text-left text-sm transition-colors active:scale-[0.97] disabled:opacity-50',
                   item.category ? 'text-foreground' : 'text-muted-foreground',
                 )}
               >
@@ -206,24 +226,29 @@ export default function UploadProductCard({
               <ImageUploadGrid
                 images={item.images ?? []}
                 onRemove={(index) => {
+                  if (isProcessingItem) return
                   const next = (item.images ?? []).filter((_, i) => i !== index)
                   onChange({ images: next.length > 0 ? next : [{ url: item.image_url }] })
                 }}
-                onAdd={() => document.getElementById(`img-upload-${item.id}`).click()}
+                onAdd={() => {
+                  if (isProcessingItem) return
+                  document.getElementById(`img-upload-${item.localKey || item.id}`).click()
+                }}
               />
               <input
-                id={`img-upload-${item.id}`}
+                id={`img-upload-${item.localKey || item.id}`}
                 type="file"
                 accept="image/*"
                 className="hidden"
                 onChange={(e) => {
+                  if (isProcessingItem) return
                   const file = e.target.files?.[0]
                   e.target.value = ''
                   if (!file) return
                   const url = URL.createObjectURL(file)
                   const next = [...(item.images ?? []), { url, uploading: true }]
                   onChange({ images: next })
-                  onAddImage(item.id, file, url)
+                  onAddImage(item.localKey || item.id, file, url)
                 }}
               />
 
@@ -284,9 +309,10 @@ export default function UploadProductCard({
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => onChange({ stock_status: option.value })}
+                      onClick={() => { if (!isProcessingItem) onChange({ stock_status: option.value }) }}
+                      disabled={isProcessingItem}
                       className={cn(
-                        'flex-1 rounded-xl border py-2 text-sm font-sans transition-colors active:scale-[0.97]',
+                        'flex-1 rounded-xl border py-2 text-sm font-sans transition-colors active:scale-[0.97] disabled:opacity-50',
                         selected
                           ? 'bg-primary/10 text-primary border-transparent'
                           : 'border-border bg-transparent text-muted-foreground hover:bg-secondary/60',

@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   AlertCircle, BarChart3, Camera, ChevronDown, ChevronRight, ChevronUp, Copy, ImagePlus,
   Link as LinkIcon, Lightbulb, Loader2, PartyPopper, Plus, ExternalLink,
-  Store, UploadCloud, X, Check
+  Store, X, Check
 } from 'lucide-react'
 import { cn } from '../lib/cn.js'
 import { supabase } from '../lib/supabase'
@@ -31,6 +31,25 @@ const COUNTRIES = [
 ]
 
 const spring = { type: 'spring', stiffness: 300, damping: 30 }
+
+const PROCESSING_STATES = {
+  IDLE: 'idle',
+  PREPARING_PHOTO: 'preparing_photo',
+  UPLOADING: 'uploading',
+  ANALYZING: 'analyzing',
+  APPLYING_DETAILS: 'applying_details',
+  READY: 'ready',
+  ERROR: 'error',
+  TIMEOUT: 'timeout',
+}
+
+const ERROR_MESSAGES = {
+  upload: "We couldn't finish adding this product. Your photo is safe.",
+  suggest: "We couldn't get suggestions right now. You can still add details manually.",
+  addImage: "We couldn't upload that photo. Please try again.",
+}
+
+const PROCESSING_TIMEOUT_MS = 30000
 
 function cleanPhone(raw, country) {
   let digits = (raw || '').replace(/\D/g, '')
@@ -364,9 +383,10 @@ export default function Upload() {
   const [items, setItems] = useState([])
   const itemsRef = useRef(items)
   itemsRef.current = items
-  const [uploading, setUploading] = useState(null)
+  const [processingMap, setProcessingMap] = useState(new Map())
+  const fileMap = useRef(new Map())
   const [inlineError, setInlineError] = useState(null)
-  const [suggestingId, setSuggestingId] = useState(null)
+  const [_suggestingId, _setSuggestingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [deletedItem, setDeletedItem] = useState(null)
   const [showUndoToast, setShowUndoToast] = useState(false)
@@ -383,6 +403,43 @@ export default function Upload() {
   const [logoUploading, setLogoUploading] = useState(false)
   const [insightsOpen, setInsightsOpen] = useState(false)
   const [analytics, setAnalytics] = useState([])
+
+
+  const setProcessing = useCallback((key, state, extra = {}) => {
+    setProcessingMap(prev => new Map(prev).set(key, { state, startTime: Date.now(), ...extra }))
+  }, [])
+
+  const clearProcessing = useCallback((key) => {
+    setProcessingMap(prev => {
+      const next = new Map(prev)
+      next.delete(key)
+      return next
+    })
+  }, [])
+
+  const isProcessing = useCallback((key) => {
+    const proc = processingMap.get(key)
+    return proc && proc.state !== PROCESSING_STATES.READY && proc.state !== PROCESSING_STATES.ERROR
+  }, [processingMap])
+
+  const anyProcessing = useMemo(() => {
+    for (const proc of processingMap.values()) {
+      if (proc.state !== PROCESSING_STATES.READY && proc.state !== PROCESSING_STATES.ERROR) return true
+    }
+    return false
+  }, [processingMap])
+
+  const liveMessage = useMemo(() => {
+    for (const proc of processingMap.values()) {
+      if (proc.state === PROCESSING_STATES.PREPARING_PHOTO) return 'Preparing your photo…'
+      if (proc.state === PROCESSING_STATES.UPLOADING) return 'Uploading your photo…'
+      if (proc.state === PROCESSING_STATES.ANALYZING) return 'Looking at your photo…'
+      if (proc.state === PROCESSING_STATES.APPLYING_DETAILS) return 'Adding product details…'
+      if (proc.state === PROCESSING_STATES.TIMEOUT) return 'Still working — this is taking a little longer than usual.'
+      if (proc.state === PROCESSING_STATES.ERROR) return proc.error?.message || 'Something went wrong.'
+    }
+    return ''
+  }, [processingMap])
 
   const logoInputRef = useRef(null)
   const shopSectionRef = useRef(null)
@@ -405,6 +462,46 @@ export default function Upload() {
     const timer = setTimeout(() => setNewItemIds(new Set()), 1500)
     return () => clearTimeout(timer)
   }, [newItemIds])
+
+  // Timeout watchdog for processing states
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now()
+      setProcessingMap(prev => {
+        let changed = false
+        const next = new Map(prev)
+        next.forEach((proc, key) => {
+          if (proc.state === PROCESSING_STATES.READY || proc.state === PROCESSING_STATES.ERROR || proc.state === PROCESSING_STATES.TIMEOUT) return
+          if (now - proc.startTime > PROCESSING_TIMEOUT_MS) {
+            next.set(key, { ...proc, state: PROCESSING_STATES.TIMEOUT })
+            changed = true
+          }
+        })
+        return changed ? next : prev
+      })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Timeout watchdog for processing states
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now()
+      setProcessingMap(prev => {
+        let changed = false
+        const next = new Map(prev)
+        next.forEach((proc, key) => {
+          if (proc.state === PROCESSING_STATES.READY || proc.state === PROCESSING_STATES.ERROR || proc.state === PROCESSING_STATES.TIMEOUT) return
+          if (now - proc.startTime > PROCESSING_TIMEOUT_MS) {
+            next.set(key, { ...proc, state: PROCESSING_STATES.TIMEOUT })
+            changed = true
+          }
+        })
+        return changed ? next : prev
+      })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const handleOnline = () => {
@@ -664,10 +761,18 @@ const handleRemoveLogo = useCallback(async () => {
   }
 }, [sellerUuid])
 
-  const updateItem = useCallback(async (id, patch) => {
-    setItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item))
+  const updateItem = useCallback(async (identifier, patch) => {
+    const isLocal = typeof identifier === 'string' && identifier.startsWith('local-')
+
+    setItems((current) => current.map((item) => {
+      const match = isLocal ? item.localKey === identifier : item.id === identifier
+      return match ? { ...item, ...patch } : item
+    }))
+
+    if (isLocal) return
+
     if (!isOnline) {
-      writeQueue.current.push({ id, patch, timestamp: Date.now() })
+      writeQueue.current.push({ id: identifier, patch, timestamp: Date.now() })
       setSaveStatus('queued')
       setTimeout(() => setSaveStatus((s) => s === 'queued' ? null : s), 2000)
       return
@@ -680,11 +785,11 @@ const handleRemoveLogo = useCallback(async () => {
           : ''
         delete cleanPatch.attributes
       }
-      const { error } = await supabase.from('catalog_items').update(cleanPatch).eq('id', id)
+      const { error } = await supabase.from('catalog_items').update(cleanPatch).eq('id', identifier)
       if (error) throw error
     } catch (err) {
-      logger.error('Upload', 'Autosave failed', { itemId: id, patch, message: err.message })
-      writeQueue.current.push({ id, patch, timestamp: Date.now() })
+      logger.error('Upload', 'Autosave failed', { itemId: identifier, patch, message: err.message })
+      writeQueue.current.push({ id: identifier, patch, timestamp: Date.now() })
       setSaveStatus('queued')
       setTimeout(() => setSaveStatus((s) => s === 'queued' ? null : s), 2000)
     }
@@ -692,49 +797,107 @@ const handleRemoveLogo = useCallback(async () => {
 
 
   const handleAddImage = useCallback(async (itemId, file, blobUrl) => {
+    const key = itemId
+    if (isProcessing(key)) return
+
+    setProcessing(key, PROCESSING_STATES.UPLOADING)
+
     try {
       const compressed = await compressImage(file)
       const imageUrl = await uploadToCloudinary(compressed)
 
-      const item = itemsRef.current.find((it) => it.id === itemId)
-      if (!item) return
+      const item = itemsRef.current.find((it) => it.id === itemId || it.localKey === itemId)
+      if (!item) {
+        clearProcessing(key)
+        return
+      }
 
       const nextImages = (item.images ?? []).map((img) =>
         img.url === blobUrl ? { url: imageUrl } : img
       )
 
-      updateItem(itemId, {
+      await updateItem(key, {
         images: nextImages,
         image_url: nextImages[0]?.url || item.image_url,
       })
+
+      clearProcessing(key)
     } catch (err) {
       logger.error('Upload', 'Image add failed', { itemId, message: err.message })
-      setInlineError('Image upload failed')
+      setInlineError(ERROR_MESSAGES.addImage)
+      setProcessing(key, PROCESSING_STATES.ERROR, {
+        error: { message: ERROR_MESSAGES.addImage, recoverable: true }
+      })
 
-      const item = itemsRef.current.find((it) => it.id === itemId)
+      const item = itemsRef.current.find((it) => it.id === itemId || it.localKey === itemId)
       if (item) {
-        updateItem(itemId, {
+        updateItem(key, {
           images: (item.images ?? []).filter((img) => img.url !== blobUrl),
         })
       }
     }
-  }, [updateItem, setInlineError])
+  }, [updateItem, setInlineError, isProcessing, setProcessing, clearProcessing])
   const handleFiles = useCallback(async (files) => {
-    if (!files.length || !sellerUuid) return
+    if (!files.length || !sellerUuid || anyProcessing) return
     setInlineError(null)
-    setUploading({ count: files.length, progress: 0 })
 
-    try {
-      for (let index = 0; index < files.length; index++) {
-        const file = files[index]
+    // 1. Create optimistic items immediately
+    const newLocalKeys = []
+    const optimisticItems = files.map((file) => {
+      const localKey = `local-${crypto.randomUUID()}`
+      const blobUrl = URL.createObjectURL(file)
+      newLocalKeys.push(localKey)
+      fileMap.current.set(localKey, file)
 
-        setUploading({ count: files.length, progress: Math.round(((index + 0.3) / files.length) * 100) })
+      const item = {
+        localKey,
+        id: null,
+        seller_uuid: sellerUuid,
+        image_url: blobUrl,
+        images: [{ url: blobUrl }],
+        title: '',
+        price: '',
+        description: '',
+        size_specs: '',
+        extra_notes: '',
+        category: null,
+        attributes: [],
+        stock_status: 'available',
+        published: false,
+        seller_phone: sellerPhone || null,
+        created_at: new Date().toISOString(),
+      }
+
+      setProcessing(localKey, PROCESSING_STATES.PREPARING_PHOTO)
+      return item
+    })
+
+    setItems(current => [...optimisticItems, ...current])
+    setNewItemIds(prev => {
+      const next = new Set(prev)
+      newLocalKeys.forEach(k => next.add(k))
+      return next
+    })
+
+    // Expand the first new item
+    if (newLocalKeys.length > 0) {
+      setExpandedId(newLocalKeys[0])
+    }
+
+    // 2. Process each item independently
+    for (const item of optimisticItems) {
+      const localKey = item.localKey
+      const file = fileMap.current.get(localKey)
+      if (!file) continue
+
+      try {
+        setProcessing(localKey, PROCESSING_STATES.PREPARING_PHOTO)
         const compressed = await compressImage(file)
 
-        setUploading({ count: files.length, progress: Math.round(((index + 0.6) / files.length) * 100) })
+        setProcessing(localKey, PROCESSING_STATES.UPLOADING)
         const imageUrl = await uploadToCloudinary(compressed)
 
-        setUploading({ count: files.length, progress: Math.round(((index + 0.9) / files.length) * 100) })
+        setProcessing(localKey, PROCESSING_STATES.APPLYING_DETAILS)
         const { data: dbItem, error } = await supabase
           .from('catalog_items')
           .insert({
@@ -755,39 +918,35 @@ const handleRemoveLogo = useCallback(async () => {
           .single()
         if (error) throw error
 
-        setItems((current) => [...current, {
-          id: dbItem.id,
-          image_url: imageUrl,
-          images: [{ url: imageUrl }],
-          title: '',
-          price: '',
-          description: '',
-          size_specs: '',
-          extra_notes: '',
-          category: null,
-          attributes: [],
-          stock_status: 'available',
-          published: false,
-          seller_phone: sellerPhone || null,
-          created_at: dbItem.created_at,
-        }])
-        setNewItemIds((prev) => new Set(prev).add(dbItem.id))
+        setItems(current => current.map(it =>
+          it.localKey === localKey
+            ? { ...it, id: dbItem.id, image_url: imageUrl, images: [{ url: imageUrl }], created_at: dbItem.created_at }
+            : it
+        ))
 
-        setUploading({ count: files.length, progress: Math.round(((index + 1) / files.length) * 100) })
+        setProcessing(localKey, PROCESSING_STATES.READY)
+        setTimeout(() => clearProcessing(localKey), 2000)
+
+      } catch (err) {
+        logger.error('Upload', 'Image upload failed', { localKey, message: err.message })
+        setProcessing(localKey, PROCESSING_STATES.ERROR, {
+          error: { message: ERROR_MESSAGES.upload, recoverable: true }
+        })
       }
-      setTimeout(() => setUploading(null), 600)
-    } catch (err) {
-      logger.error('Upload', 'Image upload failed', { message: err.message })
-      setInlineError('We could not upload that photo. Please try again.')
-      setUploading(null)
     }
-  }, [sellerUuid, sellerPhone])
+  }, [sellerUuid, sellerPhone, anyProcessing, setProcessing, clearProcessing])
 
   const suggest = useCallback(async (item) => {
-    setSuggestingId(item.id)
+    const key = item.localKey || item.id
+    if (isProcessing(key)) return
+
+    setProcessing(key, PROCESSING_STATES.ANALYZING)
     setInlineError(null)
+
     try {
       const details = await suggestProductDetails(item.image_url)
+      setProcessing(key, PROCESSING_STATES.APPLYING_DETAILS)
+
       if (details) {
         const patch = {
           title: item.title || details.title || '',
@@ -795,23 +954,91 @@ const handleRemoveLogo = useCallback(async () => {
           description: item.description || details.description || '',
           size_specs: item.size_specs || details.size_specs || '',
         }
-        await updateItem(item.id, patch)
+        await updateItem(key, patch)
       }
+
+      setProcessing(key, PROCESSING_STATES.READY)
+      setTimeout(() => clearProcessing(key), 2000)
     } catch (err) {
       logger.error('Upload', 'AI Suggest failed', { message: err.message })
-      setInlineError('Suggestions are unavailable right now. You can still add details manually.')
-    } finally {
-      setSuggestingId(null)
+      setProcessing(key, PROCESSING_STATES.ERROR, {
+        error: { message: ERROR_MESSAGES.suggest, recoverable: true }
+      })
     }
-  }, [updateItem])
+  }, [updateItem, isProcessing, setProcessing, clearProcessing])
 
-  const handleDeleteRequest = useCallback((id) => {
-    const item = items.find((i) => i.id === id)
+  const handleDeleteRequest = useCallback((identifier) => {
+    const isLocal = typeof identifier === 'string' && identifier.startsWith('local-')
+    const item = items.find((i) => isLocal ? i.localKey === identifier : i.id === identifier)
     if (!item) return
+
+    if (isLocal) {
+      URL.revokeObjectURL(item.image_url)
+      fileMap.current.delete(identifier)
+      setItems((current) => current.filter((i) => i.localKey !== identifier))
+      setNewItemIds((prev) => {
+        const next = new Set(prev)
+        next.delete(identifier)
+        return next
+      })
+      clearProcessing(identifier)
+      return
+    }
+
     setDeletedItem(item)
-    setItems((current) => current.filter((i) => i.id !== id))
+    setItems((current) => current.filter((i) => i.id !== identifier))
     setShowUndoToast(true)
-  }, [items])
+  }, [items, clearProcessing])
+  const handleRetry = useCallback(async (localKey) => {
+    const item = items.find((i) => i.localKey === localKey)
+    const file = fileMap.current.get(localKey)
+    if (!item || !file) return
+
+    setProcessing(localKey, PROCESSING_STATES.PREPARING_PHOTO)
+
+    try {
+      const compressed = await compressImage(file)
+      setProcessing(localKey, PROCESSING_STATES.UPLOADING)
+      const imageUrl = await uploadToCloudinary(compressed)
+
+      setProcessing(localKey, PROCESSING_STATES.APPLYING_DETAILS)
+      const { data: dbItem, error } = await supabase
+        .from('catalog_items')
+        .insert({
+          seller_uuid: sellerUuid,
+          image_url: imageUrl,
+          images: [{ url: imageUrl }],
+          title: item.title,
+          price: item.price,
+          description: item.description,
+          size_specs: item.size_specs,
+          extra_notes: item.extra_notes,
+          category: item.category,
+          published: false,
+          seller_phone: sellerPhone || null,
+          stock_status: item.stock_status || 'available',
+        })
+        .select()
+        .single()
+      if (error) throw error
+
+      setItems(current => current.map(it =>
+        it.localKey === localKey
+          ? { ...it, id: dbItem.id, image_url: imageUrl, images: [{ url: imageUrl }], created_at: dbItem.created_at }
+          : it
+      ))
+
+      setProcessing(localKey, PROCESSING_STATES.READY)
+      setTimeout(() => clearProcessing(localKey), 2000)
+
+    } catch (err) {
+      logger.error('Upload', 'Retry failed', { localKey, message: err.message })
+      setProcessing(localKey, PROCESSING_STATES.ERROR, {
+        error: { message: ERROR_MESSAGES.upload, recoverable: true }
+      })
+    }
+  }, [items, sellerUuid, sellerPhone, setProcessing, clearProcessing])
+
 
     const publish = useCallback(async () => {
     if (!canPublish) {
@@ -853,6 +1080,9 @@ const handleRemoveLogo = useCallback(async () => {
 
   return (
     <main className="upload-page-dark min-h-screen bg-background px-4 pb-28 text-foreground sm:px-6 safe-bottom">
+      <div aria-live="polite" role="status" className="sr-only">
+        {liveMessage}
+      </div>
       {!isOnline && (
         <div className="sticky top-0 z-40 mb-4 flex items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-medium text-warning">
           <AlertCircle className="size-4 shrink-0" />
@@ -893,34 +1123,15 @@ const handleRemoveLogo = useCallback(async () => {
             {items.length > 0 && (
               <button
                 onClick={() => setSheetOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                disabled={anyProcessing}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
               >
                 <Plus className="size-4" />Add
               </button>
             )}
           </div>
 
-          {uploading && (
-            <div className="relative z-20 mb-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-lift)]">
-              <div className="mb-2.5 flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 font-medium text-foreground">
-                  <UploadCloud className="size-4 text-primary" />
-                  {uploading.count} {uploading.count === 1 ? 'photo' : 'photos'} uploading
-                </span>
-                <span className="font-semibold tabular-nums text-primary">{uploading.progress}%</span>
-              </div>
-              <div className="h-3 w-full overflow-hidden rounded-full bg-secondary shadow-[inset_0_1px_2px_oklch(0.3_0.03_60_/_.12)]">
-                <motion.div
-                  initial={{ width: '0%' }}
-                  animate={{ width: `${Math.max(uploading.progress, 6)}%` }}
-                  transition={spring}
-                  className="relative h-full min-w-[0.75rem] rounded-full bg-primary"
-                >
-                  <span className="shimmer-v0 absolute inset-0 rounded-full" />
-                </motion.div>
-              </div>
-            </div>
-          )}
+          {/* Per-item processing status rendered inside UploadProductCard */}
 
           {items.length === 0 && !uploading ? (
             <motion.div
@@ -939,7 +1150,8 @@ const handleRemoveLogo = useCallback(async () => {
               </div>
               <button
                 onClick={() => setSheetOpen(true)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90"
+                disabled={anyProcessing}
+                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90 disabled:opacity-50"
               >
                 <Plus className="size-4" />Add product
               </button>
@@ -947,20 +1159,25 @@ const handleRemoveLogo = useCallback(async () => {
           ) : (
             <motion.div layout className="flex flex-col gap-3">
               <AnimatePresence initial={false}>
-                {items.map((item) => (
-                  <UploadProductCard
-                    key={item.id}
-                    item={item}
-                    open={expandedId === item.id}
-                    isNew={newItemIds.has(item.id)}
-                    onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                    onChange={(patch) => updateItem(item.id, patch)}
-                    onDeleteRequest={() => handleDeleteRequest(item.id)}
-                    onSuggest={() => suggest(item)}
-                    suggesting={suggestingId === item.id}
-                    onAddImage={handleAddImage}
-                  />
-                ))}
+                {items.map((item) => {
+                  const key = item.localKey || item.id
+                  return (
+                    <UploadProductCard
+                      key={key}
+                      item={item}
+                      processing={processingMap.get(key) || null}
+                      open={expandedId === key}
+                      isNew={newItemIds.has(key)}
+                      onToggle={() => setExpandedId(expandedId === key ? null : key)}
+                      onChange={(patch) => updateItem(key, patch)}
+                      onDeleteRequest={() => handleDeleteRequest(key)}
+                      onSuggest={() => suggest(item)}
+                      suggesting={Boolean(processingMap.get(key)?.state === PROCESSING_STATES.ANALYZING)}
+                      onAddImage={handleAddImage}
+                      onRetry={() => item.localKey && handleRetry(item.localKey)}
+                    />
+                  )
+                })}
               </AnimatePresence>
             </motion.div>
           )}
