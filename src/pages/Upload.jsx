@@ -157,7 +157,7 @@ function UploadSheet({ open, onClose, onFiles }) {
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/20 p-4 backdrop-blur-sm sm:items-center">
+    <div className="upload-page-dark fixed inset-0 z-50 flex items-end justify-center bg-foreground/20 p-4 backdrop-blur-sm sm:items-center">
       <button aria-label="Close" className="absolute inset-0 cursor-default" onClick={onClose} />
       <motion.div
         initial={{ y: 40, opacity: 0 }}
