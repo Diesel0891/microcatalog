@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { X } from "lucide-react"
 import { motion, AnimatePresence } from 'framer-motion'
-import FloatingLabelInput from './FloatingLabelInput.jsx'
+import ProductField from './ProductField.jsx'
 
 const spring = { type: 'spring', stiffness: 300, damping: 30 }
 
@@ -49,8 +49,9 @@ export default function StructuredAttributes({
     const freeFormValue = attributes.find((a) => a.key === 'Size / Specs')?.value ?? ''
     return (
       <div className="w-full">
-        <FloatingLabelInput
+        <ProductField
           label="Size / Specs"
+          optional
           value={freeFormValue}
           onChange={(v) => updateAttribute('Size / Specs', v)}
           placeholder="Size or specifications"
@@ -68,11 +69,12 @@ export default function StructuredAttributes({
 
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-0">
         {templateAttrs.map((attr) => (
-          <FloatingLabelInput
+          <ProductField
             key={attr.key}
             label={attr.key}
+            optional
             value={attr.value}
             onChange={(v) => updateAttribute(attr.key, v)}
             id={`${idPrefix}-${attr.key.toLowerCase().replace(/\s+/g, '-')}`}
@@ -80,8 +82,9 @@ export default function StructuredAttributes({
         ))}
         {customAttrs.map((attr) => (
           <div key={attr.key} className="relative">
-            <FloatingLabelInput
+            <ProductField
               label={attr.key}
+              optional
               value={attr.value}
               onChange={(v) => updateAttribute(attr.key, v)}
               id={`${idPrefix}-${attr.key.toLowerCase().replace(/\s+/g, '-')}`}
@@ -110,8 +113,9 @@ export default function StructuredAttributes({
           >
             <div className="flex items-start gap-2 pt-1">
               <div className="flex-1">
-                <FloatingLabelInput
+                <ProductField
                   label="Attribute name"
+                  optional
                   value={customKeyDraft}
                   onChange={setCustomKeyDraft}
                   placeholder="e.g. Pattern"
