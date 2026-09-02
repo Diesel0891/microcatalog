@@ -491,14 +491,14 @@
 
 /* ===== Upload Page Dark Theme (scoped) ===== */
 .upload-page-dark {
-  --background: #0D0D0F;
+  --background: #000000;
   --foreground: #F2F2F5;
-  --card: #151518;
+  --card: #0B0B0B;
   --card-foreground: #F2F2F5;
-  --popover: #1B1B1F;
+  --popover: #0B0B0B;
   --popover-foreground: #F2F2F5;
   --primary: #C8A15A;
-  --primary-foreground: #0D0D0F;
+  --primary-foreground: #000000;
   --secondary: #1B1B1F;
   --secondary-foreground: #A6A6AD;
   --muted: #1B1B1F;
@@ -509,9 +509,9 @@
   --border: #2A2A2E;
   --input: #2A2A2E;
   --ring: #C8A15A;
-  --color-bg: #0D0D0F;
-  --color-surface: #151518;
-  --color-surface-elevated: #1B1B1F;
+  --color-bg: #000000;
+  --color-surface: #0B0B0B;
+  --color-surface-elevated: #0B0B0B;
   --color-border: #2A2A2E;
   --color-text-primary: #F2F2F5;
   --color-text-secondary: #A6A6AD;
