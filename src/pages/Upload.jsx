@@ -795,9 +795,10 @@ const handleRemoveLogo = useCallback(async () => {
       return next
     })
 
-    // Expand the first new item
+    // Open editor for the first new item
     if (newLocalKeys.length > 0) {
-      setExpandedId(newLocalKeys[0])
+      setWorkspace('editor')
+      setEditorItemId(newLocalKeys[0])
     }
 
     // 2. Process each item independently
@@ -850,7 +851,7 @@ const handleRemoveLogo = useCallback(async () => {
         })
       }
     }
-  }, [sellerUuid, sellerPhone, anyProcessing, setProcessing, clearProcessing])
+  }, [sellerUuid, sellerPhone, anyProcessing, setProcessing, clearProcessing, setWorkspace, setEditorItemId])
 
   const suggest = useCallback(async (item) => {
     const key = item.localKey || item.id
