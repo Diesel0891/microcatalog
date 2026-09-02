@@ -46,7 +46,7 @@ export default function UploadProductCard({ item, isNew, onEdit, onDeleteRequest
   }
 
   return (
-    <motion.article ref={cardRef} layout transition={spring} className={cn('overflow-hidden rounded-[24px] border border-border bg-card', isNew && 'animate-pop')}>
+    <motion.article ref={cardRef} layout transition={spring} className={cn('rounded-[24px] border border-border bg-card', isNew && 'animate-pop')}>
       <div className="flex gap-4 p-4">
         <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-secondary">
           {coverImage ? (
