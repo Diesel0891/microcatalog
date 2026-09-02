@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  AlertCircle, BarChart3, Camera, ChevronDown, ChevronRight, ChevronUp, Copy, ImagePlus,
+  AlertCircle, BarChart3, Camera, ChevronRight, Copy, ImagePlus,
   Link as LinkIcon, Lightbulb, Loader2, PartyPopper, Plus, ExternalLink,
   Store, X, Check
 } from 'lucide-react'
@@ -15,8 +15,9 @@ import { suggestProductDetails } from '../lib/ai'
 import { logger } from '../lib/logger.js'
 import UploadProductCard from "../components/UploadProductCard.jsx"
 import DeleteUndoToast from "../components/DeleteUndoToast.jsx"
+import ProductEditor from "../components/ProductEditor.jsx"
+import ShopDetailsEditor from "../components/ShopDetailsEditor.jsx"
 
-const inputBase = "w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition-all duration-200 focus:border-primary/40"
 
 
 const COUNTRIES = [
@@ -81,69 +82,6 @@ function ErrorBanner({ message, onDismiss }) {
   )
 }
 
-function CountrySelect({ value, onChange }) {
-  const [open, setOpen] = useState(false)
-  const buttonRef = useRef(null)
-  const country = COUNTRIES.find((item) => item.code === value) || COUNTRIES[0]
-  const rect = buttonRef.current?.getBoundingClientRect()
-
-  useEffect(() => {
-    if (!open) return
-    const handleScroll = () => setOpen(false)
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [open])
-
-  return (
-    <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={cn(inputBase, 'flex items-center justify-between gap-3 text-left')}
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-2">
-          <span className="text-base leading-none">{country.flag}</span>
-          <span className="font-medium">{country.code}</span>
-        </span>
-        <ChevronDown className={cn('size-4 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
-      </button>
-      {open && createPortal(
-        <>
-          <button aria-label="Close country menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={spring}
-            className="fixed z-50 max-h-64 overflow-auto rounded-2xl border border-border bg-card/95 p-1 shadow-[var(--shadow-lift)] backdrop-blur-xl"
-            style={{ top: (rect?.bottom || 0) + 8, left: rect?.left, width: rect?.width }}
-            role="listbox"
-          >
-            {COUNTRIES.map((item) => (
-              <button
-                key={item.code}
-                type="button"
-                onClick={() => { onChange(item.code); setOpen(false) }}
-                className={cn(
-                  'flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-secondary',
-                  item.code === value && 'bg-secondary/70'
-                )}
-                role="option"
-                aria-selected={item.code === value}
-              >
-                <span className="text-base leading-none">{item.flag}</span>
-                <span className="font-medium">{item.code}</span>
-                {item.code === value && <Check className="ml-auto size-4 text-primary" />}
-              </button>
-            ))}
-          </motion.div>
-        </>,
-        document.body
-      )}
-    </div>
-  )
-}
 
 function UploadSheet({ open, onClose, onFiles }) {
   const galleryRef = useRef(null)
@@ -377,7 +315,6 @@ export default function Upload() {
   const [countryCode, setCountryCode] = useState('MW')
   const [logoUrl, setLogoUrl] = useState('')
   const [sellerPhone, setSellerPhone] = useState('')
-  const [needsPhone, setNeedsPhone] = useState(false)
   const [phoneError, setPhoneError] = useState('')
 
   const [items, setItems] = useState([])
@@ -387,7 +324,6 @@ export default function Upload() {
   const fileMap = useRef(new Map())
   const [inlineError, setInlineError] = useState(null)
   const [_suggestingId, _setSuggestingId] = useState(null)
-  const [expandedId, setExpandedId] = useState(null)
   const [deletedItem, setDeletedItem] = useState(null)
   const [showUndoToast, setShowUndoToast] = useState(false)
   const [newItemIds, setNewItemIds] = useState(new Set())
@@ -395,7 +331,6 @@ export default function Upload() {
   const [isOnline, setIsOnline] = useState(true)
   const writeQueue = useRef([])
 
-  const [profileOpen, setProfileOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [published, setPublished] = useState(false)
   const [publishing, setPublishing] = useState(false)
@@ -441,7 +376,6 @@ export default function Upload() {
     return ''
   }, [processingMap])
 
-  const logoInputRef = useRef(null)
   const shopSectionRef = useRef(null)
 
   const selectedCountry = COUNTRIES.find((c) => c.code === countryCode) || COUNTRIES[0]
@@ -1085,10 +1019,8 @@ const handleRemoveLogo = useCallback(async () => {
             </p>
           </div>
           <button
-            onClick={() => {
-              setProfileOpen(true)
-              requestAnimationFrame(() => shopSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-            }}
+            onClick={() => 
+              setWorkspace('shop')}
             className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
           >
             Edit details
@@ -1146,14 +1078,9 @@ const handleRemoveLogo = useCallback(async () => {
                       key={key}
                       item={item}
                       processing={processingMap.get(key) || null}
-                      open={expandedId === key}
                       isNew={newItemIds.has(key)}
-                      onToggle={() => setExpandedId(expandedId === key ? null : key)}
-                      onChange={(patch) => updateItem(key, patch)}
+                      onEdit={() => { setEditorItemId(key); setWorkspace('editor') }}
                       onDeleteRequest={() => handleDeleteRequest(key)}
-                      onSuggest={() => suggest(item)}
-                      suggesting={Boolean(processingMap.get(key)?.state === PROCESSING_STATES.ANALYZING)}
-                      onAddImage={handleAddImage}
                       onRetry={() => item.localKey && handleRetry(item.localKey)}
                     />
                   )
@@ -1162,171 +1089,81 @@ const handleRemoveLogo = useCallback(async () => {
             </motion.div>
           )}
         </section>
+                {/* Shop Details — navigation row */}
         <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shop details</p>
         </div>
-        <section ref={shopSectionRef} className="mb-8 scroll-mt-4">
-          <button
-            onClick={() => setProfileOpen(!profileOpen)}
-            className={cn(
-              "flex w-full items-center gap-3 rounded-2xl border border-border bg-card/60 p-3 text-left shadow-[var(--shadow-lift)] backdrop-blur-xl transition-all",
-              needsPhone && "ring-4 ring-primary/20 border-primary/50"
-            )}
-          >
-            <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-secondary">
-              {logoUrl ? (
-                <img src={logoUrl} alt="Shop logo" className="size-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-              ) : (
-                <Store className="size-5 text-muted-foreground" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{shopName || 'Your shop'}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {!phone ? 'Add your WhatsApp number to publish' : validPhone ? `${selectedCountry.dial} ${cleanedPhone}` : 'Invalid WhatsApp number'}
-              </p>
-            </div>
-            {profileOpen ? (
-              <ChevronUp className="size-4 text-muted-foreground" />
+        <button
+          onClick={() => setWorkspace('shop')}
+          className="mb-8 flex w-full items-center gap-3 rounded-2xl border border-border bg-card/60 p-3 text-left shadow-[var(--shadow-lift)] backdrop-blur-xl transition-all"
+        >
+          <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-secondary">
+            {logoUrl ? (
+              <img src={logoUrl} alt="Shop logo" className="size-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
             ) : (
-              <ChevronDown className="size-4 text-muted-foreground" />
+              <Store className="size-5 text-muted-foreground" />
             )}
-          </button>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{shopName || 'Your shop'}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {!phone ? 'Add your WhatsApp number to publish' : validPhone ? `${selectedCountry.dial} ${cleanedPhone}` : 'Invalid WhatsApp number'}
+            </p>
+          </div>
+          <ChevronRight className="size-4 text-muted-foreground" />
+        </button>
 
-          <AnimatePresence initial={false}>
-            {profileOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={spring}
-                className="overflow-hidden"
-              >
-                <div className="mt-3 grid gap-4 rounded-2xl border border-border bg-card/60 p-4 shadow-[var(--shadow-lift)] backdrop-blur-xl">
-                  <div className="flex items-start gap-4">
-                    <button
-                      type="button"
-                      onClick={() => logoInputRef.current?.click()}
-                      className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-secondary/50 text-muted-foreground transition hover:border-primary/40 hover:bg-secondary"
-                      aria-label="Upload shop logo"
-                    >
-                      {logoUploading ? (
-                        <div className="shimmer-v0 absolute inset-0" />
-                      ) : logoUrl ? (
-                        <>
-                          <motion.img
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={spring}
-                            src={logoUrl}
-                            alt="Shop logo"
-                            className="size-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleRemoveLogo() }}
-                            className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-foreground/60 text-background backdrop-blur-sm transition hover:bg-foreground/80"
-                            aria-label="Remove logo"
-                          >
-                            <X className="size-3.5" />
-                          </button>
-                        </>
-                      ) : (
-                        <span className="flex flex-col items-center gap-1.5">
-                          <Store className="size-6" />
-                          <span className="text-[11px] font-medium">Add logo</span>
-                        </span>
-                      )}
-                    </button>
-                    <input ref={logoInputRef} className="hidden" type="file" accept="image/*" onChange={handleLogo} />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-muted-foreground">Shop name</label>
-                        {saveStatus === 'saving' && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground/60">
-                            <span className="size-1.5 rounded-full bg-primary/50 animate-pulse" />
-                            Saving…
-                          </span>
-                        )}
-                        {saveStatus === 'saved' && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-success">
-                            <Check className="size-3" />
-                            Saved
-                          </span>
-                        )}
-                        {saveStatus === 'queued' && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-warning">
-                            <AlertCircle className="size-3" />
-                            Queued
-                          </span>
-                        )}
-                      </div>
-                      <input
-                        className={cn(inputBase, 'mt-1.5 field-input')}
-                        value={shopName}
-                        onChange={(e) => setShopName(e.target.value)}
-                        onBlur={autoSaveShopName}
-                        placeholder="Your shop name"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                      <p className="mb-1.5 text-xs font-medium text-muted-foreground">WhatsApp phone number</p>
-                    <div className="grid grid-cols-[7.5rem_1fr] gap-2">
-                      <CountrySelect
-                        value={countryCode}
-                        onChange={(code) => {
-                          const next = COUNTRIES.find((c) => c.code === code) || COUNTRIES[0]
-                          setPhone((prev) => cleanPhone(prev, next))
-                          setCountryCode(code)
-                        }}
-                      />
-                      <input
-                        className={cn(inputBase, 'field-input', phone.length > 0 && !validPhone && 'border-destructive', validPhone && !phoneError && 'border-success', phoneError && 'border-destructive')}
-                        value={phone}
-                        onChange={(e) => { setPhoneError(''); setPhone((e.target.value || '').replace(/\D/g, '')) }}
-                        onBlur={() => {
-                          if (phone.length === 0) {
-                            setPhoneError('')
-                          } else if (!validPhone) {
-                            setPhoneError(`Enter a valid ${selectedCountry.name} WhatsApp number`)
-                          } else {
-                            setPhoneError('')
-                            autoSavePhone()
-                          }
-                        }}
-                        placeholder={selectedCountry.placeholder}
-                        inputMode="tel"
-                      />
-                    </div>
-                        {phoneError && (
-                          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-destructive error-banner-enter">
-                            <AlertCircle className="size-3.5 shrink-0" />
-                            {phoneError}
-                          </p>
-                        )}
-                  </div>
-                  <button
-                    onClick={() => setInsightsOpen(true)}
-                    className="flex w-full items-center justify-between rounded-xl border border-border bg-card/40 px-4 py-3 text-left transition hover:bg-card/70"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <BarChart3 className="size-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">Insights</p>
-                        <p className="text-xs text-muted-foreground">30-day activity</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="size-4 text-muted-foreground" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </section>
-      </div>
+            </div>
+
+      {/* Workspace: Shop Details */}
+      {workspace === 'shop' && (
+        <ShopDetailsEditor
+          shopName={shopName}
+          onShopNameChange={setShopName}
+          onShopNameBlur={autoSaveShopName}
+          phone={phone}
+          onPhoneChange={setPhone}
+          countryCode={countryCode}
+          onCountryCodeChange={setCountryCode}
+          logoUrl={logoUrl}
+          onLogoUpload={handleLogo}
+          onRemoveLogo={handleRemoveLogo}
+          logoUploading={logoUploading}
+          saveStatus={saveStatus}
+          phoneError={phoneError}
+          onPhoneErrorChange={setPhoneError}
+          onPhoneBlur={() => {
+            if (phone.length === 0) {
+              setPhoneError('')
+            } else if (!validPhone) {
+              setPhoneError(`Enter a valid ${selectedCountry.name} WhatsApp number`)
+            } else {
+              setPhoneError('')
+              autoSavePhone()
+            }
+          }}
+          validPhone={validPhone}
+          onDone={() => setWorkspace('overview')}
+        />
+      )}
+
+      {/* Workspace: Product Editor */}
+      {workspace === 'editor' && (() => {
+        const item = items.find((i) => (i.localKey || i.id) === editorItemId)
+        if (!item) return null
+        const key = item.localKey || item.id
+        return (
+          <ProductEditor
+            item={item}
+            onChange={(patch) => updateItem(key, patch)}
+            onSuggest={() => suggest(item)}
+            onAddImage={handleAddImage}
+            processing={processingMap.get(key) || null}
+            onRetry={() => item.localKey && handleRetry(item.localKey)}
+            onDone={() => setWorkspace('overview')}
+          />
+        )
+      })()}
 
       <AnimatePresence>
         {sheetOpen && <UploadSheet open={sheetOpen} onClose={() => setSheetOpen(false)} onFiles={handleFiles} />}
@@ -1360,8 +1197,9 @@ const handleRemoveLogo = useCallback(async () => {
         items={items}
       />
 
+            {/* Workspace footer */}
       <AnimatePresence>
-        {items.length > 0 && (
+        {workspace === 'overview' && items.length > 0 && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -1369,13 +1207,12 @@ const handleRemoveLogo = useCallback(async () => {
             transition={spring}
             className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/60 px-4 py-3.5 backdrop-blur-xl sm:px-6"
           >
-            <div className="mx-auto max-w-[640px] relative">
+            <div className="relative mx-auto max-w-[640px]">
               {shopIncomplete ? (
                 <button
                   onClick={() => {
                     setNeedsPhone(true)
-                    setProfileOpen(true)
-                    requestAnimationFrame(() => shopSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+                    setWorkspace('shop')
                   }}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl bg-secondary/70 px-5 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
                 >
@@ -1406,6 +1243,48 @@ const handleRemoveLogo = useCallback(async () => {
                   )}
                 </button>
               )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {workspace === 'shop' && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={spring}
+            className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/60 px-4 py-3.5 backdrop-blur-xl sm:px-6"
+          >
+            <div className="relative mx-auto max-w-[640px]">
+              <button
+                onClick={() => setWorkspace('overview')}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90"
+              >
+                Done
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {workspace === 'editor' && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={spring}
+            className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/60 px-4 py-3.5 backdrop-blur-xl sm:px-6"
+          >
+            <div className="relative mx-auto max-w-[640px]">
+              <button
+                onClick={() => setWorkspace('overview')}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90"
+              >
+                Done
+              </button>
             </div>
           </motion.div>
         )}
