@@ -483,26 +483,6 @@ export default function Upload() {
     return () => clearInterval(interval)
   }, [])
 
-  // Timeout watchdog for processing states
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now()
-      setProcessingMap(prev => {
-        let changed = false
-        const next = new Map(prev)
-        next.forEach((proc, key) => {
-          if (proc.state === PROCESSING_STATES.READY || proc.state === PROCESSING_STATES.ERROR || proc.state === PROCESSING_STATES.TIMEOUT) return
-          if (now - proc.startTime > PROCESSING_TIMEOUT_MS) {
-            next.set(key, { ...proc, state: PROCESSING_STATES.TIMEOUT })
-            changed = true
-          }
-        })
-        return changed ? next : prev
-      })
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
-
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true)
