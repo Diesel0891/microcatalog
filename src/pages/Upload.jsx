@@ -325,6 +325,8 @@ export default function Upload() {
   const [inlineError, setInlineError] = useState(null)
   const [_suggestingId, _setSuggestingId] = useState(null)
   const [deletedItem, setDeletedItem] = useState(null)
+  const [workspace, setWorkspace] = useState('overview')
+  const [editorItemId, setEditorItemId] = useState(null)
   const [showUndoToast, setShowUndoToast] = useState(false)
   const [newItemIds, setNewItemIds] = useState(new Set())
   const [saveStatus, setSaveStatus] = useState(null)
