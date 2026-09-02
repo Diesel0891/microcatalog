@@ -35,13 +35,13 @@ export default function DeleteUndoToast({ message, visible, onUndo, onDismiss })
             if (timerRef.current) clearTimeout(timerRef.current)
           }}
           onMouseLeave={startTimer}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 rounded-full border border-[#3A301A] bg-[#0B0B0B] px-4 py-2.5 flex items-center gap-3 shadow-[0_12px_32px_rgba(0,0,0,0.4)]"
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 rounded-full border border-border bg-card px-4 py-2.5 flex items-center gap-3 shadow-[0_12px_32px_rgba(0,0,0,0.4)]"
         >
-          <span className="text-xs text-[#F0EDE4] font-sans">{message}</span>
+          <span className="text-xs text-foreground font-sans">{message}</span>
           <button
             type="button"
             onClick={onUndo}
-            className="text-xs font-medium text-[#C5A059] font-sans active:scale-[0.97]"
+            className="text-xs font-medium text-primary font-sans active:scale-[0.97]"
           >
             Undo
           </button>
