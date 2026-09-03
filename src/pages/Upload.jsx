@@ -330,6 +330,7 @@ export default function Upload() {
   const [showUndoToast, setShowUndoToast] = useState(false)
   const [newItemIds, setNewItemIds] = useState(new Set())
   const [saveStatus, setSaveStatus] = useState(null)
+  const [itemSaveState, setItemSaveState] = useState(new Map())
   const [isOnline, setIsOnline] = useState(true)
   const writeQueue = useRef([])
 
@@ -378,7 +379,7 @@ export default function Upload() {
     return ''
   }, [processingMap])
 
-  const shopSectionRef = useRef(null)
+  const _shopSectionRef = useRef(null)
 
   const selectedCountry = COUNTRIES.find((c) => c.code === countryCode) || COUNTRIES[0]
   const cleanedPhone = cleanPhone(phone, selectedCountry)
@@ -687,10 +688,19 @@ const handleRemoveLogo = useCallback(async () => {
 
     if (isLocal) return
 
+    // Per-item save state: dirty -> saving -> saved
+    setItemSaveState((prev) => new Map(prev).set(identifier, 'saving'))
+
     if (!isOnline) {
       writeQueue.current.push({ id: identifier, patch, timestamp: Date.now() })
-      setSaveStatus('queued')
-      setTimeout(() => setSaveStatus((s) => s === 'queued' ? null : s), 2000)
+      setItemSaveState((prev) => new Map(prev).set(identifier, 'error'))
+      setTimeout(() => {
+        setItemSaveState((prev) => {
+          const next = new Map(prev)
+          if (next.get(identifier) === 'error') next.delete(identifier)
+          return next
+        })
+      }, 3000)
       return
     }
     try {
@@ -703,11 +713,18 @@ const handleRemoveLogo = useCallback(async () => {
       }
       const { error } = await supabase.from('catalog_items').update(cleanPatch).eq('id', identifier)
       if (error) throw error
+      setItemSaveState((prev) => new Map(prev).set(identifier, 'saved'))
+      setTimeout(() => {
+        setItemSaveState((prev) => {
+          const next = new Map(prev)
+          if (next.get(identifier) === 'saved') next.delete(identifier)
+          return next
+        })
+      }, 2000)
     } catch (err) {
       logger.error('Upload', 'Autosave failed', { itemId: identifier, patch, message: err.message })
       writeQueue.current.push({ id: identifier, patch, timestamp: Date.now() })
-      setSaveStatus('queued')
-      setTimeout(() => setSaveStatus((s) => s === 'queued' ? null : s), 2000)
+      setItemSaveState((prev) => new Map(prev).set(identifier, 'error'))
     }
   }, [isOnline])
 
@@ -960,9 +977,7 @@ const handleRemoveLogo = useCallback(async () => {
     const publish = useCallback(async () => {
     if (!canPublish) {
       if (shopIncomplete) {
-        setNeedsPhone(true)
-        setProfileOpen(true)
-        requestAnimationFrame(() => shopSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+        setWorkspace('shop')
       }
       return
     }
@@ -1164,6 +1179,7 @@ const handleRemoveLogo = useCallback(async () => {
             processing={processingMap.get(key) || null}
             onRetry={() => item.localKey && handleRetry(item.localKey)}
             onDone={() => setWorkspace('overview')}
+            saveStatus={itemSaveState.get(key) || null}
           />
         )
       })()}
