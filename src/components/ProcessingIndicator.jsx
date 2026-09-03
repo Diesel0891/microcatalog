@@ -3,11 +3,11 @@ import { AlertCircle, RotateCcw, Check } from "lucide-react"
 import { cn } from "../lib/cn.js"
 
 const STATUS_MESSAGES = {
-  preparing_photo: "Preparing your photo…",
+  preparing_photo: "Just a moment…",
   uploading: "Uploading your photo…",
-  analyzing: "Looking at your photo…",
-  applying_details: "Adding product details…",
-  ready: "Ready to edit",
+  analyzing: "Identifying your product…",
+  applying_details: "Adding useful details…",
+  ready: "Suggestions ready",
   timeout: "Still working — this is taking a little longer than usual.",
 }
 

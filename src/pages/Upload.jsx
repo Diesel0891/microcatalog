@@ -1104,7 +1104,7 @@ const handleRemoveLogo = useCallback(async () => {
           )}
         </section>
                 {/* Shop Details — navigation row */}
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mt-8 mb-2 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shop details</p>
         </div>
         <button
