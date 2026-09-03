@@ -325,8 +325,8 @@ export default function Upload() {
   const [inlineError, setInlineError] = useState(null)
   const [_suggestingId, _setSuggestingId] = useState(null)
   const [deletedItem, setDeletedItem] = useState(null)
-  const [workspace, setWorkspace] = useState('overview')
-  const [editorItemId, setEditorItemId] = useState(null)
+  const [expandedSection, setExpandedSection] = useState(null)
+  // expandedSection: null | { type: 'product', id } | 'shopDetails'
   const [showUndoToast, setShowUndoToast] = useState(false)
   const [newItemIds, setNewItemIds] = useState(new Set())
   const [saveStatus, setSaveStatus] = useState(null)
@@ -812,11 +812,7 @@ const handleRemoveLogo = useCallback(async () => {
       return next
     })
 
-    // Open editor for the first new item
-    if (newLocalKeys.length > 0) {
-      setWorkspace('editor')
-      setEditorItemId(newLocalKeys[0])
-    }
+    // Product created; remains collapsed until seller taps Edit
 
     // 2. Process each item independently
     for (const item of optimisticItems) {
@@ -868,7 +864,7 @@ const handleRemoveLogo = useCallback(async () => {
         })
       }
     }
-  }, [sellerUuid, sellerPhone, anyProcessing, setProcessing, clearProcessing, setWorkspace, setEditorItemId])
+  }, [sellerUuid, sellerPhone, anyProcessing, setProcessing, clearProcessing])
 
   const suggest = useCallback(async (item) => {
     const key = item.localKey || item.id
@@ -977,7 +973,7 @@ const handleRemoveLogo = useCallback(async () => {
     const publish = useCallback(async () => {
     if (!canPublish) {
       if (shopIncomplete) {
-        setWorkspace('shop')
+        setExpandedSection('shopDetails')
       }
       return
     }
@@ -1038,7 +1034,7 @@ const handleRemoveLogo = useCallback(async () => {
           </div>
           <button
             onClick={() => 
-              setWorkspace('shop')}
+              setExpandedSection('shopDetails')}
             className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
           >
             Edit details
@@ -1097,7 +1093,7 @@ const handleRemoveLogo = useCallback(async () => {
                       item={item}
                       processing={processingMap.get(key) || null}
                       isNew={newItemIds.has(key)}
-                      onEdit={() => { setEditorItemId(key); setWorkspace('editor') }}
+                      onEdit={() => setExpandedSection({ type: 'product', id: key })}
                       onDeleteRequest={() => handleDeleteRequest(key)}
                       onRetry={() => item.localKey && handleRetry(item.localKey)}
                     />
@@ -1112,7 +1108,7 @@ const handleRemoveLogo = useCallback(async () => {
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shop details</p>
         </div>
         <button
-          onClick={() => setWorkspace('shop')}
+          onClick={() => setExpandedSection('shopDetails')}
           className="mb-8 flex w-full items-center gap-3 rounded-2xl border border-border bg-card/60 p-3 text-left shadow-[var(--shadow-lift)] backdrop-blur-xl transition-all"
         >
           <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-secondary">
@@ -1134,7 +1130,7 @@ const handleRemoveLogo = useCallback(async () => {
             </div>
 
       {/* Workspace: Shop Details */}
-      {workspace === 'shop' && (
+      {expandedSection === 'shopDetails' && (
         <ShopDetailsEditor
           shopName={shopName}
           onShopNameChange={setShopName}
@@ -1161,13 +1157,13 @@ const handleRemoveLogo = useCallback(async () => {
             }
           }}
           validPhone={validPhone}
-          onDone={() => setWorkspace('overview')}
+          onDone={() => setExpandedSection(null)}
         />
       )}
 
       {/* Workspace: Product Editor */}
-      {workspace === 'editor' && (() => {
-        const item = items.find((i) => (i.localKey || i.id) === editorItemId)
+      {expandedSection?.type === 'product' && (() => {
+        const item = items.find((i) => (i.localKey || i.id) === expandedSection.id)
         if (!item) return null
         const key = item.localKey || item.id
         return (
@@ -1178,7 +1174,7 @@ const handleRemoveLogo = useCallback(async () => {
             onAddImage={handleAddImage}
             processing={processingMap.get(key) || null}
             onRetry={() => item.localKey && handleRetry(item.localKey)}
-            onDone={() => setWorkspace('overview')}
+            onDone={() => setExpandedSection(null)}
             saveStatus={itemSaveState.get(key) || null}
           />
         )
@@ -1218,7 +1214,7 @@ const handleRemoveLogo = useCallback(async () => {
 
             {/* Workspace footer */}
       <AnimatePresence>
-        {workspace === 'overview' && items.length > 0 && (
+        {expandedSection === null && items.length > 0 && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -1231,7 +1227,7 @@ const handleRemoveLogo = useCallback(async () => {
                 <button
                   onClick={() => {
                     setNeedsPhone(true)
-                    setWorkspace('shop')
+                    setExpandedSection('shopDetails')
                   }}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl bg-secondary/70 px-5 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
                 >
@@ -1268,7 +1264,7 @@ const handleRemoveLogo = useCallback(async () => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {workspace === 'shop' && (
+        {expandedSection === 'shopDetails' && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -1278,7 +1274,7 @@ const handleRemoveLogo = useCallback(async () => {
           >
             <div className="relative mx-auto max-w-[640px]">
               <button
-                onClick={() => setWorkspace('overview')}
+                onClick={() => setExpandedSection(null)}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90"
               >
                 Done
@@ -1289,7 +1285,7 @@ const handleRemoveLogo = useCallback(async () => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {workspace === 'editor' && (
+        {expandedSection?.type === 'product' && (
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -1299,7 +1295,7 @@ const handleRemoveLogo = useCallback(async () => {
           >
             <div className="relative mx-auto max-w-[640px]">
               <button
-                onClick={() => setWorkspace('overview')}
+                onClick={() => setExpandedSection(null)}
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-lift)] transition hover:opacity-90"
               >
                 Done
