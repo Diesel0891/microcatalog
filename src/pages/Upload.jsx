@@ -369,10 +369,10 @@ export default function Upload() {
 
   const liveMessage = useMemo(() => {
     for (const proc of processingMap.values()) {
-      if (proc.state === PROCESSING_STATES.PREPARING_PHOTO) return 'Preparing your photo…'
+      if (proc.state === PROCESSING_STATES.PREPARING_PHOTO) return 'Just a moment…'
       if (proc.state === PROCESSING_STATES.UPLOADING) return 'Uploading your photo…'
-      if (proc.state === PROCESSING_STATES.ANALYZING) return 'Looking at your photo…'
-      if (proc.state === PROCESSING_STATES.APPLYING_DETAILS) return 'Adding product details…'
+      if (proc.state === PROCESSING_STATES.ANALYZING) return 'Identifying your product…'
+      if (proc.state === PROCESSING_STATES.APPLYING_DETAILS) return 'Adding useful details…'
       if (proc.state === PROCESSING_STATES.TIMEOUT) return 'Still working — this is taking a little longer than usual.'
       if (proc.state === PROCESSING_STATES.ERROR) return proc.error?.message || 'Something went wrong.'
     }
@@ -902,21 +902,16 @@ const handleRemoveLogo = useCallback(async () => {
     const item = items.find((i) => isLocal ? i.localKey === identifier : i.id === identifier)
     if (!item) return
 
+    setDeletedItem(item)
+    setItems((current) => current.filter((i) => isLocal ? i.localKey !== identifier : i.id !== identifier))
     if (isLocal) {
-      URL.revokeObjectURL(item.image_url)
-      fileMap.current.delete(identifier)
-      setItems((current) => current.filter((i) => i.localKey !== identifier))
       setNewItemIds((prev) => {
         const next = new Set(prev)
         next.delete(identifier)
         return next
       })
       clearProcessing(identifier)
-      return
     }
-
-    setDeletedItem(item)
-    setItems((current) => current.filter((i) => i.id !== identifier))
     setShowUndoToast(true)
   }, [items, clearProcessing])
   const handleRetry = useCallback(async (localKey) => {
@@ -1109,7 +1104,7 @@ const handleRemoveLogo = useCallback(async () => {
         </div>
         <button
           onClick={() => setExpandedSection('shopDetails')}
-          className="mb-8 flex w-full items-center gap-3 rounded-2xl border border-border bg-card/60 p-3 text-left shadow-[var(--shadow-lift)] backdrop-blur-xl transition-all"
+          className="mb-8 flex w-full items-center gap-3 rounded-2xl border border-border bg-card/60 p-3 text-left shadow-[var(--shadow-lift)] backdrop-blur-xl transition-all active:scale-[0.97]"
         >
           <div className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-secondary">
             {logoUrl ? (
